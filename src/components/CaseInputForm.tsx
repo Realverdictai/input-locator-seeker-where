@@ -57,6 +57,15 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     return isValid;
   };
 
+  // Helper function to properly handle number inputs including 0
+  const handleNumberInput = (value: string) => {
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    const numValue = Number(value);
+    return isNaN(numValue) ? undefined : numValue;
+  };
+
   const addDefendantPolicy = () => {
     const newPolicies = [...(formData.defendantPolicies || []), { defendantName: "", policyLimit: 0 }];
     setFormData({...formData, defendantPolicies: newPolicies});
@@ -226,8 +235,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="medicalSpecials"
               type="number"
-              value={formData.medicalSpecials || ''}
-              onChange={(e) => setFormData({...formData, medicalSpecials: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.medicalSpecials !== undefined ? formData.medicalSpecials.toString() : ''}
+              onChange={(e) => setFormData({...formData, medicalSpecials: handleNumberInput(e.target.value)})}
               placeholder="Enter amount"
             />
           </div>
@@ -237,8 +246,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="howellHanifDeductions"
               type="number"
-              value={formData.howellHanifDeductions || ''}
-              onChange={(e) => setFormData({...formData, howellHanifDeductions: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.howellHanifDeductions !== undefined ? formData.howellHanifDeductions.toString() : ''}
+              onChange={(e) => setFormData({...formData, howellHanifDeductions: handleNumberInput(e.target.value)})}
               placeholder="Enter deduction amount"
             />
           </div>
@@ -248,8 +257,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="futureMedicals"
               type="number"
-              value={formData.futureMedicals || ''}
-              onChange={(e) => setFormData({...formData, futureMedicals: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.futureMedicals !== undefined ? formData.futureMedicals.toString() : ''}
+              onChange={(e) => setFormData({...formData, futureMedicals: handleNumberInput(e.target.value)})}
               placeholder="Enter amount"
             />
           </div>
@@ -259,8 +268,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="surgeries"
               type="number"
-              value={formData.surgeries || ''}
-              onChange={(e) => setFormData({...formData, surgeries: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.surgeries !== undefined ? formData.surgeries.toString() : ''}
+              onChange={(e) => setFormData({...formData, surgeries: handleNumberInput(e.target.value)})}
               placeholder="Enter number"
             />
           </div>
@@ -286,8 +295,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="injections"
               type="number"
-              value={formData.injections || ''}
-              onChange={(e) => setFormData({...formData, injections: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.injections !== undefined ? formData.injections.toString() : ''}
+              onChange={(e) => setFormData({...formData, injections: handleNumberInput(e.target.value)})}
               placeholder="Enter number"
             />
           </div>
@@ -313,8 +322,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="physicalTherapySessions"
               type="number"
-              value={formData.physicalTherapySessions || ''}
-              onChange={(e) => setFormData({...formData, physicalTherapySessions: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.physicalTherapySessions !== undefined ? formData.physicalTherapySessions.toString() : ''}
+              onChange={(e) => setFormData({...formData, physicalTherapySessions: handleNumberInput(e.target.value)})}
               placeholder="Enter number"
             />
           </div>
@@ -324,8 +333,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="chiropracticSessions"
               type="number"
-              value={formData.chiropracticSessions || ''}
-              onChange={(e) => setFormData({...formData, chiropracticSessions: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.chiropracticSessions !== undefined ? formData.chiropracticSessions.toString() : ''}
+              onChange={(e) => setFormData({...formData, chiropracticSessions: handleNumberInput(e.target.value)})}
               placeholder="Enter number"
             />
           </div>
@@ -335,8 +344,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="daysBetweenAccidentAndTreatment"
               type="number"
-              value={formData.daysBetweenAccidentAndTreatment || ''}
-              onChange={(e) => setFormData({...formData, daysBetweenAccidentAndTreatment: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.daysBetweenAccidentAndTreatment !== undefined ? formData.daysBetweenAccidentAndTreatment.toString() : ''}
+              onChange={(e) => setFormData({...formData, daysBetweenAccidentAndTreatment: handleNumberInput(e.target.value)})}
               placeholder="Enter days"
             />
           </div>
@@ -346,8 +355,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="treatmentGaps"
               type="number"
-              value={formData.treatmentGaps || ''}
-              onChange={(e) => setFormData({...formData, treatmentGaps: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.treatmentGaps !== undefined ? formData.treatmentGaps.toString() : ''}
+              onChange={(e) => setFormData({...formData, treatmentGaps: handleNumberInput(e.target.value)})}
               placeholder="Enter gap days"
             />
           </div>
@@ -393,8 +402,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="plaintiffAge"
               type="number"
-              value={formData.plaintiffAge || ''}
-              onChange={(e) => setFormData({...formData, plaintiffAge: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.plaintiffAge !== undefined ? formData.plaintiffAge.toString() : ''}
+              onChange={(e) => setFormData({...formData, plaintiffAge: handleNumberInput(e.target.value)})}
               placeholder="Enter age"
             />
           </div>
@@ -431,8 +440,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="annualIncome"
               type="number"
-              value={formData.annualIncome || ''}
-              onChange={(e) => setFormData({...formData, annualIncome: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.annualIncome !== undefined ? formData.annualIncome.toString() : ''}
+              onChange={(e) => setFormData({...formData, annualIncome: handleNumberInput(e.target.value)})}
               placeholder="Enter annual income"
             />
           </div>
@@ -442,8 +451,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="wageLoss"
               type="number"
-              value={formData.wageLoss || ''}
-              onChange={(e) => setFormData({...formData, wageLoss: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.wageLoss !== undefined ? formData.wageLoss.toString() : ''}
+              onChange={(e) => setFormData({...formData, wageLoss: handleNumberInput(e.target.value)})}
               placeholder="Enter wage loss"
             />
           </div>
@@ -453,8 +462,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="futureEarningsLoss"
               type="number"
-              value={formData.futureEarningsLoss || ''}
-              onChange={(e) => setFormData({...formData, futureEarningsLoss: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.futureEarningsLoss !== undefined ? formData.futureEarningsLoss.toString() : ''}
+              onChange={(e) => setFormData({...formData, futureEarningsLoss: handleNumberInput(e.target.value)})}
               placeholder="Enter future earnings loss"
             />
           </div>
@@ -490,8 +499,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="priorWorkersCompAmount"
                 type="number"
-                value={formData.priorWorkersCompAmount || ''}
-                onChange={(e) => setFormData({...formData, priorWorkersCompAmount: e.target.value ? Number(e.target.value) : undefined})}
+                value={formData.priorWorkersCompAmount !== undefined ? formData.priorWorkersCompAmount.toString() : ''}
+                onChange={(e) => setFormData({...formData, priorWorkersCompAmount: handleNumberInput(e.target.value)})}
                 placeholder="Enter amount"
               />
             </div>
@@ -577,8 +586,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                   <Input
                     type="number"
                     placeholder="Policy limit"
-                    value={policy.policyLimit || ''}
-                    onChange={(e) => updateDefendantPolicy(index, 'policyLimit', e.target.value ? Number(e.target.value) : 0)}
+                    value={policy.policyLimit !== undefined ? policy.policyLimit.toString() : ''}
+                    onChange={(e) => updateDefendantPolicy(index, 'policyLimit', handleNumberInput(e.target.value) || 0)}
                   />
                 </div>
                 {formData.defendantPolicies!.length > 1 && (
@@ -595,8 +604,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="umUimCoverage"
               type="number"
-              value={formData.umUimCoverage || ''}
-              onChange={(e) => setFormData({...formData, umUimCoverage: e.target.value ? Number(e.target.value) : undefined})}
+              value={formData.umUimCoverage !== undefined ? formData.umUimCoverage.toString() : ''}
+              onChange={(e) => setFormData({...formData, umUimCoverage: handleNumberInput(e.target.value)})}
               placeholder="Enter UM/UIM coverage"
             />
           </div>
@@ -642,3 +651,5 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
+
+</edits_to_apply>
