@@ -19,32 +19,32 @@ interface CaseInputFormProps {
 const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   const [formData, setFormData] = useState<Partial<CaseData>>({
     liabilityPercentage: 100,
-    medicalSpecials: 0,
-    surgeries: 0,
+    medicalSpecials: undefined,
+    surgeries: undefined,
     surgeryTypes: [],
-    injections: 0,
+    injections: undefined,
     injectionTypes: [],
-    physicalTherapySessions: 0,
-    chiropracticSessions: 0,
+    physicalTherapySessions: undefined,
+    chiropracticSessions: undefined,
     daysBetweenAccidentAndTreatment: 0,
-    wageLoss: 0,
+    wageLoss: undefined,
     plaintiffAge: 35,
-    policyLimits: 0,
-    howellHanifDeductions: 0,
-    futureMedicals: 0,
-    futureEarningsLoss: 0,
+    policyLimits: undefined,
+    howellHanifDeductions: undefined,
+    futureMedicals: undefined,
+    futureEarningsLoss: undefined,
     prop213Applicable: false,
     priorWorkersComp: false,
-    priorWorkersCompAmount: 0,
+    priorWorkersCompAmount: undefined,
     priorAccident: false,
     subsequentAccident: false,
     multipleDefendants: false,
     defendantPolicies: [{ defendantName: "Primary Defendant", policyLimit: 0 }],
-    umUimCoverage: 0,
+    umUimCoverage: undefined,
     impactSeverity: 5,
-    annualIncome: 0,
+    annualIncome: undefined,
     futureSurgeryRecommended: false,
-    treatmentGaps: 0,
+    treatmentGaps: undefined,
   });
 
   const orthopedicSurgeries = [
@@ -122,20 +122,20 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
       {/* Date of Loss */}
       <Card>
         <CardHeader>
-          <CardTitle>Accident Information</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Accident Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dateOfLoss">Date of Loss (Accident Date)</Label>
               <Input
                 id="dateOfLoss"
                 type="date"
-                value={formData.dateOfLoss}
+                value={formData.dateOfLoss || ''}
                 onChange={(e) => {
                   const newFormData = {...formData, dateOfLoss: e.target.value};
                   newFormData.daysBetweenAccidentAndTreatment = calculateDaysBetween(
@@ -151,7 +151,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="firstTreatmentDate"
                 type="date"
-                value={formData.firstTreatmentDate}
+                value={formData.firstTreatmentDate || ''}
                 onChange={(e) => {
                   const newFormData = {...formData, firstTreatmentDate: e.target.value};
                   newFormData.daysBetweenAccidentAndTreatment = calculateDaysBetween(
@@ -166,7 +166,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
           
           <div className="space-y-2">
             <Label>Days Between Accident and First Treatment: {formData.daysBetweenAccidentAndTreatment || 0} days</Label>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               {(formData.daysBetweenAccidentAndTreatment || 0) > 30 && 
                 "Treatment gap may affect case value"}
             </div>
@@ -177,13 +177,13 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Basic Case Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Basic Case Information</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Basic Case Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="injuryType">Injury Type</Label>
             <Select 
-              value={formData.injuryType} 
+              value={formData.injuryType || ''} 
               onValueChange={(value) => setFormData({...formData, injuryType: value})}
             >
               <SelectTrigger>
@@ -216,7 +216,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="accidentType">Type of Accident</Label>
             <Select 
-              value={formData.accidentType} 
+              value={formData.accidentType || ''} 
               onValueChange={(value) => setFormData({...formData, accidentType: value})}
             >
               <SelectTrigger>
@@ -242,7 +242,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               step={1}
               className="w-full"
             />
-            <div className="text-xs text-gray-500">1 = Slight, 5 = Moderate, 10 = Severe</div>
+            <div className="text-xs text-muted-foreground">1 = Slight, 5 = Moderate, 10 = Severe</div>
           </div>
         </CardContent>
       </Card>
@@ -250,18 +250,18 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Medical Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Medical Information</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Medical Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="medicalSpecials">Medical Specials</Label>
               <Input
                 id="medicalSpecials"
                 type="number"
-                value={formData.medicalSpecials}
-                onChange={(e) => setFormData({...formData, medicalSpecials: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.medicalSpecials || ''}
+                onChange={(e) => setFormData({...formData, medicalSpecials: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
             <div className="space-y-2">
@@ -269,22 +269,22 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="howellHanifDeductions"
                 type="number"
-                value={formData.howellHanifDeductions}
-                onChange={(e) => setFormData({...formData, howellHanifDeductions: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.howellHanifDeductions || ''}
+                onChange={(e) => setFormData({...formData, howellHanifDeductions: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="futureMedicals">Future Medical Costs</Label>
               <Input
                 id="futureMedicals"
                 type="number"
-                value={formData.futureMedicals}
-                onChange={(e) => setFormData({...formData, futureMedicals: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.futureMedicals || ''}
+                onChange={(e) => setFormData({...formData, futureMedicals: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
             <div className="space-y-2">
@@ -292,9 +292,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="treatmentGaps"
                 type="number"
-                value={formData.treatmentGaps}
-                onChange={(e) => setFormData({...formData, treatmentGaps: Number(e.target.value)})}
-                placeholder="0"
+                value={formData.treatmentGaps || ''}
+                onChange={(e) => setFormData({...formData, treatmentGaps: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Number of days"
               />
             </div>
           </div>
@@ -304,15 +304,16 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="surgeries"
               type="number"
-              value={formData.surgeries}
-              onChange={(e) => setFormData({...formData, surgeries: Number(e.target.value)})}
+              value={formData.surgeries || ''}
+              onChange={(e) => setFormData({...formData, surgeries: e.target.value ? Number(e.target.value) : undefined})}
               min="0"
+              placeholder="Number of surgeries"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Surgery Types</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3">
               {orthopedicSurgeries.map(surgery => (
                 <div key={surgery} className="flex items-center space-x-2">
                   <Checkbox
@@ -326,7 +327,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                       }
                     }}
                   />
-                  <Label className="text-sm">{surgery}</Label>
+                  <Label className="text-xs md:text-sm cursor-pointer">{surgery}</Label>
                 </div>
               ))}
             </div>
@@ -337,15 +338,16 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="injections"
               type="number"
-              value={formData.injections}
-              onChange={(e) => setFormData({...formData, injections: Number(e.target.value)})}
+              value={formData.injections || ''}
+              onChange={(e) => setFormData({...formData, injections: e.target.value ? Number(e.target.value) : undefined})}
               min="0"
+              placeholder="Number of injections"
             />
           </div>
 
           <div className="space-y-2">
             <Label>Injection Types</Label>
-            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3">
               {injectionTypes.map(injection => (
                 <div key={injection} className="flex items-center space-x-2">
                   <Checkbox
@@ -359,20 +361,20 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                       }
                     }}
                   />
-                  <Label className="text-sm">{injection}</Label>
+                  <Label className="text-xs md:text-sm cursor-pointer">{injection}</Label>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="physicalTherapySessions">Physical Therapy Sessions</Label>
               <Input
                 id="physicalTherapySessions"
                 type="number"
-                value={formData.physicalTherapySessions}
-                onChange={(e) => setFormData({...formData, physicalTherapySessions: Number(e.target.value)})}
+                value={formData.physicalTherapySessions || ''}
+                onChange={(e) => setFormData({...formData, physicalTherapySessions: e.target.value ? Number(e.target.value) : undefined})}
                 min="0"
                 placeholder="Number of PT sessions"
               />
@@ -382,8 +384,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="chiropracticSessions"
                 type="number"
-                value={formData.chiropracticSessions}
-                onChange={(e) => setFormData({...formData, chiropracticSessions: Number(e.target.value)})}
+                value={formData.chiropracticSessions || ''}
+                onChange={(e) => setFormData({...formData, chiropracticSessions: e.target.value ? Number(e.target.value) : undefined})}
                 min="0"
                 placeholder="Number of chiropractic visits"
               />
@@ -403,9 +405,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Label htmlFor="futureSurgeryDetails">Future Surgery Details</Label>
               <Textarea
                 id="futureSurgeryDetails"
-                value={formData.futureSurgeryDetails}
+                value={formData.futureSurgeryDetails || ''}
                 onChange={(e) => setFormData({...formData, futureSurgeryDetails: e.target.value})}
                 placeholder="Describe recommended future surgeries..."
+                className="min-h-[80px]"
               />
             </div>
           )}
@@ -414,9 +417,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="priorConditions">Prior Medical Conditions</Label>
             <Textarea
               id="priorConditions"
-              value={formData.priorConditions}
+              value={formData.priorConditions || ''}
               onChange={(e) => setFormData({...formData, priorConditions: e.target.value})}
               placeholder="Any pre-existing conditions that may affect case value..."
+              className="min-h-[80px]"
             />
           </div>
         </CardContent>
@@ -425,18 +429,18 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Economic Damages */}
       <Card>
         <CardHeader>
-          <CardTitle>Economic Damages</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Economic Damages</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="wageLoss">Past Wage Loss</Label>
               <Input
                 id="wageLoss"
                 type="number"
-                value={formData.wageLoss}
-                onChange={(e) => setFormData({...formData, wageLoss: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.wageLoss || ''}
+                onChange={(e) => setFormData({...formData, wageLoss: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
             <div className="space-y-2">
@@ -444,9 +448,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="futureEarningsLoss"
                 type="number"
-                value={formData.futureEarningsLoss}
-                onChange={(e) => setFormData({...formData, futureEarningsLoss: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.futureEarningsLoss || ''}
+                onChange={(e) => setFormData({...formData, futureEarningsLoss: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
           </div>
@@ -456,9 +460,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="annualIncome"
               type="number"
-              value={formData.annualIncome}
-              onChange={(e) => setFormData({...formData, annualIncome: Number(e.target.value)})}
-              placeholder="$0"
+              value={formData.annualIncome || ''}
+              onChange={(e) => setFormData({...formData, annualIncome: e.target.value ? Number(e.target.value) : undefined})}
+              placeholder="Enter annual income"
             />
           </div>
         </CardContent>
@@ -467,25 +471,26 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Plaintiff Demographics */}
       <Card>
         <CardHeader>
-          <CardTitle>Plaintiff Demographics</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Plaintiff Demographics</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="plaintiffAge">Plaintiff Age</Label>
               <Input
                 id="plaintiffAge"
                 type="number"
-                value={formData.plaintiffAge}
-                onChange={(e) => setFormData({...formData, plaintiffAge: Number(e.target.value)})}
+                value={formData.plaintiffAge || ''}
+                onChange={(e) => setFormData({...formData, plaintiffAge: e.target.value ? Number(e.target.value) : undefined})}
                 min="1"
                 max="100"
+                placeholder="Age"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="plaintiffGender">Gender</Label>
               <Select 
-                value={formData.plaintiffGender} 
+                value={formData.plaintiffGender || ''} 
                 onValueChange={(value: 'male' | 'female') => setFormData({...formData, plaintiffGender: value})}
               >
                 <SelectTrigger>
@@ -503,7 +508,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="plaintiffOccupation">Plaintiff Occupation</Label>
             <Input
               id="plaintiffOccupation"
-              value={formData.plaintiffOccupation}
+              value={formData.plaintiffOccupation || ''}
               onChange={(e) => setFormData({...formData, plaintiffOccupation: e.target.value})}
               placeholder="e.g., Teacher, Construction Worker, etc."
             />
@@ -512,7 +517,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="venue">Venue (County)</Label>
             <Select 
-              value={formData.venue} 
+              value={formData.venue || ''} 
               onValueChange={(value) => setFormData({...formData, venue: value})}
             >
               <SelectTrigger>
@@ -533,7 +538,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Legal Factors */}
       <Card>
         <CardHeader>
-          <CardTitle>Legal Factors</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Legal Factors</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -558,9 +563,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Input
                 id="priorWorkersCompAmount"
                 type="number"
-                value={formData.priorWorkersCompAmount}
-                onChange={(e) => setFormData({...formData, priorWorkersCompAmount: Number(e.target.value)})}
-                placeholder="$0"
+                value={formData.priorWorkersCompAmount || ''}
+                onChange={(e) => setFormData({...formData, priorWorkersCompAmount: e.target.value ? Number(e.target.value) : undefined})}
+                placeholder="Enter amount"
               />
             </div>
           )}
@@ -578,9 +583,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Label htmlFor="priorAccidentDetails">Prior Accident Details</Label>
               <Textarea
                 id="priorAccidentDetails"
-                value={formData.priorAccidentDetails}
+                value={formData.priorAccidentDetails || ''}
                 onChange={(e) => setFormData({...formData, priorAccidentDetails: e.target.value})}
                 placeholder="Describe prior accidents or injuries..."
+                className="min-h-[80px]"
               />
             </div>
           )}
@@ -598,9 +604,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Label htmlFor="subsequentAccidentDetails">Subsequent Accident Details</Label>
               <Textarea
                 id="subsequentAccidentDetails"
-                value={formData.subsequentAccidentDetails}
+                value={formData.subsequentAccidentDetails || ''}
                 onChange={(e) => setFormData({...formData, subsequentAccidentDetails: e.target.value})}
                 placeholder="Describe subsequent accidents or injuries..."
+                className="min-h-[80px]"
               />
             </div>
           )}
@@ -610,7 +617,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Insurance Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Insurance Information</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Insurance Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -631,7 +638,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             </div>
             
             {formData.defendantPolicies?.map((defendant, index) => (
-              <div key={index} className="flex items-center space-x-2 p-3 border rounded">
+              <div key={index} className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2 p-3 border rounded">
                 <Input
                   placeholder="Defendant name"
                   value={defendant.defendantName}
@@ -641,12 +648,12 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                 <Input
                   type="number"
                   placeholder="Policy limit"
-                  value={defendant.policyLimit}
-                  onChange={(e) => updateDefendant(index, 'policyLimit', Number(e.target.value))}
+                  value={defendant.policyLimit || ''}
+                  onChange={(e) => updateDefendant(index, 'policyLimit', e.target.value ? Number(e.target.value) : 0)}
                   className="flex-1"
                 />
                 {formData.defendantPolicies!.length > 1 && (
-                  <Button type="button" onClick={() => removeDefendant(index)} size="sm" variant="destructive">
+                  <Button type="button" onClick={() => removeDefendant(index)} size="sm" variant="destructive" className="w-full md:w-auto">
                     <X className="w-4 h-4" />
                   </Button>
                 )}
@@ -659,9 +666,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Input
               id="umUimCoverage"
               type="number"
-              value={formData.umUimCoverage}
-              onChange={(e) => setFormData({...formData, umUimCoverage: Number(e.target.value)})}
-              placeholder="$0"
+              value={formData.umUimCoverage || ''}
+              onChange={(e) => setFormData({...formData, umUimCoverage: e.target.value ? Number(e.target.value) : undefined})}
+              placeholder="Enter coverage amount"
             />
           </div>
         </CardContent>
@@ -670,17 +677,17 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       {/* Additional Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Additional Information</CardTitle>
+          <CardTitle className="text-lg md:text-xl">Additional Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="additionalFactors">Additional Factors</Label>
             <Textarea
               id="additionalFactors"
-              value={formData.additionalFactors}
+              value={formData.additionalFactors || ''}
               onChange={(e) => setFormData({...formData, additionalFactors: e.target.value})}
               placeholder="Any additional case details, complications, or special circumstances..."
-              rows={3}
+              className="min-h-[80px]"
             />
           </div>
 
@@ -688,10 +695,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="medicalRecordsAnalysis">Medical Records Analysis</Label>
             <Textarea
               id="medicalRecordsAnalysis"
-              value={formData.medicalRecordsAnalysis}
+              value={formData.medicalRecordsAnalysis || ''}
               onChange={(e) => setFormData({...formData, medicalRecordsAnalysis: e.target.value})}
               placeholder="Upload and analyze medical records (manual entry for now)..."
-              rows={3}
+              className="min-h-[80px]"
             />
           </div>
         </CardContent>
@@ -699,7 +706,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 
       <Button 
         type="submit" 
-        className="w-full" 
+        className="w-full py-3 text-base md:text-lg" 
         disabled={!isFormValid() || isLoading}
       >
         {isLoading ? "Evaluating..." : "Evaluate Case"}
@@ -709,3 +716,5 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
+
+}
