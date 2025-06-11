@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,11 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     try {
       console.log('Attempting signup with data:', signUpData);
       
+      // Ensure we have all required fields
+      if (!signUpData.email || !signUpData.password || !signUpData.company_name) {
+        throw new Error('Please fill in all required fields');
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email: signUpData.email,
         password: signUpData.password,
@@ -56,30 +62,36 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
 
       console.log('Signup successful:', data);
 
-      // If user is created but not confirmed, show appropriate message
+      // Check if user needs email confirmation
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Check your email",
           description: "We've sent you a confirmation link. Please check your email to complete registration.",
         });
-      } else {
+      } else if (data.user && data.session) {
         toast({
           title: "Account created successfully!",
-          description: "You can now sign in to your account.",
+          description: "Welcome to Verdict AI!",
         });
-      }
-
-      if (data.user) {
         onAuthSuccess();
       }
     } catch (error: any) {
       console.error('Full signup error:', error);
       
-      let errorMessage = error.message;
+      let errorMessage = "An error occurred while creating your account.";
       
-      // Handle specific database errors
-      if (error.message?.includes('user_type') || error.message?.includes('Database error')) {
-        errorMessage = "There was a database configuration issue. Please try again or contact support.";
+      if (error.message) {
+        if (error.message.includes('already_registered')) {
+          errorMessage = "An account with this email already exists. Please try signing in instead.";
+        } else if (error.message.includes('weak_password')) {
+          errorMessage = "Password is too weak. Please choose a stronger password.";
+        } else if (error.message.includes('invalid_email')) {
+          errorMessage = "Please enter a valid email address.";
+        } else if (error.message.includes('database') || error.message.includes('user_type')) {
+          errorMessage = "Database configuration issue. Please try again in a moment or contact support.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast({
@@ -99,6 +111,10 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     try {
       console.log('Attempting signin with email:', signInData.email);
       
+      if (!signInData.email || !signInData.password) {
+        throw new Error('Please enter both email and password');
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: signInData.email,
         password: signInData.password
@@ -111,18 +127,28 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
 
       console.log('Signin successful:', data);
 
-      toast({
-        title: "Signed in successfully!",
-      });
-
-      onAuthSuccess();
+      if (data.user && data.session) {
+        toast({
+          title: "Signed in successfully!",
+          description: "Welcome back to Verdict AI!",
+        });
+        onAuthSuccess();
+      }
     } catch (error: any) {
       console.error('Full signin error:', error);
       
-      let errorMessage = error.message;
+      let errorMessage = "An error occurred while signing in.";
       
-      if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      if (error.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.message.includes('too_many_requests')) {
+          errorMessage = "Too many login attempts. Please wait a moment and try again.";
+        } else if (error.message.includes('email_not_confirmed')) {
+          errorMessage = "Please check your email and confirm your account before signing in.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast({
@@ -161,6 +187,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     value={signInData.email}
                     onChange={(e) => setSignInData({...signInData, email: e.target.value})}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -171,6 +198,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     value={signInData.password}
                     onChange={(e) => setSignInData({...signInData, password: e.target.value})}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -182,10 +210,11 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="user-type">Account Type</Label>
+                  <Label htmlFor="user-type">Account Type *</Label>
                   <Select 
                     value={signUpData.user_type} 
                     onValueChange={(value: UserType) => setSignUpData({...signUpData, user_type: value})}
+                    disabled={isLoading}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select account type" />
@@ -198,35 +227,39 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={signUpData.email}
                     onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password *</Label>
                   <Input
                     id="password"
                     type="password"
                     value={signUpData.password}
                     onChange={(e) => setSignUpData({...signUpData, password: e.target.value})}
                     required
+                    disabled={isLoading}
+                    minLength={6}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="company">Company/Firm Name</Label>
+                  <Label htmlFor="company">Company/Firm Name *</Label>
                   <Input
                     id="company"
                     type="text"
                     value={signUpData.company_name}
                     onChange={(e) => setSignUpData({...signUpData, company_name: e.target.value})}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -238,6 +271,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                       type="text"
                       value={signUpData.bar_number}
                       onChange={(e) => setSignUpData({...signUpData, bar_number: e.target.value})}
+                      disabled={isLoading}
                     />
                   </div>
                 )}
