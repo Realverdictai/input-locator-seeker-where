@@ -709,5 +709,3 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
-
-</edits_to_apply>
