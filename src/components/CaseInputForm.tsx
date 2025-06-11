@@ -86,9 +86,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 
   const isFormValid = () => {
     return formData.injuryType && 
-           formData.plaintiffGender && 
-           formData.venue && 
-           formData.plaintiffOccupation &&
+           formData.venue &&
            formData.dateOfLoss;
   };
 

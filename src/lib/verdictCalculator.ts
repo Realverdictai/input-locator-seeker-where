@@ -1,3 +1,4 @@
+
 import { CaseData, VerdictEstimate } from "@/types/verdict";
 
 // Track usage for free model limitation
@@ -41,14 +42,19 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const accidentMultiplier = accidentTypeMultipliers[caseData.accidentType as keyof typeof accidentTypeMultipliers] || 1.0;
 
   // Calculate adjusted medical specials after Howell/Hanif deductions
-  const adjustedMedicalSpecials = Math.max(0, caseData.medicalSpecials - caseData.howellHanifDeductions);
+  const medicalSpecials = caseData.medicalSpecials || 0;
+  const howellHanifDeductions = caseData.howellHanifDeductions || 0;
+  const adjustedMedicalSpecials = Math.max(0, medicalSpecials - howellHanifDeductions);
   
   // Calculate total economic damages
-  const totalEconomicDamages = adjustedMedicalSpecials + caseData.wageLoss + 
-                               caseData.futureMedicals + caseData.futureEarningsLoss;
+  const wageLoss = caseData.wageLoss || 0;
+  const futureMedicals = caseData.futureMedicals || 0;
+  const futureEarningsLoss = caseData.futureEarningsLoss || 0;
+  const totalEconomicDamages = adjustedMedicalSpecials + wageLoss + futureMedicals + futureEarningsLoss;
   
   // Surgery premium calculation with specific surgery types
-  let surgeryPremium = caseData.surgeries * 40000;
+  const surgeries = caseData.surgeries || 0;
+  let surgeryPremium = surgeries * 40000;
   if (caseData.surgeryTypes?.includes("Spinal Fusion")) surgeryPremium += 75000;
   if (caseData.surgeryTypes?.includes("Hip Replacement")) surgeryPremium += 60000;
   if (caseData.surgeryTypes?.includes("Knee Replacement")) surgeryPremium += 50000;
@@ -56,23 +62,29 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   if (caseData.surgeryTypes?.includes("Spinal Cord Stimulator Trial")) surgeryPremium += 25000;
   
   // Injection premium calculation
-  let injectionPremium = caseData.injections * 2500; // Base value per injection
+  const injections = caseData.injections || 0;
+  let injectionPremium = injections * 2500; // Base value per injection
   const prpInjections = caseData.injectionTypes?.filter(type => type.includes("PRP")).length || 0;
   injectionPremium += prpInjections * 3000; // Additional premium for PRP injections
   
   // Physical therapy and chiropractic factor
-  const ptChiroFactor = Math.min(1.2, 1 + ((caseData.physicalTherapySessions + caseData.chiropracticSessions) / 100));
+  const physicalTherapySessions = caseData.physicalTherapySessions || 0;
+  const chiropracticSessions = caseData.chiropracticSessions || 0;
+  const ptChiroFactor = Math.min(1.2, 1 + ((physicalTherapySessions + chiropracticSessions) / 100));
   
   // Treatment delay factor (gap between accident and first treatment)
-  const treatmentDelayFactor = caseData.daysBetweenAccidentAndTreatment > 7 ? 
-    Math.max(0.8, 1 - (caseData.daysBetweenAccidentAndTreatment / 365)) : 1.0;
+  const daysBetweenAccidentAndTreatment = caseData.daysBetweenAccidentAndTreatment || 0;
+  const treatmentDelayFactor = daysBetweenAccidentAndTreatment > 7 ? 
+    Math.max(0.8, 1 - (daysBetweenAccidentAndTreatment / 365)) : 1.0;
   
   // Impact severity factor
-  const impactFactor = caseData.impactSeverity / 5; // Scale to 0.2-2.0
+  const impactSeverity = caseData.impactSeverity || 5;
+  const impactFactor = impactSeverity / 5; // Scale to 0.2-2.0
   
   // Age factor
-  const ageFactor = caseData.plaintiffAge < 30 ? 1.2 : 
-                   caseData.plaintiffAge < 50 ? 1.0 : 0.85;
+  const plaintiffAge = caseData.plaintiffAge || 35;
+  const ageFactor = plaintiffAge < 30 ? 1.2 : 
+                   plaintiffAge < 50 ? 1.0 : 0.85;
 
   // Gender factor
   const genderFactor = caseData.plaintiffGender === 'female' ? 1.05 : 1.0;
@@ -81,11 +93,12 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const priorConditionsFactor = caseData.priorConditions ? 0.85 : 1.0;
   
   // Treatment gaps reduction
-  const treatmentGapsFactor = caseData.treatmentGaps > 90 ? 0.9 : 
-                             caseData.treatmentGaps > 30 ? 0.95 : 1.0;
+  const treatmentGaps = caseData.treatmentGaps || 0;
+  const treatmentGapsFactor = treatmentGaps > 90 ? 0.9 : 
+                             treatmentGaps > 30 ? 0.95 : 1.0;
 
   // Workers comp offset
-  const workersCompOffset = caseData.priorWorkersComp ? caseData.priorWorkersCompAmount : 0;
+  const workersCompOffset = caseData.priorWorkersComp ? (caseData.priorWorkersCompAmount || 0) : 0;
 
   // Future surgery premium
   const futureSurgeryPremium = caseData.futureSurgeryRecommended ? 75000 : 0;
@@ -104,7 +117,8 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const highPainSuffering = totalSpecialDamages * baseMultiplier.max * allFactors;
 
   // Apply liability reduction
-  const liabilityFactor = caseData.liabilityPercentage / 100;
+  const liabilityPercentage = caseData.liabilityPercentage || 100;
+  const liabilityFactor = liabilityPercentage / 100;
 
   // Calculate gross verdicts
   let lowVerdict = (totalSpecialDamages + lowPainSuffering) * liabilityFactor;
@@ -124,8 +138,9 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   highVerdict = Math.max(0, highVerdict - workersCompOffset);
 
   // Calculate total available insurance
-  const totalPolicyLimits = caseData.defendantPolicies?.reduce((sum, policy) => sum + policy.policyLimit, 0) || 0;
-  const totalInsurance = totalPolicyLimits + caseData.umUimCoverage;
+  const totalPolicyLimits = caseData.defendantPolicies?.reduce((sum, policy) => sum + (policy.policyLimit || 0), 0) || 0;
+  const umUimCoverage = caseData.umUimCoverage || 0;
+  const totalInsurance = totalPolicyLimits + umUimCoverage;
 
   // Settlement range (typically 60-80% of verdict estimates)
   const settlementRangeLow = lowVerdict * 0.6;
