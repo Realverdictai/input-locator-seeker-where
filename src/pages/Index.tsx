@@ -8,19 +8,28 @@ import { CaseData, VerdictEstimate } from "@/types/verdict";
 import { evaluateCase } from "@/lib/verdictCalculator";
 
 const Index = () => {
+  console.log("Index component rendering");
+  
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [verdictEstimate, setVerdictEstimate] = useState<VerdictEstimate | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   const handleCaseSubmit = async (data: CaseData) => {
+    console.log("Case submitted:", data);
     setIsEvaluating(true);
     setCaseData(data);
     
     // Simulate evaluation processing time
     setTimeout(() => {
-      const estimate = evaluateCase(data);
-      setVerdictEstimate(estimate);
-      setIsEvaluating(false);
+      try {
+        const estimate = evaluateCase(data);
+        console.log("Evaluation complete:", estimate);
+        setVerdictEstimate(estimate);
+        setIsEvaluating(false);
+      } catch (error) {
+        console.error("Error evaluating case:", error);
+        setIsEvaluating(false);
+      }
     }, 2000);
   };
 
@@ -28,6 +37,8 @@ const Index = () => {
     setCaseData(null);
     setVerdictEstimate(null);
   };
+
+  console.log("Rendering Index with state:", { caseData: !!caseData, verdictEstimate: !!verdictEstimate, isEvaluating });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
