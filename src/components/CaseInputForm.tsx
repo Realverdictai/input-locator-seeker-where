@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +46,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   };
 
   const isFormValid = () => {
-    const isValid = !!(formData.injuryType && formData.venue && formData.dateOfLoss);
+    // Only require injury type - make other fields optional for more flexible evaluation
+    const isValid = !!(formData.injuryType);
     console.log("Form validation:", { 
       injuryType: formData.injuryType, 
       venue: formData.venue, 
@@ -115,13 +115,12 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="dateOfLoss">Date of Loss (Required)</Label>
+            <Label htmlFor="dateOfLoss">Date of Loss</Label>
             <Input
               id="dateOfLoss"
               type="date"
               value={formData.dateOfLoss || ''}
               onChange={(e) => setFormData({...formData, dateOfLoss: e.target.value})}
-              required
             />
           </div>
 
@@ -147,7 +146,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="venue">Venue/County (Required)</Label>
+            <Label htmlFor="venue">Venue/County</Label>
             <Select 
               value={formData.venue || ''} 
               onValueChange={(value) => setFormData({...formData, venue: value})}
