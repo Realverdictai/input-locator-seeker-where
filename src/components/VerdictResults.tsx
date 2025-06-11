@@ -28,6 +28,39 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Free Model Status */}
+      {estimate.isFreeModel && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Badge className="bg-blue-500 text-white mb-2">Free Evaluation</Badge>
+              <p className="text-sm text-blue-700">
+                Case {estimate.casesEvaluated} of 10 free evaluations
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Upgrade for unlimited access and advanced features
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!estimate.isFreeModel && estimate.casesEvaluated > 10 && (
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Badge className="bg-orange-500 text-white mb-2">Free Limit Reached</Badge>
+              <p className="text-sm text-orange-700">
+                You've used all 10 free evaluations
+              </p>
+              <p className="text-xs text-orange-600 mt-1">
+                Upgrade to continue with unlimited evaluations
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Verdict Estimates */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Verdict Estimates</h3>
@@ -103,7 +136,7 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
 
       {/* Rationale */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Exposure Rationale</h3>
+        <h3 className="text-lg font-semibold">Comprehensive Exposure Analysis</h3>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-gray-700 leading-relaxed">

@@ -4,6 +4,7 @@ export interface CaseData {
   liabilityPercentage: number;
   medicalSpecials: number;
   surgeries: number;
+  surgeryTypes: string[];
   wageLoss: number;
   plaintiffAge: number;
   plaintiffGender: 'male' | 'female';
@@ -11,6 +12,34 @@ export interface CaseData {
   venue: string;
   policyLimits: number;
   additionalFactors: string;
+  
+  // New fields
+  howellHanifDeductions: number;
+  futureMedicals: number;
+  futureEarningsLoss: number;
+  prop213Applicable: boolean;
+  priorWorkersComp: boolean;
+  priorWorkersCompAmount: number;
+  priorAccident: boolean;
+  priorAccidentDetails: string;
+  subsequentAccident: boolean;
+  subsequentAccidentDetails: string;
+  multipleDefendants: boolean;
+  defendantPolicies: PolicyInfo[];
+  umUimCoverage: number;
+  accidentType: string;
+  impactSeverity: number;
+  annualIncome: number;
+  futureSurgeryRecommended: boolean;
+  futureSurgeryDetails: string;
+  treatmentGaps: number;
+  priorConditions: string;
+  medicalRecordsAnalysis: string;
+}
+
+export interface PolicyInfo {
+  defendantName: string;
+  policyLimit: number;
 }
 
 export interface VerdictEstimate {
@@ -21,4 +50,6 @@ export interface VerdictEstimate {
   settlementRangeHigh: number;
   policyExceedanceChance: number;
   rationale: string;
+  casesEvaluated: number;
+  isFreeModel: boolean;
 }

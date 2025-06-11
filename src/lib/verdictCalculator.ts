@@ -1,7 +1,13 @@
 
 import { CaseData, VerdictEstimate } from "@/types/verdict";
 
+// Track usage for free model limitation
+let casesEvaluated = 0;
+
 export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
+  casesEvaluated++;
+  const isFreeModel = casesEvaluated <= 10;
+
   // Base multipliers for different injury types
   const injuryMultipliers = {
     'soft-tissue': { min: 1.5, mid: 3, max: 5 },
@@ -13,66 +19,112 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
     'wrongful-death': { min: 10, mid: 20, max: 40 }
   };
 
-  // Venue multipliers (California counties)
+  // Enhanced venue multipliers for California counties
   const venueMultipliers = {
-    'los-angeles': 1.2,
-    'san-francisco': 1.4,
-    'orange': 1.1,
-    'san-diego': 1.0,
-    'santa-clara': 1.3,
-    'alameda': 1.25,
-    'riverside': 0.9,
-    'sacramento': 0.95,
-    'other': 0.85
+    'los-angeles': 1.2, 'san-francisco': 1.4, 'orange': 1.1, 'san-diego': 1.0,
+    'santa-clara': 1.3, 'alameda': 1.25, 'riverside': 0.9, 'sacramento': 0.95,
+    'san-bernardino': 0.85, 'contra-costa': 1.15, 'fresno': 0.8, 'kern': 0.75,
+    'ventura': 1.1, 'san-joaquin': 0.85, 'sonoma': 1.2, 'tulare': 0.8,
+    'santa-barbara': 1.15, 'solano': 0.9, 'monterey': 1.0, 'placer': 1.05,
+    'san-mateo': 1.3, 'merced': 0.8, 'stanislaus': 0.85, 'santa-cruz': 1.1,
+    'napa': 1.2, 'marin': 1.4
+  };
+
+  // Accident type multipliers
+  const accidentTypeMultipliers = {
+    'rear-end': 1.0, 'head-on': 1.3, 'broadside': 1.2, 'sideswipe': 0.9,
+    'rollover': 1.5, 'pedestrian': 1.2, 'bicycle': 1.1, 'motorcycle': 1.3,
+    'truck': 1.2, 'multi-vehicle': 1.1, 'hit-and-run': 1.15, 'parking-lot': 0.8
   };
 
   const baseMultiplier = injuryMultipliers[caseData.injuryType as keyof typeof injuryMultipliers] || injuryMultipliers['soft-tissue'];
   const venueMultiplier = venueMultipliers[caseData.venue as keyof typeof venueMultipliers] || 1.0;
+  const accidentMultiplier = accidentTypeMultipliers[caseData.accidentType as keyof typeof accidentTypeMultipliers] || 1.0;
 
-  // Calculate base damages
-  const baseDamages = caseData.medicalSpecials + caseData.wageLoss;
+  // Calculate adjusted medical specials after Howell/Hanif deductions
+  const adjustedMedicalSpecials = Math.max(0, caseData.medicalSpecials - caseData.howellHanifDeductions);
   
-  // Surgery premium
-  const surgeryPremium = caseData.surgeries * 50000;
+  // Calculate total economic damages
+  const totalEconomicDamages = adjustedMedicalSpecials + caseData.wageLoss + 
+                               caseData.futureMedicals + caseData.futureEarningsLoss;
   
-  // Age factor (younger plaintiffs typically get higher awards)
+  // Surgery premium calculation with specific surgery types
+  let surgeryPremium = caseData.surgeries * 40000;
+  if (caseData.surgeryTypes?.includes("Spinal Fusion")) surgeryPremium += 75000;
+  if (caseData.surgeryTypes?.includes("Hip Replacement")) surgeryPremium += 60000;
+  if (caseData.surgeryTypes?.includes("Knee Replacement")) surgeryPremium += 50000;
+  
+  // Impact severity factor
+  const impactFactor = caseData.impactSeverity / 5; // Scale to 0.2-2.0
+  
+  // Age factor
   const ageFactor = caseData.plaintiffAge < 30 ? 1.2 : 
                    caseData.plaintiffAge < 50 ? 1.0 : 0.85;
 
-  // Gender factor (historical data shows variations)
+  // Gender factor
   const genderFactor = caseData.plaintiffGender === 'female' ? 1.05 : 1.0;
 
-  // Calculate pain and suffering multipliers
-  const totalSpecialDamages = baseDamages + surgeryPremium;
+  // Prior conditions reduction
+  const priorConditionsFactor = caseData.priorConditions ? 0.85 : 1.0;
   
+  // Treatment gaps reduction
+  const treatmentGapsFactor = caseData.treatmentGaps > 90 ? 0.9 : 
+                             caseData.treatmentGaps > 30 ? 0.95 : 1.0;
+
+  // Workers comp offset
+  const workersCompOffset = caseData.priorWorkersComp ? caseData.priorWorkersCompAmount : 0;
+
+  // Future surgery premium
+  const futureSurgeryPremium = caseData.futureSurgeryRecommended ? 75000 : 0;
+
+  // Calculate total special damages
+  const totalSpecialDamages = totalEconomicDamages + surgeryPremium + futureSurgeryPremium;
+  
+  // Apply all factors to pain and suffering multipliers
+  const allFactors = venueMultiplier * accidentMultiplier * ageFactor * genderFactor * 
+                    priorConditionsFactor * treatmentGapsFactor * impactFactor;
+
+  // Calculate pain and suffering
+  const lowPainSuffering = totalSpecialDamages * baseMultiplier.min * allFactors;
+  const midPainSuffering = totalSpecialDamages * baseMultiplier.mid * allFactors;
+  const highPainSuffering = totalSpecialDamages * baseMultiplier.max * allFactors;
+
   // Apply liability reduction
   const liabilityFactor = caseData.liabilityPercentage / 100;
 
-  // Calculate verdict estimates
-  const lowPainSuffering = totalSpecialDamages * baseMultiplier.min * venueMultiplier * ageFactor * genderFactor;
-  const midPainSuffering = totalSpecialDamages * baseMultiplier.mid * venueMultiplier * ageFactor * genderFactor;
-  const highPainSuffering = totalSpecialDamages * baseMultiplier.max * venueMultiplier * ageFactor * genderFactor;
+  // Calculate gross verdicts
+  let lowVerdict = (totalSpecialDamages + lowPainSuffering) * liabilityFactor;
+  let midVerdict = (totalSpecialDamages + midPainSuffering) * liabilityFactor;
+  let highVerdict = (totalSpecialDamages + highPainSuffering) * liabilityFactor;
 
-  const lowVerdict = (totalSpecialDamages + lowPainSuffering) * liabilityFactor;
-  const midVerdict = (totalSpecialDamages + midPainSuffering) * liabilityFactor;
-  const highVerdict = (totalSpecialDamages + highPainSuffering) * liabilityFactor;
+  // Apply Prop 213 limitations (no non-economic damages for uninsured drivers)
+  if (caseData.prop213Applicable) {
+    lowVerdict = totalSpecialDamages * liabilityFactor;
+    midVerdict = totalSpecialDamages * liabilityFactor;
+    highVerdict = totalSpecialDamages * liabilityFactor;
+  }
+
+  // Subtract workers comp offset
+  lowVerdict = Math.max(0, lowVerdict - workersCompOffset);
+  midVerdict = Math.max(0, midVerdict - workersCompOffset);
+  highVerdict = Math.max(0, highVerdict - workersCompOffset);
+
+  // Calculate total available insurance
+  const totalPolicyLimits = caseData.defendantPolicies?.reduce((sum, policy) => sum + policy.policyLimit, 0) || 0;
+  const totalInsurance = totalPolicyLimits + caseData.umUimCoverage;
 
   // Settlement range (typically 60-80% of verdict estimates)
   const settlementRangeLow = lowVerdict * 0.6;
   const settlementRangeHigh = midVerdict * 0.8;
 
   // Policy exceedance calculation
-  const policyExceedanceChance = caseData.policyLimits > 0 ? 
-    Math.min(95, Math.max(5, ((midVerdict - caseData.policyLimits) / caseData.policyLimits) * 50 + 30)) : 0;
+  const policyExceedanceChance = totalInsurance > 0 ? 
+    Math.min(95, Math.max(5, ((midVerdict - totalInsurance) / totalInsurance) * 50 + 30)) : 0;
 
-  // Generate rationale
-  const rationale = generateRationale(caseData, {
-    lowVerdict,
-    midVerdict,
-    highVerdict,
-    settlementRangeLow,
-    settlementRangeHigh,
-    policyExceedanceChance
+  // Generate comprehensive rationale
+  const rationale = generateEnhancedRationale(caseData, {
+    lowVerdict, midVerdict, highVerdict, settlementRangeLow, settlementRangeHigh, 
+    policyExceedanceChance, totalInsurance, allFactors
   });
 
   return {
@@ -82,45 +134,74 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
     settlementRangeLow: Math.round(settlementRangeLow),
     settlementRangeHigh: Math.round(settlementRangeHigh),
     policyExceedanceChance: Math.round(policyExceedanceChance),
-    rationale
+    rationale,
+    casesEvaluated,
+    isFreeModel
   };
 };
 
-const generateRationale = (caseData: CaseData, estimates: any): string => {
-  const injuryDescriptions = {
-    'soft-tissue': 'soft tissue injuries typically result in lower awards',
-    'fracture': 'fracture cases show moderate to high jury sympathy',
-    'spinal-injury': 'spinal injuries command significant awards due to long-term impact',
-    'traumatic-brain-injury': 'TBI cases often result in substantial verdicts given cognitive impacts',
-    'burn': 'burn injuries generate high awards due to visible scarring and pain',
-    'amputation': 'amputation cases consistently produce high verdicts',
-    'wrongful-death': 'wrongful death cases vary widely based on decedent demographics'
-  };
+const generateEnhancedRationale = (caseData: CaseData, estimates: any): string => {
+  let rationale = `This comprehensive evaluation considers multiple factors affecting case value. `;
 
-  const venueDescriptions = {
-    'los-angeles': 'LA County juries tend to be plaintiff-friendly',
-    'san-francisco': 'San Francisco consistently produces high awards',
-    'orange': 'Orange County shows moderate jury tendencies',
-    'san-diego': 'San Diego reflects average California verdict patterns',
-    'santa-clara': 'Silicon Valley demographics support higher awards',
-    'alameda': 'Alameda County juries are generally favorable to plaintiffs'
+  // Injury type analysis
+  const injuryImpact = {
+    'soft-tissue': 'Soft tissue injuries typically result in conservative awards',
+    'spinal-injury': 'Spinal injuries command significant awards due to long-term impact',
+    'traumatic-brain-injury': 'TBI cases often result in substantial verdicts given cognitive impacts'
   };
-
-  let rationale = `This evaluation considers that ${injuryDescriptions[caseData.injuryType as keyof typeof injuryDescriptions] || 'the injury type suggests moderate damages'}. `;
   
-  if (caseData.venue in venueDescriptions) {
-    rationale += `${venueDescriptions[caseData.venue as keyof typeof venueDescriptions]}. `;
+  if (caseData.injuryType in injuryImpact) {
+    rationale += `${injuryImpact[caseData.injuryType as keyof typeof injuryImpact]}. `;
   }
 
+  // Surgery analysis
   if (caseData.surgeries > 0) {
-    rationale += `The ${caseData.surgeries} surgical procedure${caseData.surgeries > 1 ? 's' : ''} significantly increases the award potential. `;
+    rationale += `The ${caseData.surgeries} surgical procedure${caseData.surgeries > 1 ? 's' : ''} `;
+    if (caseData.surgeryTypes?.includes("Spinal Fusion")) {
+      rationale += `including spinal fusion `;
+    }
+    rationale += `significantly increases award potential. `;
   }
 
-  if (caseData.liabilityPercentage < 100) {
-    rationale += `Liability allocation of ${caseData.liabilityPercentage}% reduces the overall exposure. `;
+  // Economic factors
+  if (caseData.howellHanifDeductions > 0) {
+    rationale += `Howell/Hanif deductions of $${caseData.howellHanifDeductions.toLocaleString()} reduce medical specials. `;
   }
 
-  rationale += `Given the plaintiff's age (${caseData.plaintiffAge}) and economic profile, the settlement range reflects realistic negotiation parameters while the verdict estimates account for jury unpredictability in California courts.`;
+  // Legal limitations
+  if (caseData.prop213Applicable) {
+    rationale += `Proposition 213 severely limits recovery to economic damages only due to uninsured status. `;
+  }
+
+  // Prior issues
+  if (caseData.priorWorkersComp) {
+    rationale += `Prior workers' compensation settlement creates offset issues. `;
+  }
+
+  if (caseData.priorConditions) {
+    rationale += `Pre-existing conditions may reduce overall value. `;
+  }
+
+  // Treatment gaps
+  if (caseData.treatmentGaps > 30) {
+    rationale += `Treatment gaps of ${caseData.treatmentGaps} days may impact credibility. `;
+  }
+
+  // Insurance analysis
+  if (estimates.totalInsurance > 0) {
+    rationale += `Total available insurance of $${estimates.totalInsurance.toLocaleString()} `;
+    if (estimates.policyExceedanceChance > 50) {
+      rationale += `is likely insufficient to cover potential verdict. `;
+    } else {
+      rationale += `appears adequate for settlement range. `;
+    }
+  }
+
+  rationale += `The evaluation reflects California jury tendencies and current legal precedents.`;
 
   return rationale;
+};
+
+export const resetCaseCount = () => {
+  casesEvaluated = 0;
 };
