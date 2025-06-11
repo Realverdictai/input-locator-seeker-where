@@ -9,7 +9,114 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      case_evaluations: {
+        Row: {
+          case_data: Json
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          case_data: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          case_data?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mediation_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          insurance_evaluation_id: string | null
+          insurance_id: string | null
+          mediation_proposal: Json | null
+          pi_evaluation_id: string | null
+          pi_lawyer_id: string | null
+          session_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insurance_evaluation_id?: string | null
+          insurance_id?: string | null
+          mediation_proposal?: Json | null
+          pi_evaluation_id?: string | null
+          pi_lawyer_id?: string | null
+          session_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insurance_evaluation_id?: string | null
+          insurance_id?: string | null
+          mediation_proposal?: Json | null
+          pi_evaluation_id?: string | null
+          pi_lawyer_id?: string | null
+          session_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mediation_sessions_insurance_evaluation_id_fkey"
+            columns: ["insurance_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "case_evaluations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mediation_sessions_pi_evaluation_id_fkey"
+            columns: ["pi_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "case_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bar_number: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          phone: string | null
+          updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          bar_number?: string | null
+          company_name?: string | null
+          created_at?: string
+          id: string
+          phone?: string | null
+          updated_at?: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          bar_number?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +125,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type: "pi_lawyer" | "insurance_defense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +240,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_type: ["pi_lawyer", "insurance_defense"],
+    },
   },
 } as const
