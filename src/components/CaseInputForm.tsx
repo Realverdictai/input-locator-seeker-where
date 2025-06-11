@@ -716,5 +716,3 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
-
-}
