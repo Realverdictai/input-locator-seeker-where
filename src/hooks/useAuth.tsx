@@ -11,14 +11,21 @@ export const useAuth = () => {
   useEffect(() => {
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+        console.log('Getting initial session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          console.log('Initial session retrieved:', session?.user?.id || 'No session');
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user.id);
+          }
         }
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('Unexpected error getting session:', error);
       } finally {
         setLoading(false);
       }
@@ -27,14 +34,14 @@ export const useAuth = () => {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      console.log('Auth state changed:', event, session?.user?.id || 'No user');
       setUser(session?.user ?? null);
       
-      if (session?.user) {
+      if (session?.user && event !== 'TOKEN_REFRESHED') {
         // Use setTimeout to avoid potential recursion issues
         setTimeout(() => {
           fetchUserProfile(session.user.id);
-        }, 0);
+        }, 100);
       } else {
         setUserProfile(null);
       }
@@ -48,20 +55,46 @@ export const useAuth = () => {
   const fetchUserProfile = async (userId: string) => {
     try {
       console.log('Fetching user profile for:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      
+      // Add retry logic for database connectivity issues
+      let retries = 3;
+      let lastError: any = null;
+      
+      while (retries > 0) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        // Don't throw here, just log the error
-        return;
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            lastError = error;
+            retries--;
+            if (retries > 0) {
+              console.log(`Retrying profile fetch... ${retries} attempts remaining`);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+          } else {
+            console.log('User profile fetched:', data);
+            setUserProfile(data);
+            return;
+          }
+        } catch (fetchError) {
+          console.error('Unexpected error in profile fetch:', fetchError);
+          lastError = fetchError;
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
       }
       
-      console.log('User profile fetched:', data);
-      setUserProfile(data);
+      // If we get here, all retries failed
+      console.error('All profile fetch attempts failed. Last error:', lastError);
+      
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
     }
@@ -69,9 +102,17 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log('Signing out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+      } else {
+        console.log('Successfully signed out');
+        setUser(null);
+        setUserProfile(null);
+      }
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Unexpected error signing out:', error);
     }
   };
 

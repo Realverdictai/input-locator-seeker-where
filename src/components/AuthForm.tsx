@@ -34,35 +34,59 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log('Attempting signup with data:', signUpData);
+      console.log('Starting signup process with data:', {
+        email: signUpData.email,
+        user_type: signUpData.user_type,
+        company_name: signUpData.company_name,
+        has_bar_number: !!signUpData.bar_number
+      });
       
-      // Ensure we have all required fields
-      if (!signUpData.email || !signUpData.password || !signUpData.company_name) {
-        throw new Error('Please fill in all required fields');
+      // Enhanced validation
+      if (!signUpData.email?.trim()) {
+        throw new Error('Email is required');
+      }
+      if (!signUpData.password || signUpData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+      if (!signUpData.company_name?.trim()) {
+        throw new Error('Company/Firm name is required');
+      }
+      if (!signUpData.user_type) {
+        throw new Error('Account type is required');
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(signUpData.email.trim())) {
+        throw new Error('Please enter a valid email address');
       }
       
       const { data, error } = await supabase.auth.signUp({
-        email: signUpData.email,
+        email: signUpData.email.trim(),
         password: signUpData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             user_type: signUpData.user_type,
-            company_name: signUpData.company_name,
-            bar_number: signUpData.bar_number || null,
+            company_name: signUpData.company_name.trim(),
+            bar_number: signUpData.bar_number?.trim() || null,
             phone: null
           }
         }
       });
 
       if (error) {
-        console.error('Signup error:', error);
+        console.error('Signup error details:', error);
         throw error;
       }
 
-      console.log('Signup successful:', data);
+      console.log('Signup response:', {
+        user_id: data.user?.id,
+        email_confirmed: data.user?.email_confirmed_at,
+        has_session: !!data.session
+      });
 
-      // Check if user needs email confirmation
+      // Handle different signup scenarios
       if (data.user && !data.user.email_confirmed_at) {
         toast({
           title: "Check your email",
@@ -73,22 +97,33 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
           title: "Account created successfully!",
           description: "Welcome to Verdict AI!",
         });
-        onAuthSuccess();
+        
+        // Small delay to ensure profile is created
+        setTimeout(() => {
+          onAuthSuccess();
+        }, 1000);
+      } else if (data.user) {
+        toast({
+          title: "Account created",
+          description: "Please check your email to verify your account.",
+        });
       }
     } catch (error: any) {
-      console.error('Full signup error:', error);
+      console.error('Signup error:', error);
       
       let errorMessage = "An error occurred while creating your account.";
       
-      if (error.message) {
-        if (error.message.includes('already_registered')) {
+      if (error?.message) {
+        if (error.message.includes('User already registered') || error.message.includes('already_registered')) {
           errorMessage = "An account with this email already exists. Please try signing in instead.";
-        } else if (error.message.includes('weak_password')) {
-          errorMessage = "Password is too weak. Please choose a stronger password.";
-        } else if (error.message.includes('invalid_email')) {
+        } else if (error.message.includes('Password should be at least') || error.message.includes('weak_password')) {
+          errorMessage = "Password is too weak. Please choose a stronger password (at least 6 characters).";
+        } else if (error.message.includes('Invalid email') || error.message.includes('invalid_email')) {
           errorMessage = "Please enter a valid email address.";
-        } else if (error.message.includes('database') || error.message.includes('user_type')) {
-          errorMessage = "Database configuration issue. Please try again in a moment or contact support.";
+        } else if (error.message.includes('Email rate limit exceeded')) {
+          errorMessage = "Too many email requests. Please wait a moment before trying again.";
+        } else if (error.message.includes('Database error') || error.message.includes('user_type') || error.message.includes('does not exist')) {
+          errorMessage = "Database configuration issue. The system is being updated. Please try again in a moment.";
         } else {
           errorMessage = error.message;
         }
@@ -109,43 +144,58 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log('Attempting signin with email:', signInData.email);
+      console.log('Starting signin process for:', signInData.email);
       
-      if (!signInData.email || !signInData.password) {
+      if (!signInData.email?.trim() || !signInData.password) {
         throw new Error('Please enter both email and password');
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(signInData.email.trim())) {
+        throw new Error('Please enter a valid email address');
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: signInData.email,
+        email: signInData.email.trim(),
         password: signInData.password
       });
 
       if (error) {
-        console.error('Signin error:', error);
+        console.error('Signin error details:', error);
         throw error;
       }
 
-      console.log('Signin successful:', data);
+      console.log('Signin response:', {
+        user_id: data.user?.id,
+        has_session: !!data.session
+      });
 
       if (data.user && data.session) {
         toast({
           title: "Signed in successfully!",
           description: "Welcome back to Verdict AI!",
         });
-        onAuthSuccess();
+        
+        // Small delay to ensure profile is loaded
+        setTimeout(() => {
+          onAuthSuccess();
+        }, 500);
       }
     } catch (error: any) {
-      console.error('Full signin error:', error);
+      console.error('Signin error:', error);
       
       let errorMessage = "An error occurred while signing in.";
       
-      if (error.message) {
+      if (error?.message) {
         if (error.message.includes('Invalid login credentials')) {
           errorMessage = "Invalid email or password. Please check your credentials and try again.";
-        } else if (error.message.includes('too_many_requests')) {
-          errorMessage = "Too many login attempts. Please wait a moment and try again.";
-        } else if (error.message.includes('email_not_confirmed')) {
+        } else if (error.message.includes('Email not confirmed')) {
           errorMessage = "Please check your email and confirm your account before signing in.";
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = "Too many login attempts. Please wait a moment and try again.";
+        } else if (error.message.includes('Signup is disabled')) {
+          errorMessage = "New signups are currently disabled. Please contact support.";
         } else {
           errorMessage = error.message;
         }
@@ -188,6 +238,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     onChange={(e) => setSignInData({...signInData, email: e.target.value})}
                     required
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -199,6 +250,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     onChange={(e) => setSignInData({...signInData, password: e.target.value})}
                     required
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -235,11 +287,12 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
                     required
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
+                  <Label htmlFor="password">Password * (min. 6 characters)</Label>
                   <Input
                     id="password"
                     type="password"
@@ -248,6 +301,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     required
                     disabled={isLoading}
                     minLength={6}
+                    autoComplete="new-password"
                   />
                 </div>
                 
@@ -260,6 +314,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     onChange={(e) => setSignUpData({...signUpData, company_name: e.target.value})}
                     required
                     disabled={isLoading}
+                    autoComplete="organization"
                   />
                 </div>
                 
