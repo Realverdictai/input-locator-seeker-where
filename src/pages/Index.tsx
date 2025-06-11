@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,7 +117,7 @@ const Index = () => {
       // Check if both parties have submitted and generate mediation proposal
       const updatedSession = { ...session, ...updateData };
       if (updatedSession.pi_evaluation_id && updatedSession.insurance_evaluation_id) {
-        await generateMediationProposal(updatedSession.id);
+        await generateMediationProposal(updatedSession);
       }
 
     } catch (error) {
@@ -126,34 +125,36 @@ const Index = () => {
     }
   };
 
-  const generateMediationProposal = async (sessionId: string) => {
-    // This would typically call an edge function to generate the proposal
-    // For now, we'll create a simple proposal
-    const proposal = {
-      settlement_amount: verdictEstimate?.midVerdict || 0,
-      rationale: "Based on the submitted case evaluations from both parties",
-      key_differences: ["Liability assessment", "Medical damages valuation"],
-      common_ground: ["Basic injury type", "Treatment timeline"],
-      recommendation: "Recommend settlement discussion based on mid-range evaluation"
-    };
-
+  const generateMediationProposal = async (session: any) => {
     try {
-      const { error } = await supabase
-        .from('mediation_sessions')
-        .update({ 
-          mediation_proposal: proposal as any,
-          status: 'proposal_ready'
-        })
-        .eq('id', sessionId);
+      console.log('Generating mediation proposal for session:', session.id);
+      
+      const { data, error } = await supabase.functions.invoke('send-mediation-proposal', {
+        body: {
+          sessionId: session.id,
+          piEvaluationId: session.pi_evaluation_id,
+          insuranceEvaluationId: session.insurance_evaluation_id
+        }
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error calling mediation proposal function:', error);
+        throw error;
+      }
+
+      console.log('Mediation proposal response:', data);
 
       toast({
         title: "Mediation Proposal Generated!",
-        description: "Both parties have submitted their evaluations. The mediator's proposal is ready.",
+        description: "Both parties have submitted their evaluations. A mediation proposal has been generated and sent to all parties.",
       });
     } catch (error) {
       console.error('Error generating mediation proposal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mediation proposal. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
