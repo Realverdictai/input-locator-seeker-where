@@ -55,10 +55,10 @@ const Index = () => {
         if (user) {
           const { error } = await supabase
             .from('case_evaluations')
-            .insert([{
+            .insert({
               user_id: user.id,
-              case_data: data
-            }]);
+              case_data: data as any
+            });
 
           if (error) {
             console.error('Error saving case evaluation:', error);
@@ -93,7 +93,7 @@ const Index = () => {
       const { data: evaluation, error: evalError } = await supabase
         .from('case_evaluations')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -141,7 +141,7 @@ const Index = () => {
       const { error } = await supabase
         .from('mediation_sessions')
         .update({ 
-          mediation_proposal: proposal,
+          mediation_proposal: proposal as any,
           status: 'proposal_ready'
         })
         .eq('id', sessionId);
