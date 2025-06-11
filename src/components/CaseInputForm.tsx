@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -651,5 +652,3 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
-
-</edits_to_apply>
