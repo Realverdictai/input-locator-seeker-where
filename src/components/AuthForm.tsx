@@ -41,7 +41,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
         has_bar_number: !!signUpData.bar_number
       });
       
-      // Enhanced validation
+      // Validation
       if (!signUpData.email?.trim()) {
         throw new Error('Email is required');
       }
@@ -114,16 +114,14 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
       let errorMessage = "An error occurred while creating your account.";
       
       if (error?.message) {
-        if (error.message.includes('User already registered') || error.message.includes('already_registered')) {
+        if (error.message.includes('User already registered')) {
           errorMessage = "An account with this email already exists. Please try signing in instead.";
-        } else if (error.message.includes('Password should be at least') || error.message.includes('weak_password')) {
+        } else if (error.message.includes('Password should be at least')) {
           errorMessage = "Password is too weak. Please choose a stronger password (at least 6 characters).";
-        } else if (error.message.includes('Invalid email') || error.message.includes('invalid_email')) {
+        } else if (error.message.includes('Invalid email')) {
           errorMessage = "Please enter a valid email address.";
         } else if (error.message.includes('Email rate limit exceeded')) {
           errorMessage = "Too many email requests. Please wait a moment before trying again.";
-        } else if (error.message.includes('Database error') || error.message.includes('user_type') || error.message.includes('does not exist')) {
-          errorMessage = "Database configuration issue. The system is being updated. Please try again in a moment.";
         } else {
           errorMessage = error.message;
         }
@@ -194,8 +192,6 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
           errorMessage = "Please check your email and confirm your account before signing in.";
         } else if (error.message.includes('Too many requests')) {
           errorMessage = "Too many login attempts. Please wait a moment and try again.";
-        } else if (error.message.includes('Signup is disabled')) {
-          errorMessage = "New signups are currently disabled. Please contact support.";
         } else {
           errorMessage = error.message;
         }

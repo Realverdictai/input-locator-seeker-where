@@ -56,45 +56,18 @@ export const useAuth = () => {
     try {
       console.log('Fetching user profile for:', userId);
       
-      // Add retry logic for database connectivity issues
-      let retries = 3;
-      let lastError: any = null;
-      
-      while (retries > 0) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-          if (error) {
-            console.error('Error fetching user profile:', error);
-            lastError = error;
-            retries--;
-            if (retries > 0) {
-              console.log(`Retrying profile fetch... ${retries} attempts remaining`);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              continue;
-            }
-          } else {
-            console.log('User profile fetched:', data);
-            setUserProfile(data);
-            return;
-          }
-        } catch (fetchError) {
-          console.error('Unexpected error in profile fetch:', fetchError);
-          lastError = fetchError;
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
+      if (error) {
+        console.error('Error fetching user profile:', error);
+      } else {
+        console.log('User profile fetched successfully:', data);
+        setUserProfile(data);
       }
-      
-      // If we get here, all retries failed
-      console.error('All profile fetch attempts failed. Last error:', lastError);
-      
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
     }
