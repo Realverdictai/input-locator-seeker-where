@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,33 +34,58 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     setIsLoading(true);
 
     try {
+      console.log('Attempting signup with data:', signUpData);
+      
       const { data, error } = await supabase.auth.signUp({
         email: signUpData.email,
         password: signUpData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             user_type: signUpData.user_type,
             company_name: signUpData.company_name,
-            bar_number: signUpData.bar_number,
-            phone: signUpData.phone
+            bar_number: signUpData.bar_number || null,
+            phone: signUpData.phone || null
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signup error:', error);
+        throw error;
+      }
 
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email for verification.",
-      });
+      console.log('Signup successful:', data);
+
+      // If user is created but not confirmed, show appropriate message
+      if (data.user && !data.user.email_confirmed_at) {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link. Please check your email to complete registration.",
+        });
+      } else {
+        toast({
+          title: "Account created successfully!",
+          description: "You can now sign in to your account.",
+        });
+      }
 
       if (data.user) {
         onAuthSuccess();
       }
     } catch (error: any) {
+      console.error('Full signup error:', error);
+      
+      let errorMessage = error.message;
+      
+      // Handle specific database errors
+      if (error.message?.includes('user_type') || error.message?.includes('Database error')) {
+        errorMessage = "There was a database configuration issue. Please try again or contact support.";
+      }
+      
       toast({
         title: "Error creating account",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -74,12 +98,19 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     setIsLoading(true);
 
     try {
+      console.log('Attempting signin with email:', signInData.email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: signInData.email,
         password: signInData.password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signin error:', error);
+        throw error;
+      }
+
+      console.log('Signin successful:', data);
 
       toast({
         title: "Signed in successfully!",
@@ -87,9 +118,17 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
 
       onAuthSuccess();
     } catch (error: any) {
+      console.error('Full signin error:', error);
+      
+      let errorMessage = error.message;
+      
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      }
+      
       toast({
         title: "Error signing in",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
