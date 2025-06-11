@@ -104,29 +104,62 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
 
     setIsLoading(true);
     try {
+      console.log('Looking for session with code:', joinSessionCode);
+      
       const { data: session, error: fetchError } = await supabase
         .from('mediation_sessions')
         .select('*')
         .eq('session_code', joinSessionCode)
         .single();
 
-      if (fetchError) throw new Error('Session not found');
-
-      const updateData: any = {};
-      if (userProfile.user_type === 'pi_lawyer' && !session.pi_lawyer_id) {
-        updateData.pi_lawyer_id = userProfile.id;
-      } else if (userProfile.user_type === 'insurance_defense' && !session.insurance_id) {
-        updateData.insurance_id = userProfile.id;
-      } else {
-        throw new Error('Cannot join this session');
+      if (fetchError) {
+        console.error('Session fetch error:', fetchError);
+        throw new Error('Session not found');
       }
 
-      const { error: updateError } = await supabase
-        .from('mediation_sessions')
-        .update(updateData)
-        .eq('id', session.id);
+      console.log('Found session:', session);
+      console.log('User profile:', userProfile);
 
-      if (updateError) throw updateError;
+      // Check if user can join this session
+      const updateData: any = {};
+      let canJoin = false;
+
+      if (userProfile.user_type === 'pi_lawyer') {
+        if (!session.pi_lawyer_id) {
+          updateData.pi_lawyer_id = userProfile.id;
+          canJoin = true;
+        } else if (session.pi_lawyer_id === userProfile.id) {
+          // User is already in this session
+          canJoin = true;
+        }
+      } else if (userProfile.user_type === 'insurance_defense') {
+        if (!session.insurance_id) {
+          updateData.insurance_id = userProfile.id;
+          canJoin = true;
+        } else if (session.insurance_id === userProfile.id) {
+          // User is already in this session
+          canJoin = true;
+        }
+      }
+
+      if (!canJoin) {
+        throw new Error('Cannot join this session - slot already filled or invalid user type');
+      }
+
+      // Only update if there are changes to make
+      if (Object.keys(updateData).length > 0) {
+        console.log('Updating session with:', updateData);
+        
+        const { error: updateError } = await supabase
+          .from('mediation_sessions')
+          .update(updateData)
+          .eq('id', session.id);
+
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
+      }
 
       toast({
         title: "Joined mediation session!",
@@ -137,6 +170,7 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
       fetchMediationSessions();
       onStartEvaluation(joinSessionCode);
     } catch (error: any) {
+      console.error('Join session error:', error);
       toast({
         title: "Error joining session",
         description: error.message,
