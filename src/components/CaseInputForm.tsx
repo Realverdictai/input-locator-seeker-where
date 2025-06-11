@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +22,11 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     medicalSpecials: 0,
     surgeries: 0,
     surgeryTypes: [],
+    injections: 0,
+    injectionTypes: [],
+    physicalTherapySessions: 0,
+    chiropracticSessions: 0,
+    daysBetweenAccidentAndTreatment: 0,
     wageLoss: 0,
     plaintiffAge: 35,
     policyLimits: 0,
@@ -47,7 +51,18 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     "ACL Reconstruction", "Meniscus Repair", "Rotator Cuff Repair", "Hip Replacement",
     "Knee Replacement", "Spinal Fusion", "Laminectomy", "Arthroscopy", "Fracture Repair",
     "Carpal Tunnel Release", "Shoulder Replacement", "Ankle Fusion", "Disc Replacement",
-    "Cervical Fusion", "Lumbar Fusion", "Hardware Removal", "Tendon Repair"
+    "Cervical Fusion", "Lumbar Fusion", "Hardware Removal", "Tendon Repair",
+    "Spinal Cord Stimulator Trial", "Spinal Cord Stimulator Permanent", "Shoulder Debridement",
+    "Microdiscectomy", "Artificial Disc Replacement", "Kyphoplasty", "Vertebroplasty",
+    "Nerve Decompression", "Facet Joint Injection", "Radiofrequency Ablation"
+  ];
+
+  const injectionTypes = [
+    "Epidural Steroid Injection", "Facet Joint Injection", "Trigger Point Injection",
+    "Cortisone Injection - Shoulder", "Cortisone Injection - Knee", "Cortisone Injection - Hip",
+    "Hyaluronic Acid Injection", "PRP - Platelet Rich Plasma - Shoulder", "PRP - Knee",
+    "PRP - Hip", "PRP - Elbow", "PRP - Ankle", "PRP - Back", "PRP - Neck",
+    "Nerve Block", "SI Joint Injection", "Bursa Injection", "Tendon Sheath Injection"
   ];
 
   const californiaCounties = [
@@ -73,7 +88,19 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     return formData.injuryType && 
            formData.plaintiffGender && 
            formData.venue && 
-           formData.plaintiffOccupation;
+           formData.plaintiffOccupation &&
+           formData.dateOfLoss;
+  };
+
+  const calculateDaysBetween = (dateOfLoss: string, firstTreatment: string) => {
+    if (dateOfLoss && firstTreatment) {
+      const lossDate = new Date(dateOfLoss);
+      const treatmentDate = new Date(firstTreatment);
+      const diffTime = treatmentDate.getTime() - lossDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
+    }
+    return 0;
   };
 
   const addDefendant = () => {
@@ -96,6 +123,57 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Date of Loss */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Accident Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dateOfLoss">Date of Loss (Accident Date)</Label>
+              <Input
+                id="dateOfLoss"
+                type="date"
+                value={formData.dateOfLoss}
+                onChange={(e) => {
+                  const newFormData = {...formData, dateOfLoss: e.target.value};
+                  newFormData.daysBetweenAccidentAndTreatment = calculateDaysBetween(
+                    e.target.value, 
+                    formData.firstTreatmentDate || ''
+                  );
+                  setFormData(newFormData);
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="firstTreatmentDate">First Treatment Date</Label>
+              <Input
+                id="firstTreatmentDate"
+                type="date"
+                value={formData.firstTreatmentDate}
+                onChange={(e) => {
+                  const newFormData = {...formData, firstTreatmentDate: e.target.value};
+                  newFormData.daysBetweenAccidentAndTreatment = calculateDaysBetween(
+                    formData.dateOfLoss || '', 
+                    e.target.value
+                  );
+                  setFormData(newFormData);
+                }}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Days Between Accident and First Treatment: {formData.daysBetweenAccidentAndTreatment || 0} days</Label>
+            <div className="text-xs text-gray-500">
+              {(formData.daysBetweenAccidentAndTreatment || 0) > 30 && 
+                "Treatment gap may affect case value"}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Basic Case Information */}
       <Card>
         <CardHeader>
@@ -251,6 +329,64 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                   <Label className="text-sm">{surgery}</Label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="injections">Number of Injections</Label>
+            <Input
+              id="injections"
+              type="number"
+              value={formData.injections}
+              onChange={(e) => setFormData({...formData, injections: Number(e.target.value)})}
+              min="0"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Injection Types</Label>
+            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+              {injectionTypes.map(injection => (
+                <div key={injection} className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={formData.injectionTypes?.includes(injection)}
+                    onCheckedChange={(checked) => {
+                      const current = formData.injectionTypes || [];
+                      if (checked) {
+                        setFormData({...formData, injectionTypes: [...current, injection]});
+                      } else {
+                        setFormData({...formData, injectionTypes: current.filter(i => i !== injection)});
+                      }
+                    }}
+                  />
+                  <Label className="text-sm">{injection}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="physicalTherapySessions">Physical Therapy Sessions</Label>
+              <Input
+                id="physicalTherapySessions"
+                type="number"
+                value={formData.physicalTherapySessions}
+                onChange={(e) => setFormData({...formData, physicalTherapySessions: Number(e.target.value)})}
+                min="0"
+                placeholder="Number of PT sessions"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="chiropracticSessions">Chiropractic Sessions</Label>
+              <Input
+                id="chiropracticSessions"
+                type="number"
+                value={formData.chiropracticSessions}
+                onChange={(e) => setFormData({...formData, chiropracticSessions: Number(e.target.value)})}
+                min="0"
+                placeholder="Number of chiropractic visits"
+              />
             </div>
           </div>
 
@@ -573,3 +709,5 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 };
 
 export default CaseInputForm;
+
+</edits_to_apply>

@@ -5,6 +5,13 @@ export interface CaseData {
   medicalSpecials: number;
   surgeries: number;
   surgeryTypes: string[];
+  injections: number;
+  injectionTypes: string[];
+  physicalTherapySessions: number;
+  chiropracticSessions: number;
+  dateOfLoss: string;
+  firstTreatmentDate: string;
+  daysBetweenAccidentAndTreatment: number;
   wageLoss: number;
   plaintiffAge: number;
   plaintiffGender: 'male' | 'female';

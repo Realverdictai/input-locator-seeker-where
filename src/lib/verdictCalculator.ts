@@ -1,4 +1,3 @@
-
 import { CaseData, VerdictEstimate } from "@/types/verdict";
 
 // Track usage for free model limitation
@@ -53,6 +52,20 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   if (caseData.surgeryTypes?.includes("Spinal Fusion")) surgeryPremium += 75000;
   if (caseData.surgeryTypes?.includes("Hip Replacement")) surgeryPremium += 60000;
   if (caseData.surgeryTypes?.includes("Knee Replacement")) surgeryPremium += 50000;
+  if (caseData.surgeryTypes?.includes("Spinal Cord Stimulator Permanent")) surgeryPremium += 100000;
+  if (caseData.surgeryTypes?.includes("Spinal Cord Stimulator Trial")) surgeryPremium += 25000;
+  
+  // Injection premium calculation
+  let injectionPremium = caseData.injections * 2500; // Base value per injection
+  const prpInjections = caseData.injectionTypes?.filter(type => type.includes("PRP")).length || 0;
+  injectionPremium += prpInjections * 3000; // Additional premium for PRP injections
+  
+  // Physical therapy and chiropractic factor
+  const ptChiroFactor = Math.min(1.2, 1 + ((caseData.physicalTherapySessions + caseData.chiropracticSessions) / 100));
+  
+  // Treatment delay factor (gap between accident and first treatment)
+  const treatmentDelayFactor = caseData.daysBetweenAccidentAndTreatment > 7 ? 
+    Math.max(0.8, 1 - (caseData.daysBetweenAccidentAndTreatment / 365)) : 1.0;
   
   // Impact severity factor
   const impactFactor = caseData.impactSeverity / 5; // Scale to 0.2-2.0
@@ -77,12 +90,13 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   // Future surgery premium
   const futureSurgeryPremium = caseData.futureSurgeryRecommended ? 75000 : 0;
 
-  // Calculate total special damages
-  const totalSpecialDamages = totalEconomicDamages + surgeryPremium + futureSurgeryPremium;
+  // Calculate total special damages including new medical treatments
+  const totalSpecialDamages = totalEconomicDamages + surgeryPremium + injectionPremium + futureSurgeryPremium;
   
   // Apply all factors to pain and suffering multipliers
   const allFactors = venueMultiplier * accidentMultiplier * ageFactor * genderFactor * 
-                    priorConditionsFactor * treatmentGapsFactor * impactFactor;
+                    priorConditionsFactor * treatmentGapsFactor * impactFactor * 
+                    ptChiroFactor * treatmentDelayFactor;
 
   // Calculate pain and suffering
   const lowPainSuffering = totalSpecialDamages * baseMultiplier.min * allFactors;
@@ -124,7 +138,7 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   // Generate comprehensive rationale
   const rationale = generateEnhancedRationale(caseData, {
     lowVerdict, midVerdict, highVerdict, settlementRangeLow, settlementRangeHigh, 
-    policyExceedanceChance, totalInsurance, allFactors
+    policyExceedanceChance, totalInsurance, allFactors, injectionPremium, ptChiroFactor, treatmentDelayFactor
   });
 
   return {
@@ -166,6 +180,24 @@ const generateEnhancedRationale = (caseData: CaseData, estimates: any): string =
   // Economic factors
   if (caseData.howellHanifDeductions > 0) {
     rationale += `Howell/Hanif deductions of $${caseData.howellHanifDeductions.toLocaleString()} reduce medical specials. `;
+  }
+
+  // New medical treatment analysis
+  if (caseData.injections > 0) {
+    rationale += `The ${caseData.injections} injection${caseData.injections > 1 ? 's' : ''} `;
+    const prpCount = caseData.injectionTypes?.filter(type => type.includes("PRP")).length || 0;
+    if (prpCount > 0) {
+      rationale += `including ${prpCount} PRP injection${prpCount > 1 ? 's' : ''} `;
+    }
+    rationale += `add significant treatment value. `;
+  }
+
+  if ((caseData.physicalTherapySessions + caseData.chiropracticSessions) > 50) {
+    rationale += `Extensive therapy (${caseData.physicalTherapySessions + caseData.chiropracticSessions} sessions) demonstrates commitment to recovery. `;
+  }
+
+  if (caseData.daysBetweenAccidentAndTreatment > 7) {
+    rationale += `${caseData.daysBetweenAccidentAndTreatment}-day delay to first treatment may impact credibility. `;
   }
 
   // Legal limitations
