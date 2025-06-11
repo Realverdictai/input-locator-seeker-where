@@ -17,5 +17,4 @@ export interface SignUpData {
   user_type: UserType;
   company_name: string;
   bar_number?: string;
-  phone?: string;
 }

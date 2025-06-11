@@ -20,8 +20,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     password: '',
     user_type: 'pi_lawyer',
     company_name: '',
-    bar_number: '',
-    phone: ''
+    bar_number: ''
   });
   const [signInData, setSignInData] = useState({
     email: '',
@@ -45,7 +44,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
             user_type: signUpData.user_type,
             company_name: signUpData.company_name,
             bar_number: signUpData.bar_number || null,
-            phone: signUpData.phone || null
+            phone: null
           }
         }
       });
@@ -233,7 +232,7 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                 
                 {signUpData.user_type === 'pi_lawyer' && (
                   <div className="space-y-2">
-                    <Label htmlFor="bar-number">Bar Number</Label>
+                    <Label htmlFor="bar-number">Bar Number (Optional)</Label>
                     <Input
                       id="bar-number"
                       type="text"
@@ -242,16 +241,6 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
                     />
                   </div>
                 )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={signUpData.phone}
-                    onChange={(e) => setSignUpData({...signUpData, phone: e.target.value})}
-                  />
-                </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating Account..." : "Create Account"}
