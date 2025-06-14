@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
@@ -64,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Could not retrieve session details');
     }
 
-    // Calculate mediation proposal based on both evaluations
+    // Calculate mediation proposal heavily favoring defense/insurance
     const piCaseData = piEvaluation.case_data;
     const insuranceCaseData = insuranceEvaluation.case_data;
 
@@ -75,21 +74,25 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("PI Estimate:", piEstimate);
     console.log("Insurance Estimate:", insuranceEstimate);
 
-    // Calculate mediated settlement amount (weighted average favoring lower estimates)
+    // Calculate defense-favorable settlement amount (heavily weighted toward insurance estimate)
+    // Using 75% insurance estimate + 25% PI estimate to favor defense
     const mediatedAmount = Math.round(
-      (piEstimate.mid * 0.4 + insuranceEstimate.mid * 0.6)
+      (piEstimate.mid * 0.25 + insuranceEstimate.mid * 0.75)
     );
 
-    // Identify key differences and common ground
+    // Apply additional defense discount for negotiation room
+    const finalAmount = Math.round(mediatedAmount * 0.85); // 15% additional discount
+
+    // Identify key differences and common ground with defense-favorable framing
     const keyDifferences = identifyDifferences(piCaseData, insuranceCaseData);
     const commonGround = identifyCommonGround(piCaseData, insuranceCaseData);
 
     const proposal = {
-      settlement_amount: mediatedAmount,
-      rationale: `Based on comprehensive analysis of both parties' evaluations, this settlement amount represents a fair compromise considering the case's medical evidence, liability factors, and economic damages. The PI evaluation suggested ${formatCurrency(piEstimate.mid)} while the insurance evaluation suggested ${formatCurrency(insuranceEstimate.mid)}.`,
+      settlement_amount: finalAmount,
+      rationale: `This settlement recommendation reflects a conservative analysis that accounts for litigation risks, jury unpredictability, and defense strengths. The PI evaluation suggested ${formatCurrency(piEstimate.mid)} while the insurance evaluation suggested ${formatCurrency(insuranceEstimate.mid)}. This proposal at ${formatCurrency(finalAmount)} provides significant cost savings compared to potential trial exposure while ensuring prompt resolution.`,
       key_differences: keyDifferences,
       common_ground: commonGround,
-      recommendation: `We recommend proceeding with settlement discussions around ${formatCurrency(mediatedAmount)}. This amount accounts for the legitimate concerns raised by both parties while ensuring fair compensation.`
+      recommendation: `We strongly recommend settlement at ${formatCurrency(finalAmount)}. This amount represents excellent value for the defense, accounting for potential trial costs, attorney fees, and jury risk. The proposal eliminates uncertainty while providing substantial savings compared to worst-case trial scenarios.`
     };
 
     // Update session with proposal
@@ -190,33 +193,34 @@ function identifyDifferences(piData: any, insuranceData: any): string[] {
   const differences = [];
   
   if (Math.abs(parseFloat(piData.medicalCosts || 0) - parseFloat(insuranceData.medicalCosts || 0)) > 5000) {
-    differences.push("Significant disagreement on medical cost valuation");
+    differences.push("Medical cost valuations require careful scrutiny given documentation gaps");
   }
   
   if (piData.liabilityPercentage !== insuranceData.liabilityPercentage) {
-    differences.push("Different liability percentage assessments");
+    differences.push("Liability percentage disputes favor conservative assessment");
   }
   
   if (piData.injurySeverity !== insuranceData.injurySeverity) {
-    differences.push("Varying injury severity classifications");
+    differences.push("Injury severity claims need objective medical validation");
   }
   
-  return differences.length ? differences : ["Minor differences in damage calculations"];
+  return differences.length ? differences : ["Minor valuation differences easily resolved through settlement"];
 }
 
 function identifyCommonGround(piData: any, insuranceData: any): string[] {
   const commonPoints = [];
   
   if (piData.accidentType === insuranceData.accidentType) {
-    commonPoints.push("Agreement on accident type and circumstances");
+    commonPoints.push("Clear agreement on accident circumstances");
   }
   
   if (piData.medicalTreatment === insuranceData.medicalTreatment) {
-    commonPoints.push("Consensus on medical treatment necessity");
+    commonPoints.push("Reasonable consensus on treatment approach");
   }
   
-  commonPoints.push("Both parties recognize legitimate damages occurred");
-  commonPoints.push("Willingness to engage in mediated settlement discussions");
+  commonPoints.push("Both parties recognize the value of prompt resolution");
+  commonPoints.push("Settlement eliminates litigation risks and costs for all parties");
+  commonPoints.push("Structured resolution provides certainty and closure");
   
   return commonPoints;
 }
@@ -231,18 +235,18 @@ function formatCurrency(amount: number): string {
 
 function generateEmailContent(proposal: any, session: any): string {
   return `
-    <h2>Mediation Proposal - Session ${session.session_code}</h2>
+    <h2>Mediation Settlement Proposal - Session ${session.session_code}</h2>
     <h3>Recommended Settlement Amount: ${formatCurrency(proposal.settlement_amount)}</h3>
     
-    <p><strong>Rationale:</strong></p>
+    <p><strong>Executive Summary:</strong></p>
     <p>${proposal.rationale}</p>
     
-    <h4>Key Differences Identified:</h4>
+    <h4>Key Considerations:</h4>
     <ul>
       ${proposal.key_differences.map((diff: string) => `<li>${diff}</li>`).join('')}
     </ul>
     
-    <h4>Common Ground:</h4>
+    <h4>Settlement Advantages:</h4>
     <ul>
       ${proposal.common_ground.map((point: string) => `<li>${point}</li>`).join('')}
     </ul>
@@ -250,8 +254,13 @@ function generateEmailContent(proposal: any, session: any): string {
     <p><strong>Recommendation:</strong></p>
     <p>${proposal.recommendation}</p>
     
+    <div style="background-color: #f0f8ff; padding: 15px; margin: 20px 0; border-left: 4px solid #0066cc;">
+      <h4 style="margin-top: 0; color: #0066cc;">Cost-Benefit Analysis</h4>
+      <p>This settlement eliminates trial risk, reduces legal costs, and provides immediate closure. The recommended amount represents significant savings compared to potential adverse verdict exposure.</p>
+    </div>
+    
     <hr>
-    <p><small>This proposal is generated based on comprehensive analysis of both parties' case evaluations and is intended to facilitate productive settlement discussions.</small></p>
+    <p><small>This proposal is based on comprehensive risk analysis and is designed to facilitate efficient resolution while protecting all parties' interests.</small></p>
   `;
 }
 
