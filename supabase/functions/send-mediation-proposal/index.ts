@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,7 +25,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const resend = new Resend(resendApiKey);
 
     console.log("Processing mediation proposal for session:", sessionId);
 
@@ -110,24 +114,45 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending mediation proposal to:", { piEmail, insuranceEmail });
 
-    // Email content
+    // Generate email content
     const emailContent = generateEmailContent(proposal, session);
 
-    // Here you would integrate with your email service (Resend, SendGrid, etc.)
-    // For demonstration, we're logging the proposal
-    console.log("Mediation proposal generated:", {
-      sessionId,
-      proposal,
-      emailContent,
-      recipients: { piEmail, insuranceEmail }
-    });
+    // Send emails to both parties
+    const emailPromises = [];
+    
+    if (piEmail) {
+      emailPromises.push(
+        resend.emails.send({
+          from: "Verdict AI <noreply@verdictai.com>",
+          to: [piEmail],
+          subject: `Mediation Proposal Ready - Session ${session.session_code}`,
+          html: emailContent,
+        })
+      );
+    }
+
+    if (insuranceEmail) {
+      emailPromises.push(
+        resend.emails.send({
+          from: "Verdict AI <noreply@verdictai.com>",
+          to: [insuranceEmail],
+          subject: `Mediation Proposal Ready - Session ${session.session_code}`,
+          html: emailContent,
+        })
+      );
+    }
+
+    // Send all emails concurrently
+    const emailResults = await Promise.all(emailPromises);
+    
+    console.log("Email results:", emailResults);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Mediation proposal generated and notifications sent",
         proposal,
-        emailContent 
+        emailsSent: emailResults.length
       }),
       {
         status: 200,
