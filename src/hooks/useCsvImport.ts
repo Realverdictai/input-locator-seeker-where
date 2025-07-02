@@ -17,6 +17,43 @@ interface CaseData {
   Narrative: string;
 }
 
+// Proper CSV parsing function that handles quoted fields with commas
+const parseCSVLine = (line: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Handle escaped quotes
+        current += '"';
+        i += 2;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        i++;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim());
+      current = '';
+      i++;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  return result;
+};
+
 export const useCsvImport = () => {
   const [csvData, setCsvData] = useState<CaseData[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -63,9 +100,11 @@ export const useCsvImport = () => {
         return;
       }
       
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      // Parse header row properly
+      const headers = parseCSVLine(lines[0]).map(h => h.replace(/"/g, ''));
       
       console.log('CSV headers:', headers);
+      console.log('Expected headers:', ['CaseID', 'CaseType', 'Venue', 'DOL', 'AccType', 'Injuries', 'Surgery', 'Inject', 'LiabPct', 'PolLim', 'Settle', 'Narrative']);
       console.log('Total lines:', lines.length);
       
       const data: CaseData[] = [];
@@ -75,9 +114,12 @@ export const useCsvImport = () => {
       for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim() === '') continue;
         
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        // Parse each data row properly
+        const values = parseCSVLine(lines[i]).map(v => v.replace(/"/g, ''));
+        
         if (values.length !== headers.length) {
           console.warn(`Row ${i + 1} has ${values.length} columns, expected ${headers.length}`);
+          errors.push(`Row ${i + 1} has incorrect number of columns (${values.length} vs ${headers.length})`);
           continue;
         }
 
