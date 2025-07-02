@@ -35,11 +35,15 @@ const AdminCsvImporter = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('File selected:', file.name);
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const lines = text.split('\n');
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      console.log('CSV headers:', headers);
       
       const data: CaseData[] = [];
       const errors: string[] = [];
@@ -70,6 +74,9 @@ const AdminCsvImporter = () => {
 
         data.push(row as CaseData);
       }
+
+      console.log('Parsed data:', data.length, 'rows');
+      console.log('Validation errors:', errors);
 
       setCsvData(data);
       setValidationErrors(errors);
@@ -158,6 +165,10 @@ const AdminCsvImporter = () => {
     }
   };
 
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -175,12 +186,28 @@ const AdminCsvImporter = () => {
           {/* File Upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Select CSV File</label>
+            <div className="flex items-center gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={triggerFileInput}
+                className="flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Choose CSV File
+              </Button>
+              {csvData.length > 0 && (
+                <span className="text-sm text-green-600">
+                  ✓ {csvData.length} cases loaded
+                </span>
+              )}
+            </div>
             <input
               ref={fileInputRef}
               type="file"
               accept=".csv"
               onChange={handleFileUpload}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="hidden"
             />
           </div>
 
