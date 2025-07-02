@@ -35,7 +35,13 @@ const AdminCsvImporter = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('File selected:', file.name);
+    console.log('File selected:', file.name, 'Type:', file.type);
+
+    // Check if it's a CSV file or if we need to handle other formats
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      alert('Please export your file as CSV format first. In Numbers: File > Export To > CSV');
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -194,6 +200,9 @@ const AdminCsvImporter = () => {
           {/* File Upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Select CSV File</label>
+            <div className="text-xs text-gray-600 mb-2">
+              📝 <strong>Mac Users:</strong> If using Numbers, export as CSV first: File → Export To → CSV
+            </div>
             <div className="flex items-center gap-4">
               <Button 
                 type="button" 
@@ -213,9 +222,8 @@ const AdminCsvImporter = () => {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,text/csv"
               onChange={handleFileUpload}
-              className="hidden"
               style={{ display: 'none' }}
             />
           </div>
