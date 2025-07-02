@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from '@supabase/supabase-js';
 
 interface CaseData {
   CaseID: string;
@@ -89,8 +89,11 @@ const AdminCsvImporter = () => {
     setImportResult(null);
 
     try {
-      // Use service role key for backend operations
-      const serviceSupabase = supabase;
+      // Create service role client for admin operations
+      const serviceSupabase = createClient(
+        "https://hueccsiuyxjqupxkfhkl.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1ZWNjc2l1eXhqcXVweGtmaGtsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTYxNzYzMSwiZXhwIjoyMDY1MTkzNjMxfQ.T5bE7C8CpfvNPYxvl5aWvf_I9m4BdtYg7xw6t8rq7gM"
+      );
 
       if (replaceExisting) {
         // Truncate existing data
