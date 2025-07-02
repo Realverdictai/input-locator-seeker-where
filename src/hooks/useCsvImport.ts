@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CaseData {
   CaseID: string;
@@ -175,15 +174,9 @@ export const useCsvImport = () => {
     setImportResult(null);
 
     try {
-      // Create service role client for admin operations
-      const serviceSupabase = createClient(
-        "https://hueccsiuyxjqupxkfhkl.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1ZWNjc2l1eXhqcXVweGtmaGtsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTYxNzYzMSwiZXhwIjoyMDY1MTkzNjMxfQ.T5bE7C8CpfvNPYxvl5aWvf_I9m4BdtYg7xw6t8rq7gM"
-      );
-
       if (replaceExisting) {
-        // Truncate existing data
-        const { error: deleteError } = await serviceSupabase
+        // Use the configured supabase client instead of creating a new one
+        const { error: deleteError } = await supabase
           .from('cases_master')
           .delete()
           .neq('case_id', 0); // Delete all rows
@@ -206,14 +199,14 @@ export const useCsvImport = () => {
         liab_pct: row.LiabPct,
         pol_lim: row.PolLim,
         settle: row.Settle,
-        narrative: row.Narrative.length > 500 ? row.Narrative.substring(0, 500) : row.Narrative
+        narrative: row.Narrative.length > 1000 ? row.Narrative.substring(0, 1000) : row.Narrative
       }));
 
       // Insert data in batches
       const batchSize = 50;
       for (let i = 0; i < dbData.length; i += batchSize) {
         const batch = dbData.slice(i, i + batchSize);
-        const { error } = await serviceSupabase
+        const { error } = await supabase
           .from('cases_master')
           .insert(batch);
 

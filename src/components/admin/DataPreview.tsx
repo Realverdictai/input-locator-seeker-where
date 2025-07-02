@@ -26,36 +26,53 @@ const DataPreview = ({ csvData }: DataPreviewProps) => {
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-medium">Preview ({csvData.length} cases)</h3>
-      <div className="max-h-64 overflow-auto border rounded-md">
+      <div className="max-h-96 overflow-auto border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>CaseID</TableHead>
-              <TableHead>CaseType</TableHead>
-              <TableHead>Venue</TableHead>
-              <TableHead>DOL</TableHead>
-              <TableHead>AccType</TableHead>
-              <TableHead>Settle</TableHead>
+              <TableHead className="min-w-[80px]">CaseID</TableHead>
+              <TableHead className="min-w-[100px]">CaseType</TableHead>
+              <TableHead className="min-w-[100px]">Venue</TableHead>
+              <TableHead className="min-w-[80px]">DOL</TableHead>
+              <TableHead className="min-w-[100px]">AccType</TableHead>
+              <TableHead className="min-w-[100px]">Injuries</TableHead>
+              <TableHead className="min-w-[80px]">Surgery</TableHead>
+              <TableHead className="min-w-[80px]">Inject</TableHead>
+              <TableHead className="min-w-[80px]">LiabPct</TableHead>
+              <TableHead className="min-w-[80px]">PolLim</TableHead>
+              <TableHead className="min-w-[100px]">Settle</TableHead>
+              <TableHead className="min-w-[200px]">Narrative</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {csvData.slice(0, 5).map((row, index) => (
+            {csvData.slice(0, 3).map((row, index) => (
               <TableRow key={index}>
-                <TableCell>{row.CaseID}</TableCell>
-                <TableCell>{row.CaseType}</TableCell>
-                <TableCell>{row.Venue}</TableCell>
-                <TableCell>{row.DOL}</TableCell>
-                <TableCell>{row.AccType}</TableCell>
-                <TableCell>{row.Settle}</TableCell>
+                <TableCell className="font-mono text-xs">{row.CaseID}</TableCell>
+                <TableCell className="text-xs">{row.CaseType}</TableCell>
+                <TableCell className="text-xs">{row.Venue}</TableCell>
+                <TableCell className="text-xs">{row.DOL}</TableCell>
+                <TableCell className="text-xs">{row.AccType}</TableCell>
+                <TableCell className="text-xs">{row.Injuries}</TableCell>
+                <TableCell className="text-xs">{row.Surgery}</TableCell>
+                <TableCell className="text-xs">{row.Inject}</TableCell>
+                <TableCell className="text-xs">{row.LiabPct}</TableCell>
+                <TableCell className="text-xs">{row.PolLim}</TableCell>
+                <TableCell className="text-xs">{row.Settle}</TableCell>
+                <TableCell className="text-xs max-w-[200px] truncate" title={row.Narrative}>
+                  {row.Narrative}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        {csvData.length > 5 && (
-          <div className="text-center text-sm text-gray-500 py-2">
-            ... and {csvData.length - 5} more cases
+        {csvData.length > 3 && (
+          <div className="text-center text-sm text-gray-500 py-2 bg-gray-50">
+            ... and {csvData.length - 3} more cases (showing first 3 for preview)
           </div>
         )}
+      </div>
+      <div className="text-xs text-gray-600 mt-2">
+        💡 All 12 columns will be imported including the detailed Narrative field which contains valuable case evaluation information.
       </div>
     </div>
   );
