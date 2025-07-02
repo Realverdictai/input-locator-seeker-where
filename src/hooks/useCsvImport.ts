@@ -27,21 +27,46 @@ export const useCsvImport = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('File selected:', file.name, 'Type:', file.type);
+    console.log('File selected:', file.name, 'Type:', file.type, 'Size:', file.size);
 
-    // Check if it's a CSV file or if we need to handle other formats
-    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-      alert('Please export your file as CSV format first. In Numbers: File > Export To > CSV');
+    // Check file extension and type more thoroughly
+    const fileName = file.name.toLowerCase();
+    const isCSV = fileName.endsWith('.csv') || file.type === 'text/csv' || file.type === 'application/csv';
+    
+    if (!isCSV) {
+      if (fileName.endsWith('.numbers')) {
+        alert('⚠️ Numbers files are not supported!\n\nPlease export your Numbers file as CSV:\n1. File → Export To → CSV\n2. Save to your desktop\n3. Upload the CSV file here');
+      } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        alert('⚠️ Excel files are not supported!\n\nPlease save your Excel file as CSV:\n1. File → Save As → CSV\n2. Upload the CSV file here');
+      } else {
+        alert('⚠️ Only CSV files are supported!\n\nPlease convert your file to CSV format first.');
+      }
+      
+      // Clear the input
+      event.target.value = '';
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const lines = text.split('\n');
+      
+      if (!text || text.trim() === '') {
+        alert('The file appears to be empty. Please check your CSV file.');
+        return;
+      }
+      
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      
+      if (lines.length < 2) {
+        alert('The CSV file must have at least a header row and one data row.');
+        return;
+      }
+      
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
       console.log('CSV headers:', headers);
+      console.log('Total lines:', lines.length);
       
       const data: CaseData[] = [];
       const errors: string[] = [];
@@ -51,7 +76,10 @@ export const useCsvImport = () => {
         if (lines[i].trim() === '') continue;
         
         const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-        if (values.length !== headers.length) continue;
+        if (values.length !== headers.length) {
+          console.warn(`Row ${i + 1} has ${values.length} columns, expected ${headers.length}`);
+          continue;
+        }
 
         const row: any = {};
         headers.forEach((header, index) => {
@@ -59,9 +87,9 @@ export const useCsvImport = () => {
         });
 
         // Validate CaseID uniqueness
-        if (seenIds.has(row.CaseID)) {
+        if (row.CaseID && seenIds.has(row.CaseID)) {
           errors.push(`Duplicate CaseID found: ${row.CaseID} (row ${i + 1})`);
-        } else {
+        } else if (row.CaseID) {
           seenIds.add(row.CaseID);
         }
 
@@ -79,6 +107,17 @@ export const useCsvImport = () => {
       setCsvData(data);
       setValidationErrors(errors);
       setImportResult(null);
+      
+      if (data.length > 0) {
+        setImportResult({
+          success: true,
+          message: `✅ Successfully loaded ${data.length} cases from CSV`
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      alert('Error reading the file. Please try again.');
     };
 
     reader.readAsText(file);

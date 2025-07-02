@@ -13,7 +13,6 @@ const FileUploadSection = ({ onFileUpload, csvDataLength }: FileUploadSectionPro
 
   const triggerFileInput = () => {
     console.log('Button clicked, triggering file input');
-    console.log('File input ref:', fileInputRef.current);
     
     if (fileInputRef.current) {
       console.log('Clicking file input programmatically');
@@ -24,11 +23,23 @@ const FileUploadSection = ({ onFileUpload, csvDataLength }: FileUploadSectionPro
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <label className="text-sm font-medium">Select CSV File</label>
-      <div className="text-xs text-gray-600 mb-2">
-        📝 <strong>Mac Users:</strong> If using Numbers, export as CSV first: File → Export To → CSV
+      
+      {/* Mac Users Instructions */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
+        <div className="font-semibold text-yellow-800 mb-2">📱 Mac Users with Numbers:</div>
+        <ol className="list-decimal list-inside space-y-1 text-yellow-700">
+          <li>Open your Numbers file</li>
+          <li>Go to <strong>File → Export To → CSV</strong></li>
+          <li>Save the CSV file to your desktop</li>
+          <li>Then upload the CSV file here</li>
+        </ol>
+        <div className="mt-2 text-yellow-600">
+          ⚠️ <strong>.numbers files won't work</strong> - you must export as CSV first!
+        </div>
       </div>
+
       <div className="flex items-center gap-4">
         <Button 
           type="button" 
@@ -45,10 +56,11 @@ const FileUploadSection = ({ onFileUpload, csvDataLength }: FileUploadSectionPro
           </span>
         )}
       </div>
+      
       <input
         ref={fileInputRef}
         type="file"
-        accept=".csv,text/csv"
+        accept=".csv,text/csv,application/csv"
         onChange={onFileUpload}
         style={{ display: 'none' }}
       />
