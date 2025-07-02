@@ -4,8 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Database } from "lucide-react";
+import { RefreshCw, Database, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface CaseData {
   case_id: number;
@@ -27,9 +35,11 @@ const DataViewer = () => {
   const [cases, setCases] = useState<CaseData[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [casesPerPage] = useState(10);
   const { toast } = useToast();
 
-  const fetchCases = async () => {
+  const fetchCases = async (page: number = 1) => {
     setLoading(true);
     try {
       // Get total count first
@@ -39,12 +49,15 @@ const DataViewer = () => {
 
       setTotalCount(count || 0);
 
-      // Get first 5 cases for preview with ALL columns
+      // Calculate offset for pagination
+      const offset = (page - 1) * casesPerPage;
+
+      // Get cases for current page with ALL columns
       const { data, error } = await supabase
         .from('cases_master')
         .select('*')
         .order('case_id', { ascending: true })
-        .limit(5);
+        .range(offset, offset + casesPerPage - 1);
 
       if (error) {
         throw error;
@@ -55,9 +68,9 @@ const DataViewer = () => {
       if (data && data.length > 0) {
         toast({
           title: "Data loaded",
-          description: `Found ${count} cases with all ${Object.keys(data[0]).length - 2} data fields per case`,
+          description: `Showing ${data.length} of ${count} cases (page ${page})`,
         });
-      } else {
+      } else if (count === 0) {
         toast({
           title: "No data found",
           description: "The cases_master table appears to be empty",
@@ -77,8 +90,18 @@ const DataViewer = () => {
   };
 
   useEffect(() => {
-    fetchCases();
-  }, []);
+    fetchCases(currentPage);
+  }, [currentPage]);
+
+  const totalPages = Math.ceil(totalCount / casesPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleRefresh = () => {
+    fetchCases(currentPage);
+  };
 
   return (
     <Card>
@@ -89,7 +112,7 @@ const DataViewer = () => {
             Complete Database Viewer - All Case Data
           </div>
           <Button 
-            onClick={fetchCases} 
+            onClick={handleRefresh} 
             disabled={loading}
             variant="outline"
             size="sm"
@@ -102,7 +125,9 @@ const DataViewer = () => {
           {totalCount > 0 ? (
             <>
               Total cases in database: <strong>{totalCount}</strong>
-              {totalCount > 5 && " (showing first 5 with ALL data fields)"}
+              {totalCount > casesPerPage && (
+                <span> | Page {currentPage} of {totalPages} (showing {cases.length} cases)</span>
+              )}
             </>
           ) : (
             "Checking database..."
@@ -117,7 +142,7 @@ const DataViewer = () => {
             <Database className="w-12 h-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg font-medium">No data found</p>
             <p className="text-sm">The cases_master table appears to be empty.</p>
-            <p className="text-sm mt-2">Try importing your CSV file using the importer above.</p>
+            <p className="text-sm mt-2">Try importing your CSV file using the importer below.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -166,6 +191,44 @@ const DataViewer = () => {
                 </TableBody>
               </Table>
             </div>
+            
+            {totalPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                    const pageNumber = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + index;
+                    if (pageNumber > totalPages) return null;
+                    
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(pageNumber)}
+                          isActive={pageNumber === currentPage}
+                          className="cursor-pointer"
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+            
             <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
               💡 <strong>All 12 CSV columns are captured:</strong> CaseID, CaseType, Venue, DOL, AccType, Injuries, Surgery, Inject, LiabPct, PolLim, Settle, and full Narrative text. 
               {cases.length > 0 && cases[0].narrative && (
@@ -173,6 +236,9 @@ const DataViewer = () => {
                   <strong>Narrative length example:</strong> Case {cases[0].case_id} has {cases[0].narrative.length} characters of narrative data.
                 </span>
               )}
+              <div className="mt-2">
+                <strong>Navigation:</strong> Use the pagination controls below to browse all {totalCount} cases in your database.
+              </div>
             </div>
           </div>
         )}
