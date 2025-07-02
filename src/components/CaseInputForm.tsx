@@ -58,13 +58,31 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     return isValid;
   };
 
-  // Helper function to properly handle number inputs including 0
-  const handleNumberInput = (value: string) => {
+  // Helper function to format numbers with commas
+  const formatNumberWithCommas = (value: number | undefined): string => {
+    if (value === undefined || value === null) return '';
+    return value.toLocaleString('en-US');
+  };
+
+  // Helper function to parse formatted number string back to number
+  const parseFormattedNumber = (value: string): number | undefined => {
     if (value === '' || value === null || value === undefined) {
       return undefined;
     }
-    const numValue = Number(value);
+    const cleanedValue = value.replace(/,/g, '');
+    const numValue = Number(cleanedValue);
     return isNaN(numValue) ? undefined : numValue;
+  };
+
+  // Helper function to properly handle number inputs including 0
+  const handleNumberInput = (value: string) => {
+    return parseFormattedNumber(value);
+  };
+
+  // Helper function to handle formatted number input change
+  const handleFormattedNumberChange = (field: keyof CaseData, value: string) => {
+    const numericValue = handleNumberInput(value);
+    setFormData({...formData, [field]: numericValue});
   };
 
   const addDefendantPolicy = () => {
@@ -79,7 +97,11 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 
   const updateDefendantPolicy = (index: number, field: keyof PolicyInfo, value: string | number) => {
     const newPolicies = [...(formData.defendantPolicies || [])];
-    newPolicies[index] = { ...newPolicies[index], [field]: value };
+    if (field === 'policyLimit') {
+      newPolicies[index] = { ...newPolicies[index], [field]: typeof value === 'string' ? handleNumberInput(value) || 0 : value };
+    } else {
+      newPolicies[index] = { ...newPolicies[index], [field]: value };
+    }
     setFormData({...formData, defendantPolicies: newPolicies});
   };
 
@@ -235,9 +257,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="medicalSpecials">Medical Specials ($)</Label>
             <Input
               id="medicalSpecials"
-              type="number"
-              value={formData.medicalSpecials !== undefined ? formData.medicalSpecials.toString() : ''}
-              onChange={(e) => setFormData({...formData, medicalSpecials: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.medicalSpecials)}
+              onChange={(e) => handleFormattedNumberChange('medicalSpecials', e.target.value)}
               placeholder="Enter amount"
             />
           </div>
@@ -246,9 +268,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="howellHanifDeductions">Howell/Hanif Deductions ($)</Label>
             <Input
               id="howellHanifDeductions"
-              type="number"
-              value={formData.howellHanifDeductions !== undefined ? formData.howellHanifDeductions.toString() : ''}
-              onChange={(e) => setFormData({...formData, howellHanifDeductions: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.howellHanifDeductions)}
+              onChange={(e) => handleFormattedNumberChange('howellHanifDeductions', e.target.value)}
               placeholder="Enter deduction amount"
             />
           </div>
@@ -257,9 +279,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="futureMedicals">Future Medicals ($)</Label>
             <Input
               id="futureMedicals"
-              type="number"
-              value={formData.futureMedicals !== undefined ? formData.futureMedicals.toString() : ''}
-              onChange={(e) => setFormData({...formData, futureMedicals: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.futureMedicals)}
+              onChange={(e) => handleFormattedNumberChange('futureMedicals', e.target.value)}
               placeholder="Enter amount"
             />
           </div>
@@ -268,9 +290,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="surgeries">Number of Surgeries</Label>
             <Input
               id="surgeries"
-              type="number"
-              value={formData.surgeries !== undefined ? formData.surgeries.toString() : ''}
-              onChange={(e) => setFormData({...formData, surgeries: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.surgeries)}
+              onChange={(e) => handleFormattedNumberChange('surgeries', e.target.value)}
               placeholder="Enter number"
             />
           </div>
@@ -295,9 +317,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="injections">Number of Injections</Label>
             <Input
               id="injections"
-              type="number"
-              value={formData.injections !== undefined ? formData.injections.toString() : ''}
-              onChange={(e) => setFormData({...formData, injections: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.injections)}
+              onChange={(e) => handleFormattedNumberChange('injections', e.target.value)}
               placeholder="Enter number"
             />
           </div>
@@ -322,9 +344,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="physicalTherapySessions">Physical Therapy Sessions</Label>
             <Input
               id="physicalTherapySessions"
-              type="number"
-              value={formData.physicalTherapySessions !== undefined ? formData.physicalTherapySessions.toString() : ''}
-              onChange={(e) => setFormData({...formData, physicalTherapySessions: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.physicalTherapySessions)}
+              onChange={(e) => handleFormattedNumberChange('physicalTherapySessions', e.target.value)}
               placeholder="Enter number"
             />
           </div>
@@ -333,9 +355,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="chiropracticSessions">Chiropractic Sessions</Label>
             <Input
               id="chiropracticSessions"
-              type="number"
-              value={formData.chiropracticSessions !== undefined ? formData.chiropracticSessions.toString() : ''}
-              onChange={(e) => setFormData({...formData, chiropracticSessions: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.chiropracticSessions)}
+              onChange={(e) => handleFormattedNumberChange('chiropracticSessions', e.target.value)}
               placeholder="Enter number"
             />
           </div>
@@ -344,9 +366,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="daysBetweenAccidentAndTreatment">Days Between Accident and First Treatment</Label>
             <Input
               id="daysBetweenAccidentAndTreatment"
-              type="number"
-              value={formData.daysBetweenAccidentAndTreatment !== undefined ? formData.daysBetweenAccidentAndTreatment.toString() : ''}
-              onChange={(e) => setFormData({...formData, daysBetweenAccidentAndTreatment: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.daysBetweenAccidentAndTreatment)}
+              onChange={(e) => handleFormattedNumberChange('daysBetweenAccidentAndTreatment', e.target.value)}
               placeholder="Enter days"
             />
           </div>
@@ -355,9 +377,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="treatmentGaps">Treatment Gaps (days)</Label>
             <Input
               id="treatmentGaps"
-              type="number"
-              value={formData.treatmentGaps !== undefined ? formData.treatmentGaps.toString() : ''}
-              onChange={(e) => setFormData({...formData, treatmentGaps: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.treatmentGaps)}
+              onChange={(e) => handleFormattedNumberChange('treatmentGaps', e.target.value)}
               placeholder="Enter gap days"
             />
           </div>
@@ -402,9 +424,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="plaintiffAge">Plaintiff Age</Label>
             <Input
               id="plaintiffAge"
-              type="number"
-              value={formData.plaintiffAge !== undefined ? formData.plaintiffAge.toString() : ''}
-              onChange={(e) => setFormData({...formData, plaintiffAge: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.plaintiffAge)}
+              onChange={(e) => handleFormattedNumberChange('plaintiffAge', e.target.value)}
               placeholder="Enter age"
             />
           </div>
@@ -440,9 +462,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="annualIncome">Annual Income ($)</Label>
             <Input
               id="annualIncome"
-              type="number"
-              value={formData.annualIncome !== undefined ? formData.annualIncome.toString() : ''}
-              onChange={(e) => setFormData({...formData, annualIncome: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.annualIncome)}
+              onChange={(e) => handleFormattedNumberChange('annualIncome', e.target.value)}
               placeholder="Enter annual income"
             />
           </div>
@@ -451,9 +473,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="wageLoss">Wage Loss ($)</Label>
             <Input
               id="wageLoss"
-              type="number"
-              value={formData.wageLoss !== undefined ? formData.wageLoss.toString() : ''}
-              onChange={(e) => setFormData({...formData, wageLoss: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.wageLoss)}
+              onChange={(e) => handleFormattedNumberChange('wageLoss', e.target.value)}
               placeholder="Enter wage loss"
             />
           </div>
@@ -462,9 +484,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="futureEarningsLoss">Future Earnings Loss ($)</Label>
             <Input
               id="futureEarningsLoss"
-              type="number"
-              value={formData.futureEarningsLoss !== undefined ? formData.futureEarningsLoss.toString() : ''}
-              onChange={(e) => setFormData({...formData, futureEarningsLoss: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.futureEarningsLoss)}
+              onChange={(e) => handleFormattedNumberChange('futureEarningsLoss', e.target.value)}
               placeholder="Enter future earnings loss"
             />
           </div>
@@ -499,9 +521,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
               <Label htmlFor="priorWorkersCompAmount">Prior Workers' Comp Amount ($)</Label>
               <Input
                 id="priorWorkersCompAmount"
-                type="number"
-                value={formData.priorWorkersCompAmount !== undefined ? formData.priorWorkersCompAmount.toString() : ''}
-                onChange={(e) => setFormData({...formData, priorWorkersCompAmount: handleNumberInput(e.target.value)})}
+                type="text"
+                value={formatNumberWithCommas(formData.priorWorkersCompAmount)}
+                onChange={(e) => handleFormattedNumberChange('priorWorkersCompAmount', e.target.value)}
                 placeholder="Enter amount"
               />
             </div>
@@ -585,10 +607,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
                 </div>
                 <div className="flex-1">
                   <Input
-                    type="number"
+                    type="text"
                     placeholder="Policy limit"
-                    value={policy.policyLimit !== undefined ? policy.policyLimit.toString() : ''}
-                    onChange={(e) => updateDefendantPolicy(index, 'policyLimit', handleNumberInput(e.target.value) || 0)}
+                    value={formatNumberWithCommas(policy.policyLimit)}
+                    onChange={(e) => updateDefendantPolicy(index, 'policyLimit', e.target.value)}
                   />
                 </div>
                 {formData.defendantPolicies!.length > 1 && (
@@ -604,9 +626,9 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
             <Label htmlFor="umUimCoverage">UM/UIM Coverage ($)</Label>
             <Input
               id="umUimCoverage"
-              type="number"
-              value={formData.umUimCoverage !== undefined ? formData.umUimCoverage.toString() : ''}
-              onChange={(e) => setFormData({...formData, umUimCoverage: handleNumberInput(e.target.value)})}
+              type="text"
+              value={formatNumberWithCommas(formData.umUimCoverage)}
+              onChange={(e) => handleFormattedNumberChange('umUimCoverage', e.target.value)}
               placeholder="Enter UM/UIM coverage"
             />
           </div>
