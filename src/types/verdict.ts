@@ -1,5 +1,15 @@
-
 export interface CaseData {
+  // New wizard fields
+  caseType?: string;
+  otherCaseType?: string;
+  injuryTypes?: string[];
+  otherInjuryType?: string;
+  liabilityDisputed?: string;
+  treatmentGap?: boolean;
+  numberOfDefendants?: number;
+  umbrellaCoverage?: string;
+  
+  // Existing fields
   injuryType: string;
   liabilityPercentage?: number;
   medicalSpecials?: number;
@@ -20,7 +30,7 @@ export interface CaseData {
   policyLimits?: number;
   additionalFactors?: string;
   
-  // New fields
+  // Existing fields continued
   howellHanifDeductions?: number;
   futureMedicals?: number;
   futureEarningsLoss?: number;
