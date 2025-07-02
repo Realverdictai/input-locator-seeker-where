@@ -51,12 +51,13 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       } as CaseData;
       onSubmit(submitData);
     } else {
-      console.log("Form is not valid");
+      console.log("Form is not valid - missing required fields");
+      // You could show a toast or alert here
     }
   };
 
   const isFormValid = () => {
-    // Require case type and at least one injury type
+    // Only require validation for final submission
     const isValid = !!(formData.caseType && formData.injuryTypes && formData.injuryTypes.length > 0);
     console.log("Form validation:", { 
       caseType: formData.caseType,

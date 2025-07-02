@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, SkipForward } from "lucide-react";
 
 interface FormWizardProps {
   steps: {
@@ -27,6 +27,12 @@ const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true }:
     }
   };
 
+  const handleSkip = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
@@ -34,6 +40,7 @@ const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true }:
   };
 
   const progress = ((currentStep + 1) / steps.length) * 100;
+  const isLastStep = currentStep === steps.length - 1;
 
   return (
     <div className="space-y-6">
@@ -69,21 +76,35 @@ const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true }:
               Back
             </Button>
             
-            <Button
-              type="button"
-              onClick={handleNext}
-              disabled={isLoading || !canProceed}
-              className="flex items-center gap-2"
-            >
-              {currentStep === steps.length - 1 ? (
-                isLoading ? "Evaluating..." : "Evaluate Case"
-              ) : (
-                <>
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </>
+            <div className="flex gap-2">
+              {!isLastStep && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSkip}
+                  className="flex items-center gap-2"
+                >
+                  <SkipForward className="w-4 h-4" />
+                  Skip
+                </Button>
               )}
-            </Button>
+              
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={isLastStep && (isLoading || !canProceed)}
+                className="flex items-center gap-2"
+              >
+                {isLastStep ? (
+                  isLoading ? "Evaluating..." : "Evaluate Case"
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
