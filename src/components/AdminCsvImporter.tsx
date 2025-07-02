@@ -166,7 +166,15 @@ const AdminCsvImporter = () => {
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    console.log('Button clicked, triggering file input');
+    console.log('File input ref:', fileInputRef.current);
+    
+    if (fileInputRef.current) {
+      console.log('Clicking file input programmatically');
+      fileInputRef.current.click();
+    } else {
+      console.error('File input ref is null');
+    }
   };
 
   return (
@@ -208,6 +216,7 @@ const AdminCsvImporter = () => {
               accept=".csv"
               onChange={handleFileUpload}
               className="hidden"
+              style={{ display: 'none' }}
             />
           </div>
 
