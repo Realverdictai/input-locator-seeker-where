@@ -9,6 +9,7 @@ import ValidationErrors from "./admin/ValidationErrors";
 import DataPreview from "./admin/DataPreview";
 import ImportResult from "./admin/ImportResult";
 import ImportButton from "./admin/ImportButton";
+import DataViewer from "./admin/DataViewer";
 
 const AdminCsvImporter = () => {
   const [replaceExisting, setReplaceExisting] = useState(true);
@@ -27,6 +28,8 @@ const AdminCsvImporter = () => {
 
   return (
     <div className="space-y-6">
+      <DataViewer />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
