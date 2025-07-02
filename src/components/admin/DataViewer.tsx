@@ -39,12 +39,12 @@ const DataViewer = () => {
 
       setTotalCount(count || 0);
 
-      // Get first 10 cases for preview
+      // Get first 5 cases for preview with ALL columns
       const { data, error } = await supabase
         .from('cases_master')
         .select('*')
         .order('case_id', { ascending: true })
-        .limit(10);
+        .limit(5);
 
       if (error) {
         throw error;
@@ -55,7 +55,7 @@ const DataViewer = () => {
       if (data && data.length > 0) {
         toast({
           title: "Data loaded",
-          description: `Found ${count} cases in the database`,
+          description: `Found ${count} cases with all ${Object.keys(data[0]).length - 2} data fields per case`,
         });
       } else {
         toast({
@@ -86,7 +86,7 @@ const DataViewer = () => {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5" />
-            Database Viewer
+            Complete Database Viewer - All Case Data
           </div>
           <Button 
             onClick={fetchCases} 
@@ -102,7 +102,7 @@ const DataViewer = () => {
           {totalCount > 0 ? (
             <>
               Total cases in database: <strong>{totalCount}</strong>
-              {totalCount > 10 && " (showing first 10)"}
+              {totalCount > 5 && " (showing first 5 with ALL data fields)"}
             </>
           ) : (
             "Checking database..."
@@ -111,7 +111,7 @@ const DataViewer = () => {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-8">Loading data...</div>
+          <div className="text-center py-8">Loading complete case data...</div>
         ) : cases.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Database className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -120,33 +120,60 @@ const DataViewer = () => {
             <p className="text-sm mt-2">Try importing your CSV file using the importer above.</p>
           </div>
         ) : (
-          <div className="max-h-96 overflow-auto border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[80px]">Case ID</TableHead>
-                  <TableHead className="min-w-[100px]">Type</TableHead>
-                  <TableHead className="min-w-[100px]">Venue</TableHead>
-                  <TableHead className="min-w-[80px]">DOL</TableHead>
-                  <TableHead className="min-w-[100px]">Settlement</TableHead>
-                  <TableHead className="min-w-[200px]">Narrative</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cases.map((caseData) => (
-                  <TableRow key={caseData.case_id}>
-                    <TableCell className="font-mono text-xs">{caseData.case_id}</TableCell>
-                    <TableCell className="text-xs">{caseData.case_type}</TableCell>
-                    <TableCell className="text-xs">{caseData.venue}</TableCell>
-                    <TableCell className="text-xs">{caseData.dol}</TableCell>
-                    <TableCell className="text-xs">{caseData.settle}</TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate" title={caseData.narrative}>
-                      {caseData.narrative}
-                    </TableCell>
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-green-600">
+              ✅ Showing ALL {Object.keys(cases[0]).length - 2} data fields per case (excluding timestamps)
+            </div>
+            <div className="max-h-96 overflow-auto border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[80px] sticky left-0 bg-white">Case ID</TableHead>
+                    <TableHead className="min-w-[100px]">Case Type</TableHead>
+                    <TableHead className="min-w-[100px]">Venue</TableHead>
+                    <TableHead className="min-w-[80px]">DOL</TableHead>
+                    <TableHead className="min-w-[100px]">Accident Type</TableHead>
+                    <TableHead className="min-w-[120px]">Injuries</TableHead>
+                    <TableHead className="min-w-[80px]">Surgery</TableHead>
+                    <TableHead className="min-w-[80px]">Injections</TableHead>
+                    <TableHead className="min-w-[80px]">Liability %</TableHead>
+                    <TableHead className="min-w-[100px]">Policy Limit</TableHead>
+                    <TableHead className="min-w-[100px]">Settlement</TableHead>
+                    <TableHead className="min-w-[300px]">Narrative</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {cases.map((caseData) => (
+                    <TableRow key={caseData.case_id}>
+                      <TableCell className="font-mono text-xs font-bold sticky left-0 bg-white">{caseData.case_id}</TableCell>
+                      <TableCell className="text-xs">{caseData.case_type || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.venue || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.dol || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.acc_type || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.injuries || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.surgery || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.inject || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.liab_pct || 'N/A'}</TableCell>
+                      <TableCell className="text-xs">{caseData.pol_lim || 'N/A'}</TableCell>
+                      <TableCell className="text-xs font-semibold">{caseData.settle || 'N/A'}</TableCell>
+                      <TableCell className="text-xs max-w-[300px]" title={caseData.narrative}>
+                        <div className="max-h-20 overflow-y-auto">
+                          {caseData.narrative || 'N/A'}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
+              💡 <strong>All 12 CSV columns are captured:</strong> CaseID, CaseType, Venue, DOL, AccType, Injuries, Surgery, Inject, LiabPct, PolLim, Settle, and full Narrative text. 
+              {cases.length > 0 && cases[0].narrative && (
+                <span className="block mt-1">
+                  <strong>Narrative length example:</strong> Case {cases[0].case_id} has {cases[0].narrative.length} characters of narrative data.
+                </span>
+              )}
+            </div>
           </div>
         )}
       </CardContent>
