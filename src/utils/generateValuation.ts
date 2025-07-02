@@ -23,6 +23,7 @@ interface ValuationResult {
   rationale: string;
   midpoint: number;
   comparables: number[];
+  proposal: string;
 }
 
 /**
@@ -63,7 +64,8 @@ export function generateValuation(newCase: NewCase, comparables: Comparable[]): 
       recommendedRange: "$0 – $0",
       rationale: "No comparable cases found for analysis.",
       midpoint: 0,
-      comparables: []
+      comparables: [],
+      proposal: "$0"
     };
   }
 
@@ -77,7 +79,8 @@ export function generateValuation(newCase: NewCase, comparables: Comparable[]): 
       recommendedRange: "$0 – $0",
       rationale: "No valid settlement values found in comparable cases.",
       midpoint: 0,
-      comparables: comparables.map(c => c.CaseID)
+      comparables: comparables.map(c => c.CaseID),
+      proposal: "$0"
     };
   }
 
@@ -116,11 +119,25 @@ export function generateValuation(newCase: NewCase, comparables: Comparable[]): 
   
   const rationale = `Based on ${comparables.length} comparable cases in ${newCase.Venue} ${surgeryText}, considering policy limits of ${newCase.PolLim}.`;
 
-  // 5. Return result
+  // 5. Find comparable case closest to midpoint for proposal
+  const roundedMedian = Math.round(median);
+  let closestSettle = settleValues[0];
+  let minDistance = Math.abs(settleValues[0] - roundedMedian);
+  
+  for (const settle of settleValues) {
+    const distance = Math.abs(settle - roundedMedian);
+    if (distance < minDistance || (distance === minDistance && settle < closestSettle)) {
+      closestSettle = settle;
+      minDistance = distance;
+    }
+  }
+
+  // 6. Return result
   return {
     recommendedRange: `${formatCurrency(min)} – ${formatCurrency(max)}`,
     rationale,
-    midpoint: Math.round(median),
-    comparables: comparables.map(c => c.CaseID)
+    midpoint: roundedMedian,
+    comparables: comparables.map(c => c.CaseID),
+    proposal: formatCurrency(closestSettle)
   };
 }
