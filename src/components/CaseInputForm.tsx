@@ -99,7 +99,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     if (field === 'policyLimit') {
       newPolicies[index] = { ...newPolicies[index], [field]: typeof value === 'string' ? handleNumberInput(value) || 0 : value };
     } else {
-      newPolicies[index] = { ...newPolicies[index], [field]: value };
+      newPolicies[index] = { ...newPolicies[index], [field]: value as string };
     }
     setFormData({...formData, defendantPolicies: newPolicies});
   };
