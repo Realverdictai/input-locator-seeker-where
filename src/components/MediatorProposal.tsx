@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
 interface MediatorProposalProps {
   recommendedRange: string;
   midpoint: number;
@@ -6,8 +9,46 @@ interface MediatorProposalProps {
 }
 
 const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: MediatorProposalProps) => {
+  const [plaintiffEmail, setPlaintiffEmail] = useState('');
+  const [defenseEmail, setDefenseEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState('');
+  
   const expiryDate = new Date();
   expiryDate.setDate(expiryDate.getDate() + 7);
+
+  const handleSendProposal = async () => {
+    if (!plaintiffEmail || !defenseEmail) {
+      setMessage('Please enter both email addresses');
+      return;
+    }
+
+    setSending(true);
+    setMessage('');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mediation-proposal', {
+        body: {
+          plaintiffEmail,
+          defenseEmail,
+          proposalAmount: proposal,
+          recommendedRange,
+          rationale,
+          expiresOn: expiryDate.toLocaleDateString()
+        }
+      });
+
+      if (error) throw error;
+
+      setMessage('Proposal sent successfully to both parties!');
+      setPlaintiffEmail('');
+      setDefenseEmail('');
+    } catch (error: any) {
+      setMessage(`Error: ${error.message}`);
+    } finally {
+      setSending(false);
+    }
+  };
   
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
@@ -74,6 +115,79 @@ const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: M
         }}>
           This proposal expires on {expiryDate.toLocaleDateString()} at 5:00 PM.
         </p>
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{ marginBottom: '15px' }}>Send Proposal</h3>
+        
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Plaintiff's Email:
+            <input
+              type="email"
+              value={plaintiffEmail}
+              onChange={(e) => setPlaintiffEmail(e.target.value)}
+              placeholder="plaintiff@lawfirm.com"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Defense Email:
+            <input
+              type="email"
+              value={defenseEmail}
+              onChange={(e) => setDefenseEmail(e.target.value)}
+              placeholder="defense@insurance.com"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <button
+          onClick={handleSendProposal}
+          disabled={sending}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: sending ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: sending ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {sending ? 'Sending...' : 'Send Proposal'}
+        </button>
+
+        {message && (
+          <p style={{ 
+            marginTop: '10px',
+            padding: '10px',
+            backgroundColor: message.includes('Error') ? '#ffe6e6' : '#e6ffe6',
+            border: `1px solid ${message.includes('Error') ? '#ff9999' : '#99ff99'}`,
+            borderRadius: '4px',
+            color: message.includes('Error') ? '#cc0000' : '#006600'
+          }}>
+            {message}
+          </p>
+        )}
       </div>
       
       <div style={{ 
