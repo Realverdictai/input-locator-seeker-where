@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,10 +78,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     return parseFormattedNumber(value);
   };
 
-  // Helper function to handle formatted number input change
+  // Helper function to handle formatted number input change - Fixed type error
   const handleFormattedNumberChange = (field: keyof CaseData, value: string) => {
     const numericValue = handleNumberInput(value);
-    setFormData({...formData, [field]: numericValue});
+    setFormData(prev => ({...prev, [field]: numericValue}));
   };
 
   const addDefendantPolicy = () => {
