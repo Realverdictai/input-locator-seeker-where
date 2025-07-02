@@ -33,6 +33,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cases_master: {
+        Row: {
+          acc_type: string | null
+          case_id: number
+          case_type: string
+          created_at: string
+          dol: string | null
+          inject: string | null
+          injuries: string | null
+          liab_pct: string | null
+          narrative: string | null
+          pol_lim: string | null
+          settle: string | null
+          surgery: string | null
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          acc_type?: string | null
+          case_id: number
+          case_type: string
+          created_at?: string
+          dol?: string | null
+          inject?: string | null
+          injuries?: string | null
+          liab_pct?: string | null
+          narrative?: string | null
+          pol_lim?: string | null
+          settle?: string | null
+          surgery?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          acc_type?: string | null
+          case_id?: number
+          case_type?: string
+          created_at?: string
+          dol?: string | null
+          inject?: string | null
+          injuries?: string | null
+          liab_pct?: string | null
+          narrative?: string | null
+          pol_lim?: string | null
+          settle?: string | null
+          surgery?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
       mediation_sessions: {
         Row: {
           created_at: string
