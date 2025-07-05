@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { buildPdf } from '@/report/buildPdf';
 import { CaseData } from '@/types/verdict';
 
 interface MediatorProposalProps {
@@ -39,20 +38,6 @@ const MediatorProposal = ({
     setMessage('');
 
     try {
-      let pdfBuffer: Buffer | null = null;
-      
-      if (attachReport && caseData) {
-        // Generate PDF report
-        pdfBuffer = await buildPdf({
-          newCase: caseData,
-          evaluator,
-          mediatorProposal,
-          rationale,
-          sourceRows,
-          expiresOn
-        });
-      }
-
       const { data, error } = await supabase.functions.invoke('send-mediation-proposal', {
         body: {
           plaintiffEmail,
@@ -62,7 +47,8 @@ const MediatorProposal = ({
           rationale,
           expiresOn,
           attachReport,
-          pdfData: pdfBuffer ? pdfBuffer.toString('base64') : null
+          caseData: attachReport ? caseData : null,
+          sourceRows: attachReport ? sourceRows : null
         }
       });
 
