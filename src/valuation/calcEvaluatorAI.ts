@@ -132,7 +132,7 @@ async function findSimilarCasesWithFeatures(
     features: extractFeaturesFromDbRow(row),
     settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
     case_id: row.case_id
-  })).filter(case => case.settlement > 0);
+  })).filter(caseItem => caseItem.settlement > 0);
 }
 
 /**
@@ -158,7 +158,7 @@ async function fallbackSimilarCases(
       settlement: row.settlement || 0,
       case_id: row.case_id
     }))
-    .filter(case => case.settlement > 0)
+    .filter(caseItem => caseItem.settlement > 0)
     .slice(0, limit);
 }
 
