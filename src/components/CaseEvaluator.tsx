@@ -114,63 +114,87 @@ const CaseEvaluator = () => {
   };
 
   return (
-    <div className="container-pro section-spacing">
-      <h1 className="display-heading text-center mb-8">⚖️ Data-Driven Case Evaluator</h1>
-      <div className="professional-card p-6 text-center mb-8 bg-primary/5 border-primary/20">
-        <p className="text-primary font-semibold">
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>⚖️ Data-Driven Case Evaluator</h1>
+      <div style={{ 
+        textAlign: 'center', 
+        marginBottom: '20px',
+        padding: '10px',
+        backgroundColor: '#e7f3ff',
+        border: '1px solid #007bff',
+        borderRadius: '4px'
+      }}>
+        <p style={{ margin: 0, color: '#0066cc', fontWeight: 'bold' }}>
           Using Linear Model Analysis of 313 Real Settlement Cases
         </p>
       </div>
       
-      <form onSubmit={handleSubmit} className="professional-card p-8 mb-8">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Venue:
-            </label>
+      <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Venue:
             <input
               type="text"
               name="Venue"
               value={formData.Venue}
               onChange={handleInputChange}
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
               required
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Surgery (or "None"):
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Surgery (or "None"):
             <input
               type="text"
               name="Surgery"
               value={formData.Surgery}
               onChange={handleInputChange}
               placeholder="None"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
               required
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <label className="text-sm font-semibold text-foreground">
-              Injuries:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Injuries:
             <textarea
               name="Injuries"
               value={formData.Injuries}
               onChange={handleInputChange}
               rows={3}
-              className="premium-input w-full resize-y"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
               required
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Liability % (0-100):
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Liability % (0-100):
             <input
               type="number"
               name="LiabPct"
@@ -178,71 +202,101 @@ const CaseEvaluator = () => {
               onChange={handleInputChange}
               min="0"
               max="100"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
               required
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Accident Type:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Accident Type:
             <input
               type="text"
               name="AccType"
               value={formData.AccType}
               onChange={handleInputChange}
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
               required
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Medical Specials ($) - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Medical Specials ($) - Optional:
             <input
               type="number"
               name="medicalSpecials"
               value={formData.medicalSpecials}
               onChange={handleInputChange}
               placeholder="150000"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Howell (post-contracted) Specials ($) - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Howell (post-contracted) Specials ($) - Optional:
             <input
               type="number"
               name="howellSpecials"
               value={formData.howellSpecials}
               onChange={handleInputChange}
               placeholder="125000"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Surgery Type - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Surgery Type - Optional:
             <input
               type="text"
               name="surgeryType"
               value={formData.surgeryType}
               onChange={handleInputChange}
               placeholder="e.g., ACDF, Lumbar Fusion"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Number of Surgeries - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Number of Surgeries - Optional:
             <input
               type="number"
               name="surgeries"
@@ -250,28 +304,40 @@ const CaseEvaluator = () => {
               onChange={handleInputChange}
               placeholder="1"
               min="0"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Injection Type - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Injection Type - Optional:
             <input
               type="text"
               name="injectionType"
               value={formData.injectionType}
               onChange={handleInputChange}
               placeholder="e.g., Epidural Steroid, Facet Joint"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Number of Injections - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Number of Injections - Optional:
             <input
               type="number"
               name="injections"
@@ -279,161 +345,238 @@ const CaseEvaluator = () => {
               onChange={handleInputChange}
               placeholder="3"
               min="0"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             />
-          </div>
+          </label>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              TBI Severity - Optional:
-            </label>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            TBI Severity - Optional:
             <select
               name="tbiSeverity"
               value={formData.tbiSeverity}
               onChange={handleInputChange}
-              className="premium-select w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
             >
               <option value="">Select TBI severity</option>
               <option value="mild">Mild</option>
               <option value="moderate">Moderate</option>
               <option value="severe">Severe</option>
             </select>
-            <small className="text-muted-foreground text-xs">
-              Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
-            </small>
-          </div>
+          </label>
+          <small style={{ color: '#666', fontSize: '0.8em' }}>
+            Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
+          </small>
+        </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground">
-              Policy Limits ($):
-            </label>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Policy Limits ($):
             <input
               type="text"
               name="PolLim"
               value={formData.PolLim}
               onChange={handleInputChange}
               placeholder="$250,000"
-              className="premium-input w-full"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
               required
             />
-          </div>
+          </label>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`premium-button w-full mt-8 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: loading ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
         >
           {loading ? 'Loading...' : 'Evaluate Case'}
         </button>
       </form>
 
       {error && (
-        <div className="professional-card p-4 mb-6 bg-destructive/10 border-destructive/20">
-          <p className="text-destructive font-medium">{error}</p>
+        <div style={{ 
+          color: 'red', 
+          padding: '10px', 
+          backgroundColor: '#ffe6e6', 
+          border: '1px solid #ff9999',
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          {error}
         </div>
       )}
 
       {result && (
-        <div className="space-y-6">
-          <div className="professional-card p-8 text-center bg-success/5 border-success/20">
-            <h2 className="section-heading text-success mb-4">
+        <div style={{ marginTop: '30px' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '20px',
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px'
+          }}>
+            <h2 style={{ 
+              fontSize: '2em', 
+              fontWeight: 'bold', 
+              margin: '0 0 10px 0',
+              color: '#28a745'
+            }}>
               ⚖️ Data-Driven Settlement Analysis: {result.proposal}
             </h2>
-            <p className="body-large text-muted-foreground mb-4">
+            <p style={{ 
+              fontSize: '1.1em', 
+              margin: '10px 0',
+              color: '#6c757d',
+              lineHeight: '1.4'
+            }}>
               {result.rationale}
             </p>
-            <p className="text-sm text-muted-foreground italic mb-4">
+            <p style={{ 
+              fontSize: '0.9em', 
+              margin: '10px 0',
+              color: '#666',
+              fontStyle: 'italic'
+            }}>
               (from Case #{result.sourceCaseID})
             </p>
-            <p className="text-base font-semibold text-destructive">
+            <p style={{ 
+              fontSize: '1em', 
+              margin: '0',
+              color: '#dc3545',
+              fontWeight: 'bold'
+            }}>
               Open for acceptance until {result.expiresOn}
             </p>
           </div>
 
           {/* Policy Exceedance Risk Indicator */}
           {result.policyExceedanceRisk !== undefined && result.policyLimit && result.policyLimit > 0 && (
-            <div className={`professional-card p-6 ${
-              result.policyExceedanceRisk > 60 ? 'bg-destructive/5 border-destructive/20' : 
-              result.policyExceedanceRisk > 30 ? 'bg-warning/5 border-warning/20' : 
-              'bg-success/5 border-success/20'
-            }`}>
-              <h3 className={`card-heading flex items-center gap-2 ${
-                result.policyExceedanceRisk > 60 ? 'text-destructive' : 
-                result.policyExceedanceRisk > 30 ? 'text-warning' : 
-                'text-success'
-              }`}>
+            <div style={{ 
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: result.policyExceedanceRisk > 60 ? '#fff5f5' : result.policyExceedanceRisk > 30 ? '#fffbf0' : '#f0fff4',
+              border: `2px solid ${result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169'}`,
+              borderRadius: '8px'
+            }}>
+              <h3 style={{ 
+                marginBottom: '10px', 
+                color: result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
                 {result.policyExceedanceRisk > 60 ? '🚨' : result.policyExceedanceRisk > 30 ? '⚠️' : '✅'} Policy Limit Analysis
               </h3>
               
-              <div className="space-y-3">
-                <div className="text-sm">
-                  <span className="font-semibold">Policy Limit:</span> ${result.policyLimit.toLocaleString()}
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Policy Limit:</strong> ${result.policyLimit.toLocaleString()}
+              </div>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Settlement Recommendation:</strong> {result.proposal}
+              </div>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Coverage Ratio:</strong> {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}% of policy limits
+              </div>
+              
+              <div style={{ 
+                padding: '10px',
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                borderRadius: '4px',
+                fontSize: '0.9em'
+              }}>
+                <strong>Risk Assessment:</strong> {
+                  result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
+                  result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
+                  result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
+                  'LOW RISK - Settlement well within policy limits.'
+                }
+              </div>
+              
+              {/* Visual risk meter */}
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ fontSize: '0.8em', marginBottom: '5px' }}>
+                  <strong>Exceedance Risk: {result.policyExceedanceRisk}%</strong>
                 </div>
-                
-                <div className="text-sm">
-                  <span className="font-semibold">Settlement Recommendation:</span> {result.proposal}
-                </div>
-                
-                <div className="text-sm">
-                  <span className="font-semibold">Coverage Ratio:</span> {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}% of policy limits
-                </div>
-                
-                <div className="professional-card p-4 bg-background/70">
-                  <div className="text-sm">
-                    <span className="font-semibold">Risk Assessment:</span> {
-                      result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
-                      result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
-                      result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
-                      'LOW RISK - Settlement well within policy limits.'
-                    }
-                  </div>
-                </div>
-                
-                {/* Visual risk meter */}
-                <div>
-                  <div className="text-xs font-semibold mb-2">
-                    Exceedance Risk: {result.policyExceedanceRisk}%
-                  </div>
-                  <div className="w-full h-5 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-300 ${
-                        result.policyExceedanceRisk > 60 ? 'bg-gradient-to-r from-destructive/80 to-destructive' : 
-                        result.policyExceedanceRisk > 30 ? 'bg-gradient-to-r from-warning/80 to-warning' : 
-                        'bg-gradient-to-r from-success/80 to-success'
-                      }`}
-                      style={{ width: `${Math.min(result.policyExceedanceRisk, 100)}%` }}
-                    ></div>
-                  </div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '20px', 
+                  backgroundColor: '#e2e8f0',
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${Math.min(result.policyExceedanceRisk, 100)}%`,
+                    height: '100%',
+                    background: result.policyExceedanceRisk > 60 ? 
+                      'linear-gradient(90deg, #fc8181, #e53e3e)' : 
+                      result.policyExceedanceRisk > 30 ? 
+                      'linear-gradient(90deg, #f6ad55, #dd6b20)' : 
+                      'linear-gradient(90deg, #68d391, #38a169)',
+                    transition: 'width 0.3s ease'
+                  }}></div>
                 </div>
               </div>
             </div>
           )}
 
           {result.valueFactors && (
-            <div className="professional-card p-6">
-              <h3 className="card-heading text-muted-foreground mb-4">Settlement Analysis:</h3>
-              <div className="grid md:grid-cols-2 gap-6">
+            <div style={{ 
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '8px'
+            }}>
+              <h3 style={{ marginBottom: '15px', color: '#495057' }}>Settlement Analysis:</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 {result.valueFactors.increasing.length > 0 && (
                   <div>
-                    <h4 className="text-success font-semibold mb-3 flex items-center gap-2">
-                      📈 Factors Increasing Value:
-                    </h4>
-                    <ul className="space-y-2 pl-4">
+                    <h4 style={{ color: '#28a745', marginBottom: '10px' }}>📈 Factors Increasing Value:</h4>
+                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
                       {result.valueFactors.increasing.map((factor, index) => (
-                        <li key={index} className="text-success text-sm">{factor}</li>
+                        <li key={index} style={{ marginBottom: '5px', color: '#28a745' }}>{factor}</li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {result.valueFactors.decreasing.length > 0 && (
                   <div>
-                    <h4 className="text-destructive font-semibold mb-3 flex items-center gap-2">
-                      📉 Factors Decreasing Value:
-                    </h4>
-                    <ul className="space-y-2 pl-4">
+                    <h4 style={{ color: '#dc3545', marginBottom: '10px' }}>📉 Factors Decreasing Value:</h4>
+                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
                       {result.valueFactors.decreasing.map((factor, index) => (
-                        <li key={index} className="text-destructive text-sm">{factor}</li>
+                        <li key={index} style={{ marginBottom: '5px', color: '#dc3545' }}>{factor}</li>
                       ))}
                     </ul>
                   </div>
@@ -442,44 +585,71 @@ const CaseEvaluator = () => {
             </div>
           )}
 
-          <div className="text-center">
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
             <button
               onClick={() => setShowComparables(!showComparables)}
-              className="premium-button"
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
             >
               {showComparables ? 'Hide' : 'Show'} Similar Cases
             </button>
           </div>
 
           {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
-            <div className="professional-card p-6">
-              <h3 className="card-heading mb-4">Comparable Cases:</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-border">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="p-3 text-left border border-border font-semibold text-foreground">
-                        Case ID
-                      </th>
-                      <th className="p-3 text-left border border-border font-semibold text-foreground">
-                        Settlement Amount
-                      </th>
+            <div style={{ marginTop: '20px' }}>
+              <h3 style={{ marginBottom: '15px' }}>Comparable Cases:</h3>
+              <table style={{ 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                border: '1px solid #dee2e6'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
+                    <th style={{ 
+                      padding: '12px', 
+                      textAlign: 'left',
+                      border: '1px solid #dee2e6',
+                      fontWeight: 'bold'
+                    }}>
+                      Case ID
+                    </th>
+                    <th style={{ 
+                      padding: '12px', 
+                      textAlign: 'left',
+                      border: '1px solid #dee2e6',
+                      fontWeight: 'bold'
+                    }}>
+                      Settlement Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.comparableCases.map((caseItem, index) => (
+                    <tr key={caseItem.case_id} style={{
+                      backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
+                    }}>
+                      <td style={{ 
+                        padding: '12px',
+                        border: '1px solid #dee2e6'
+                      }}>
+                        {caseItem.case_id}
+                      </td>
+                      <td style={{ 
+                        padding: '12px',
+                        border: '1px solid #dee2e6'
+                      }}>
+                        ${caseItem.settlement_amount.toLocaleString()}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {result.comparableCases.map((caseItem, index) => (
-                      <tr key={caseItem.case_id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                        <td className="p-3 border border-border text-foreground">
-                          {caseItem.case_id}
-                        </td>
-                        <td className="p-3 border border-border text-foreground">
-                          ${caseItem.settlement_amount.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

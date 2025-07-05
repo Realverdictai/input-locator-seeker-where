@@ -16,7 +16,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/10">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
