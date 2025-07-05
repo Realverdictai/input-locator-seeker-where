@@ -57,8 +57,8 @@ export async function calcEvaluatorAI(
 
     console.log(`🔍 Found ${similarCases.length} similar cases`);
 
-    // Step 4: Fit ridge regression (α = 0.8)
-    const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.8);
+    // Step 4: Fit ridge regression (α = 0.3 for less aggressive regularization)
+    const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.3);
     console.log('📈 Ridge regression prediction:', regressionResult.prediction);
 
     // Step 4.5: Apply weights from weights.json (if not ignored)

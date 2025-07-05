@@ -24,7 +24,7 @@ export function fitRidgeRegression(
 
   // Convert features to matrix format
   const X = similarCases.map(c => featuresToArray(c.features));
-  const y = similarCases.map(c => Math.log(Math.max(c.settlement, 1000))); // Log transform settlements
+  const y = similarCases.map(c => c.settlement); // Use raw settlements, not log transformed
   const targetX = featuresToArray(targetFeatures);
 
   // Standardize features
@@ -34,8 +34,7 @@ export function fitRidgeRegression(
   const weights = solveRidgeRegression(standardizedX, y, alpha);
   
   // Make prediction
-  const logPrediction = dotProduct(standardizedTarget, weights);
-  const prediction = Math.exp(logPrediction);
+  const prediction = dotProduct(standardizedTarget, weights);
 
   // Calculate confidence based on feature similarity
   const confidence = calculateConfidence(targetFeatures, similarCases.map(c => c.features));
@@ -44,7 +43,7 @@ export function fitRidgeRegression(
   const roundedPrediction = Math.round(prediction / 500) * 500;
 
   return {
-    prediction: Math.max(roundedPrediction, 5000), // Minimum $5,000
+    prediction: Math.max(roundedPrediction, 25000), // Minimum $25,000 for injury cases
     confidence,
     nearestCaseIds: similarCases.map(c => c.case_id)
   };
