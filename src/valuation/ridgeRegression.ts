@@ -22,19 +22,16 @@ export function fitRidgeRegression(
     throw new Error('No similar cases found for regression');
   }
 
-  // Convert features to matrix format
+  // Convert features to matrix format (scaled for better numerical stability)
   const X = similarCases.map(c => featuresToArray(c.features));
-  const y = similarCases.map(c => c.settlement); // Use raw settlements, not log transformed
+  const y = similarCases.map(c => c.settlement);
   const targetX = featuresToArray(targetFeatures);
 
-  // Standardize features
-  const { standardizedX, standardizedTarget, means, stds } = standardizeFeatures(X, targetX);
-
-  // Fit ridge regression
-  const weights = solveRidgeRegression(standardizedX, y, alpha);
+  // Fit ridge regression without standardization to avoid prediction scaling issues
+  const weights = solveRidgeRegression(X, y, alpha);
   
   // Make prediction
-  const prediction = dotProduct(standardizedTarget, weights);
+  const prediction = dotProduct([1, ...targetX], weights); // Add intercept term
 
   // Calculate confidence based on feature similarity
   const confidence = calculateConfidence(targetFeatures, similarCases.map(c => c.features));
