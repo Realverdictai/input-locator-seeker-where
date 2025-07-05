@@ -24,9 +24,10 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/mediator" element={
                 <MediatorProposal 
-                  proposal="$99,000"
+                  mediatorProposal="$99,000"
+                  evaluator="$105,000"
                   rationale="Based on analysis of comparable cases in Los Angeles County with shoulder injuries, considering policy limits of $250,000."
-                  sourceCaseID={123}
+                  sourceRows={[123, 456, 789]}
                   expiresOn="January 12, 2025"
                 />
               } />
