@@ -115,7 +115,7 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
     let boost = 0;
     
     // Add injection value
-    const injectionCount = features.injectionCount || newCase.injections || 0;
+    const injectionCount = features.injectionCount || newCase.injections || newCase.injection_count || 0;
     if (injectionCount > 0) {
       boost += injectionCount * weights.defaultInjectionValue;
       console.log(`💉 Injection boost: ${injectionCount} × $${weights.defaultInjectionValue.toLocaleString()} = $${(injectionCount * weights.defaultInjectionValue).toLocaleString()}`);

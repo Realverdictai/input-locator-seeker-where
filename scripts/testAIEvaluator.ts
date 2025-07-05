@@ -6,28 +6,29 @@ import { calcEvaluatorAI } from '../src/valuation/calcEvaluatorAI';
 
 const testCase = {
   Venue: 'Los Angeles',
-  Surgery: 'Fusion',
-  Injuries: 'Lumbar disc herniation; Nerve root compression; Chronic pain syndrome',
+  Surgery: 'None',
+  Injuries: 'Mild traumatic brain injury; Cervical strain; Post-concussion syndrome',
   LiabPct: 100,
   AccType: 'Motor Vehicle Accident',
-  howell: 185000,
+  howell: 45000,
+  medicalSpecials: 50000,
   policyLimits: 300000,
-  surgeryType: 'Lumbar Fusion',
-  surgeries: 1,
+  surgeryType: 'None',
+  surgeries: 0,
   injectionType: 'Epidural Steroid',
   injections: 3,
   age: 45,
-  tbiLevel: 0,
+  tbiLevel: 1, // 1 = Mild TBI
   dol: '2022-06-15'
 };
 
-// Sample narrative with deduction triggers
+// Sample narrative WITHOUT deduction triggers
 const testNarrative = `
-Patient was involved in rear-end collision on 06/15/2022. Initial treatment began immediately.
-However, patient had a subsequent accident in September 2022 during the treatment period when he fell at home.
-There was also a significant gap in treatment from October to December 2022 (90+ days) due to patient non-compliance.
-Medical records indicate some pre-existing degenerative changes in the lumbar spine.
-Patient missed several appointments and was non-compliant with physical therapy recommendations.
+Patient was involved in rear-end collision on 06/15/2022. Patient sustained mild traumatic brain injury with post-concussion symptoms.
+Treatment began immediately with consistent follow-up care. Patient received 3 epidural steroid injections over treatment period.
+Medical specials total $50,000. Howell damages calculated at $45,000.
+Patient has been compliant with all treatment recommendations and attending all appointments.
+No pre-existing conditions affecting this injury. No subsequent accidents during treatment.
 `;
 
 async function runTest() {

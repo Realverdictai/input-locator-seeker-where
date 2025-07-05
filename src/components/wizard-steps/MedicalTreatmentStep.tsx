@@ -410,8 +410,8 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
             id="injections"
             type="number"
             min="0"
-            value={formData.injections || 0}
-            onChange={(e) => setFormData({...formData, injections: parseInt(e.target.value) || 0})}
+            value={formData.injections || ''}
+            onChange={(e) => setFormData({...formData, injections: e.target.value ? parseInt(e.target.value) : undefined})}
             placeholder="0"
           />
         </div>

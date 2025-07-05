@@ -117,7 +117,7 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     howellSpecials: caseData.howell || caseData.howell_num || 0,
     surgeryCount: caseData.surgery_count || surgeryList.length || 0,
     surgeryComplexity,
-    injectionCount: caseData.injection_count || (caseData.injection_list?.length || 0),
+    injectionCount: caseData.injection_count || caseData.injections || (caseData.injection_list?.length || 0),
     tbiSeverity: caseData.tbiLevel || 0,
     medTreatmentGapDays,
     totalTreatmentDuration,
