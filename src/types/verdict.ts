@@ -56,6 +56,8 @@ export interface CaseData {
   annualIncome?: number;
   futureSurgeryRecommended?: boolean;
   futureSurgeryDetails?: string;
+  futureSurgeryDate?: string;
+  willGetFutureSurgery?: boolean;
   treatmentGaps?: number;
   priorConditions?: string;
   medicalRecordsAnalysis?: string;

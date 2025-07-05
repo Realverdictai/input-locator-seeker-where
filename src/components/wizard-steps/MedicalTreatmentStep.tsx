@@ -1,10 +1,15 @@
 import { useState } from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { CaseData } from "@/types/verdict";
 import { Brain } from "lucide-react";
 
@@ -481,14 +486,74 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
         </div>
 
         {formData.futureSurgeryRecommended && (
-          <div className="space-y-2">
-            <Label htmlFor="futureSurgeryDetails">Future Surgery Details</Label>
-            <Textarea
-              id="futureSurgeryDetails"
-              value={formData.futureSurgeryDetails || ''}
-              onChange={(e) => setFormData({...formData, futureSurgeryDetails: e.target.value})}
-              placeholder="Describe recommended future surgery"
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="futureSurgeryDetails">Future Surgery Details</Label>
+              <Textarea
+                id="futureSurgeryDetails"
+                value={formData.futureSurgeryDetails || ''}
+                onChange={(e) => setFormData({...formData, futureSurgeryDetails: e.target.value})}
+                placeholder="Describe recommended future surgery"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Date of Future Surgery</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.futureSurgeryDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.futureSurgeryDate ? (
+                      format(new Date(formData.futureSurgeryDate), "PPP")
+                    ) : (
+                      <span>Select future surgery date (if known)</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={formData.futureSurgeryDate ? new Date(formData.futureSurgeryDate) : undefined}
+                    onSelect={(date) => setFormData({...formData, futureSurgeryDate: date?.toISOString().split('T')[0]})}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="willGetFutureSurgery"
+                checked={formData.willGetFutureSurgery || false}
+                onCheckedChange={(checked) => setFormData({...formData, willGetFutureSurgery: !!checked})}
+              />
+              <Label htmlFor="willGetFutureSurgery">Patient will definitely get this future surgery</Label>
+            </div>
+
+            {/* Impact Warning */}
+            {(!formData.willGetFutureSurgery || !formData.futureSurgeryDate) && (
+              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-yellow-700 text-sm">
+                  <strong>Valuation Impact:</strong> Future surgery costs will be minimized in the case evaluation since the surgery is {!formData.willGetFutureSurgery ? 'uncertain' : 'not scheduled'}.
+                </p>
+              </div>
+            )}
+
+            {formData.willGetFutureSurgery && formData.futureSurgeryDate && (
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-green-700 text-sm">
+                  <strong>Valuation Impact:</strong> Future surgery costs will be fully factored into the case evaluation since surgery is confirmed and scheduled.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
