@@ -44,9 +44,12 @@ export type Database = {
           inject: string | null
           injuries: string | null
           liab_pct: string | null
+          liab_pct_num: number | null
           narrative: string | null
           pol_lim: string | null
+          policy_limits_num: number | null
           settle: string | null
+          settle_num: number | null
           surgery: string | null
           updated_at: string
           venue: string | null
@@ -61,9 +64,12 @@ export type Database = {
           inject?: string | null
           injuries?: string | null
           liab_pct?: string | null
+          liab_pct_num?: number | null
           narrative?: string | null
           pol_lim?: string | null
+          policy_limits_num?: number | null
           settle?: string | null
+          settle_num?: number | null
           surgery?: string | null
           updated_at?: string
           venue?: string | null
@@ -78,9 +84,12 @@ export type Database = {
           inject?: string | null
           injuries?: string | null
           liab_pct?: string | null
+          liab_pct_num?: number | null
           narrative?: string | null
           pol_lim?: string | null
+          policy_limits_num?: number | null
           settle?: string | null
+          settle_num?: number | null
           surgery?: string | null
           updated_at?: string
           venue?: string | null

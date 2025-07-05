@@ -25,9 +25,9 @@ interface RegressionResult {
  * Extract features from case data
  */
 export function extractFeatures(caseData: any): CaseFeatures {
-  // Parse settlement amount
-  const howell = parseFloat(String(caseData.howell || caseData.Howell || '0').replace(/[$,]/g, '')) || 0;
-  const medSpecials = parseFloat(String(caseData.medicalSpecials || caseData.MedicalSpecials || howell * 1.5).replace(/[$,]/g, '')) || 0;
+  // Parse settlement amount - use numeric columns first
+  const howell = (caseData as any).howell_num || parseFloat(String(caseData.howell || caseData.Howell || '0').replace(/[$,]/g, '')) || 0;
+  const medSpecials = (caseData as any).med_specials_num || parseFloat(String(caseData.medicalSpecials || caseData.MedicalSpecials || howell * 1.5).replace(/[$,]/g, '')) || 0;
   
   // Surgery count
   const surgeryCount = parseInt(String(caseData.surgeries || caseData.SurgeryCount || (caseData.surgery && caseData.surgery !== 'None' ? 1 : 0))) || 0;
@@ -54,8 +54,8 @@ export function extractFeatures(caseData: any): CaseFeatures {
     venueMultiplier = 0.97;
   }
   
-  // Liability factor
-  const liabPct = parseFloat(String(caseData.liab_pct || caseData.LiabPct || '100')) || 100;
+  // Liability factor - use numeric column first
+  const liabPct = (caseData as any).liab_pct_num || parseFloat(String(caseData.liab_pct || caseData.LiabPct || '100')) || 100;
   const liabilityFactor = Math.min(1.0, liabPct / 100);
   
   // Prior accidents (1 if yes, 0 if no)
@@ -89,7 +89,7 @@ export function fitLocalModel(nearestCases: any[], alpha: number = 0.8): Regress
   
   for (const caseData of nearestCases) {
     const features = extractFeatures(caseData);
-    const settlement = parseFloat(String(caseData.settle || '0').replace(/[$,]/g, '')) || 0;
+    const settlement = (caseData as any).settle_num || parseFloat(String(caseData.settle || '0').replace(/[$,]/g, '')) || 0;
     
     if (settlement > 0) {
       // Feature vector

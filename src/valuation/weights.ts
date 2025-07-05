@@ -56,7 +56,7 @@ function calculateWeights(cases: CaseRow[]): WeightsCache {
   const howellSlope: { howell: number; settle: number }[] = [];
 
   cases.forEach(caseRow => {
-    const settlement = parseCurrency(caseRow.settle);
+    const settlement = (caseRow as any).settle_num || parseCurrency(caseRow.settle);
     if (settlement <= 0) return;
 
     allSettlements.push(settlement);

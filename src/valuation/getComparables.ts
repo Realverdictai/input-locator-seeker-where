@@ -81,9 +81,9 @@ function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): nu
   }
   
   // Liability percentage proximity (4 points max)
-  if (caseRow.liab_pct && newCase.LiabPct) {
-    const case_liab = parseFloat(caseRow.liab_pct) || 100;
-    const new_liab = parseFloat(newCase.LiabPct) || 100;
+  const case_liab = (caseRow as any).liab_pct_num || (caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100);
+  const new_liab = newCase.liab_pct_num || (newCase.LiabPct ? parseFloat(newCase.LiabPct) : 100);
+  if (case_liab && new_liab) {
     const liab_diff = Math.abs(case_liab - new_liab);
     score += Math.max(0, 4 - (liab_diff / 25));
   }
@@ -105,7 +105,7 @@ export async function getComparables(newCase: NewCase, limit: number = 25): Prom
     // Fetch all cases from database for similarity calculation
     const { data: allCases, error } = await supabase
       .from('cases_master')
-      .select('case_id, surgery, inject, injuries, settle, pol_lim, venue, liab_pct, acc_type')
+      .select('case_id, surgery, inject, injuries, settle, settle_num, pol_lim, policy_limits_num, venue, liab_pct, liab_pct_num, acc_type')
       .not('settle', 'is', null)
       .limit(500); // Get larger sample for better matching
     

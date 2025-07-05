@@ -26,11 +26,11 @@ export async function findNearestCases(
     // Convert embedding array to pgvector format
     const embeddingVector = `[${embedding.join(',')}]`;
     
-    // Get liability percentage as number
-    const liabPct = parseFloat(newCase.LiabPct || '100') || 100;
-    
-    // Determine policy bucket (simplified)
-    const policyLimits = parseInt(String(newCase.PolicyLimits || '0').replace(/[$,]/g, '')) || 0;
+  // Get liability percentage as number
+  const liabPct = newCase.liab_pct_num || newCase.LiabPct ? parseFloat(String(newCase.LiabPct).replace(/[^0-9.]/g, '')) || 100 : 100;
+  
+  // Determine policy bucket (simplified)
+  const policyLimits = newCase.policy_limits_num || newCase.PolicyLimits ? parseInt(String(newCase.PolicyLimits || '0').replace(/[$,]/g, '')) || 0 : 0;
     const policyBucket = policyLimits > 500000 ? 'high' : policyLimits > 100000 ? 'mid' : 'low';
     
     // TBI level mapping
@@ -117,9 +117,9 @@ function calculateFallbackSimilarity(caseRow: any, newCase: any): number {
   }
 
   // Liability percentage proximity (4 points max)
-  if (caseRow.liab_pct && newCase.LiabPct) {
-    const case_liab = parseFloat(caseRow.liab_pct) || 100;
-    const new_liab = parseFloat(newCase.LiabPct) || 100;
+  const case_liab = (caseRow as any).liab_pct_num || (caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100);
+  const new_liab = newCase.liab_pct_num || (newCase.LiabPct ? parseFloat(newCase.LiabPct) : 100);
+  if (case_liab && new_liab) {
     const liab_diff = Math.abs(case_liab - new_liab);
     score += Math.max(0, 4 - (liab_diff / 25));
   }

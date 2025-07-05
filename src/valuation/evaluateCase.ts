@@ -48,7 +48,7 @@ export async function evaluateCase(newCase: any): Promise<EvaluationResult> {
     console.log('💰 Predicted evaluator amount:', evaluatorAmount);
     
     // Step 5: Calculate mediator proposal
-    const policyLimits = parseInt(String(newCase.PolicyLimits || '0').replace(/[$,]/g, '')) || 0;
+    const policyLimits = newCase.policy_limits_num || parseInt(String(newCase.PolicyLimits || '0').replace(/[$,]/g, '')) || 0;
     let mediatorAmount: number;
     
     if (policyLimits > 0 && evaluatorAmount >= (policyLimits * 0.9)) {
