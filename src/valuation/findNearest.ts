@@ -39,7 +39,7 @@ export async function findNearestCases(
     // Has surgery flag
     const hasSurgery = !!(newCase.Surgery && newCase.Surgery !== 'None');
 
-    const { data, error } = await supabase.rpc('find_similar_cases', {
+    const { data, error } = await supabase.rpc('hybrid_case_similarity', {
       query_embedding: embeddingVector,
       query_liab_pct: liabPct,
       query_policy_bucket: policyBucket,
@@ -54,7 +54,7 @@ export async function findNearestCases(
       return await fallbackSimilaritySearch(newCase, limit);
     }
 
-    return data || [];
+    return (data as NearestCase[]) || [];
     
   } catch (error) {
     console.error('Error in findNearestCases:', error);

@@ -212,6 +212,29 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      hybrid_case_similarity: {
+        Args: {
+          query_embedding: string
+          query_liab_pct?: number
+          query_policy_bucket?: string
+          query_tbi_level?: number
+          query_has_surgery?: boolean
+          result_limit?: number
+        }
+        Returns: {
+          case_id: number
+          surgery: string
+          inject: string
+          injuries: string
+          settle: string
+          pol_lim: string
+          venue: string
+          liab_pct: string
+          acc_type: string
+          narrative: string
+          score: number
+        }[]
+      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
