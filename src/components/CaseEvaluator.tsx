@@ -38,6 +38,8 @@ interface ValuationResult {
     high: number;
   };
   policyExceedanceRisk?: number;
+  policyLimit?: number;
+  settlementAmount?: number;
 }
 
 interface ComparableCase {
@@ -476,6 +478,78 @@ const CaseEvaluator = () => {
               Open for acceptance until {result.expiresOn}
             </p>
           </div>
+
+          {/* Policy Exceedance Risk Indicator */}
+          {result.policyExceedanceRisk !== undefined && result.policyLimit && result.policyLimit > 0 && (
+            <div style={{ 
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: result.policyExceedanceRisk > 60 ? '#fff5f5' : result.policyExceedanceRisk > 30 ? '#fffbf0' : '#f0fff4',
+              border: `2px solid ${result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169'}`,
+              borderRadius: '8px'
+            }}>
+              <h3 style={{ 
+                marginBottom: '10px', 
+                color: result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                {result.policyExceedanceRisk > 60 ? '🚨' : result.policyExceedanceRisk > 30 ? '⚠️' : '✅'} Policy Limit Analysis
+              </h3>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Policy Limit:</strong> ${result.policyLimit.toLocaleString()}
+              </div>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Settlement Recommendation:</strong> {result.proposal}
+              </div>
+              
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Coverage Ratio:</strong> {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}% of policy limits
+              </div>
+              
+              <div style={{ 
+                padding: '10px',
+                backgroundColor: 'rgba(255,255,255,0.7)',
+                borderRadius: '4px',
+                fontSize: '0.9em'
+              }}>
+                <strong>Risk Assessment:</strong> {
+                  result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
+                  result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
+                  result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
+                  'LOW RISK - Settlement well within policy limits.'
+                }
+              </div>
+              
+              {/* Visual risk meter */}
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ fontSize: '0.8em', marginBottom: '5px' }}>
+                  <strong>Exceedance Risk: {result.policyExceedanceRisk}%</strong>
+                </div>
+                <div style={{ 
+                  width: '100%', 
+                  height: '20px', 
+                  backgroundColor: '#e2e8f0',
+                  borderRadius: '10px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${Math.min(result.policyExceedanceRisk, 100)}%`,
+                    height: '100%',
+                    background: result.policyExceedanceRisk > 60 ? 
+                      'linear-gradient(90deg, #fc8181, #e53e3e)' : 
+                      result.policyExceedanceRisk > 30 ? 
+                      'linear-gradient(90deg, #f6ad55, #dd6b20)' : 
+                      'linear-gradient(90deg, #68d391, #38a169)',
+                    transition: 'width 0.3s ease'
+                  }}></div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {result.valueFactors && (
             <div style={{ 
