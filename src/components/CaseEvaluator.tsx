@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { generateValuation } from '@/utils/generateValuation';
-import { findComparables } from '@/integrations/supabase/findComparables';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface FormData {
   Venue: string;
@@ -70,8 +78,7 @@ const CaseEvaluator = () => {
   const [comparableCases, setComparableCases] = useState<ComparableCase[]>([]);
   const [showComparables, setShowComparables] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -113,545 +120,357 @@ const CaseEvaluator = () => {
     }
   };
 
+  const getRiskLevel = (risk: number) => {
+    if (risk > 85) return { label: 'CRITICAL', color: 'destructive', icon: AlertCircle };
+    if (risk > 60) return { label: 'HIGH', color: 'destructive', icon: AlertTriangle };
+    if (risk > 30) return { label: 'MODERATE', color: 'warning', icon: AlertTriangle };
+    return { label: 'LOW', color: 'success', icon: CheckCircle };
+  };
+
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>⚖️ Data-Driven Case Evaluator</h1>
-      <div style={{ 
-        textAlign: 'center', 
-        marginBottom: '20px',
-        padding: '10px',
-        backgroundColor: '#e7f3ff',
-        border: '1px solid #007bff',
-        borderRadius: '4px'
-      }}>
-        <p style={{ margin: 0, color: '#0066cc', fontWeight: 'bold' }}>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold mb-4">⚖️ Verdict AI Case Evaluator</h1>
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
           Using Linear Model Analysis of 313 Real Settlement Cases
-        </p>
+        </Badge>
       </div>
-      
-      <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Venue:
-            <input
-              type="text"
-              name="Venue"
-              value={formData.Venue}
-              onChange={handleInputChange}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-              required
-            />
-          </label>
-        </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Surgery (or "None"):
-            <input
-              type="text"
-              name="Surgery"
-              value={formData.Surgery}
-              onChange={handleInputChange}
-              placeholder="None"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-              required
-            />
-          </label>
-        </div>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Case Information</CardTitle>
+          <CardDescription>Enter case details for data-driven settlement analysis</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="venue">Venue</Label>
+                <Input
+                  id="venue"
+                  value={formData.Venue}
+                  onChange={(e) => handleInputChange('Venue', e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="acctype">Accident Type</Label>
+                <Input
+                  id="acctype"
+                  value={formData.AccType}
+                  onChange={(e) => handleInputChange('AccType', e.target.value)}
+                  required
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Injuries:
-            <textarea
-              name="Injuries"
-              value={formData.Injuries}
-              onChange={handleInputChange}
-              rows={3}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                resize: 'vertical'
-              }}
-              required
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="surgery">Surgery (or "None")</Label>
+                <Input
+                  id="surgery"
+                  value={formData.Surgery}
+                  onChange={(e) => handleInputChange('Surgery', e.target.value)}
+                  placeholder="None"
+                  required
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Liability % (0-100):
-            <input
-              type="number"
-              name="LiabPct"
-              value={formData.LiabPct}
-              onChange={handleInputChange}
-              min="0"
-              max="100"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-              required
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="liabpct">Liability % (0-100)</Label>
+                <Input
+                  id="liabpct"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={formData.LiabPct}
+                  onChange={(e) => handleInputChange('LiabPct', e.target.value)}
+                  required
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Accident Type:
-            <input
-              type="text"
-              name="AccType"
-              value={formData.AccType}
-              onChange={handleInputChange}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-              required
-            />
-          </label>
-        </div>
+              <div className="md:col-span-2">
+                <Label htmlFor="injuries">Injuries</Label>
+                <Textarea
+                  id="injuries"
+                  value={formData.Injuries}
+                  onChange={(e) => handleInputChange('Injuries', e.target.value)}
+                  rows={3}
+                  required
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Medical Specials ($) - Optional:
-            <input
-              type="number"
-              name="medicalSpecials"
-              value={formData.medicalSpecials}
-              onChange={handleInputChange}
-              placeholder="150000"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="medicalSpecials">Medical Specials ($)</Label>
+                <Input
+                  id="medicalSpecials"
+                  type="number"
+                  value={formData.medicalSpecials}
+                  onChange={(e) => handleInputChange('medicalSpecials', e.target.value)}
+                  placeholder="150000"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Howell (post-contracted) Specials ($) - Optional:
-            <input
-              type="number"
-              name="howellSpecials"
-              value={formData.howellSpecials}
-              onChange={handleInputChange}
-              placeholder="125000"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="howellSpecials">Howell Specials ($)</Label>
+                <Input
+                  id="howellSpecials"
+                  type="number"
+                  value={formData.howellSpecials}
+                  onChange={(e) => handleInputChange('howellSpecials', e.target.value)}
+                  placeholder="125000"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Surgery Type - Optional:
-            <input
-              type="text"
-              name="surgeryType"
-              value={formData.surgeryType}
-              onChange={handleInputChange}
-              placeholder="e.g., ACDF, Lumbar Fusion"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="surgeryType">Surgery Type</Label>
+                <Input
+                  id="surgeryType"
+                  value={formData.surgeryType}
+                  onChange={(e) => handleInputChange('surgeryType', e.target.value)}
+                  placeholder="e.g., ACDF, Lumbar Fusion"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Number of Surgeries - Optional:
-            <input
-              type="number"
-              name="surgeries"
-              value={formData.surgeries}
-              onChange={handleInputChange}
-              placeholder="1"
-              min="0"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="surgeries">Number of Surgeries</Label>
+                <Input
+                  id="surgeries"
+                  type="number"
+                  min="0"
+                  value={formData.surgeries}
+                  onChange={(e) => handleInputChange('surgeries', e.target.value)}
+                  placeholder="1"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Injection Type - Optional:
-            <input
-              type="text"
-              name="injectionType"
-              value={formData.injectionType}
-              onChange={handleInputChange}
-              placeholder="e.g., Epidural Steroid, Facet Joint"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="injectionType">Injection Type</Label>
+                <Input
+                  id="injectionType"
+                  value={formData.injectionType}
+                  onChange={(e) => handleInputChange('injectionType', e.target.value)}
+                  placeholder="e.g., Epidural Steroid"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Number of Injections - Optional:
-            <input
-              type="number"
-              name="injections"
-              value={formData.injections}
-              onChange={handleInputChange}
-              placeholder="3"
-              min="0"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="injections">Number of Injections</Label>
+                <Input
+                  id="injections"
+                  type="number"
+                  min="0"
+                  value={formData.injections}
+                  onChange={(e) => handleInputChange('injections', e.target.value)}
+                  placeholder="3"
+                />
+              </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            TBI Severity - Optional:
-            <select
-              name="tbiSeverity"
-              value={formData.tbiSeverity}
-              onChange={handleInputChange}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-            >
-              <option value="">Select TBI severity</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
-            </select>
-          </label>
-          <small style={{ color: '#666', fontSize: '0.8em' }}>
-            Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
-          </small>
-        </div>
+              <div>
+                <Label htmlFor="tbiSeverity">TBI Severity</Label>
+                <Select value={formData.tbiSeverity} onValueChange={(value) => handleInputChange('tbiSeverity', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select TBI severity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mild">Mild</SelectItem>
+                    <SelectItem value="moderate">Moderate</SelectItem>
+                    <SelectItem value="severe">Severe</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
+                </p>
+              </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Policy Limits ($):
-            <input
-              type="text"
-              name="PolLim"
-              value={formData.PolLim}
-              onChange={handleInputChange}
-              placeholder="$250,000"
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                marginTop: '5px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
-              required
-            />
-          </label>
-        </div>
+              <div>
+                <Label htmlFor="pollim">Policy Limits ($)</Label>
+                <Input
+                  id="pollim"
+                  value={formData.PolLim}
+                  onChange={(e) => handleInputChange('PolLim', e.target.value)}
+                  placeholder="$250,000"
+                  required
+                />
+              </div>
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: loading ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Loading...' : 'Evaluate Case'}
-        </button>
-      </form>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Analyzing Case...' : 'Evaluate Case'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {error && (
-        <div style={{ 
-          color: 'red', 
-          padding: '10px', 
-          backgroundColor: '#ffe6e6', 
-          border: '1px solid #ff9999',
-          borderRadius: '4px',
-          marginBottom: '20px'
-        }}>
-          {error}
-        </div>
+        <Card className="mb-6 border-destructive bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="w-4 h-4" />
+              <p className="font-medium">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {result && (
-        <div style={{ marginTop: '30px' }}>
-          <div style={{ 
-            textAlign: 'center', 
-            marginBottom: '20px',
-            padding: '20px',
-            backgroundColor: '#f8f9fa',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px'
-          }}>
-            <h2 style={{ 
-              fontSize: '2em', 
-              fontWeight: 'bold', 
-              margin: '0 0 10px 0',
-              color: '#28a745'
-            }}>
-              ⚖️ Data-Driven Settlement Analysis: {result.proposal}
-            </h2>
-            <p style={{ 
-              fontSize: '1.1em', 
-              margin: '10px 0',
-              color: '#6c757d',
-              lineHeight: '1.4'
-            }}>
-              {result.rationale}
-            </p>
-            <p style={{ 
-              fontSize: '0.9em', 
-              margin: '10px 0',
-              color: '#666',
-              fontStyle: 'italic'
-            }}>
-              (from Case #{result.sourceCaseID})
-            </p>
-            <p style={{ 
-              fontSize: '1em', 
-              margin: '0',
-              color: '#dc3545',
-              fontWeight: 'bold'
-            }}>
-              Open for acceptance until {result.expiresOn}
-            </p>
-          </div>
+        <div className="space-y-6">
+          {/* Main Settlement Result */}
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl text-green-700">
+                ⚖️ Settlement Analysis: {result.proposal}
+              </CardTitle>
+              <CardDescription className="text-base">
+                {result.rationale}
+              </CardDescription>
+              <div className="flex justify-center gap-4 text-sm text-muted-foreground">
+                <span>Case #{result.sourceCaseID}</span>
+                <span>•</span>
+                <span className="text-red-600 font-medium">Expires: {result.expiresOn}</span>
+              </div>
+            </CardHeader>
+          </Card>
 
-          {/* Policy Exceedance Risk Indicator */}
+          {/* Policy Exceedance Risk Analysis */}
           {result.policyExceedanceRisk !== undefined && result.policyLimit && result.policyLimit > 0 && (
-            <div style={{ 
-              marginTop: '20px',
-              padding: '15px',
-              backgroundColor: result.policyExceedanceRisk > 60 ? '#fff5f5' : result.policyExceedanceRisk > 30 ? '#fffbf0' : '#f0fff4',
-              border: `2px solid ${result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169'}`,
-              borderRadius: '8px'
-            }}>
-              <h3 style={{ 
-                marginBottom: '10px', 
-                color: result.policyExceedanceRisk > 60 ? '#e53e3e' : result.policyExceedanceRisk > 30 ? '#dd6b20' : '#38a169',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                {result.policyExceedanceRisk > 60 ? '🚨' : result.policyExceedanceRisk > 30 ? '⚠️' : '✅'} Policy Limit Analysis
-              </h3>
-              
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Policy Limit:</strong> ${result.policyLimit.toLocaleString()}
-              </div>
-              
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Settlement Recommendation:</strong> {result.proposal}
-              </div>
-              
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Coverage Ratio:</strong> {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}% of policy limits
-              </div>
-              
-              <div style={{ 
-                padding: '10px',
-                backgroundColor: 'rgba(255,255,255,0.7)',
-                borderRadius: '4px',
-                fontSize: '0.9em'
-              }}>
-                <strong>Risk Assessment:</strong> {
-                  result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
-                  result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
-                  result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
-                  'LOW RISK - Settlement well within policy limits.'
-                }
-              </div>
-              
-              {/* Visual risk meter */}
-              <div style={{ marginTop: '10px' }}>
-                <div style={{ fontSize: '0.8em', marginBottom: '5px' }}>
-                  <strong>Exceedance Risk: {result.policyExceedanceRisk}%</strong>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {getRiskLevel(result.policyExceedanceRisk).icon === AlertCircle && <AlertCircle className="w-5 h-5 text-red-500" />}
+                  {getRiskLevel(result.policyExceedanceRisk).icon === AlertTriangle && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
+                  {getRiskLevel(result.policyExceedanceRisk).icon === CheckCircle && <CheckCircle className="w-5 h-5 text-green-500" />}
+                  Policy Limit Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">Policy Limit:</span>
+                    <p className="text-lg font-bold">${result.policyLimit.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Settlement:</span>
+                    <p className="text-lg font-bold">{result.proposal}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">Coverage Ratio:</span>
+                    <p className="text-lg font-bold">
+                      {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}%
+                    </p>
+                  </div>
                 </div>
-                <div style={{ 
-                  width: '100%', 
-                  height: '20px', 
-                  backgroundColor: '#e2e8f0',
-                  borderRadius: '10px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ 
-                    width: `${Math.min(result.policyExceedanceRisk, 100)}%`,
-                    height: '100%',
-                    background: result.policyExceedanceRisk > 60 ? 
-                      'linear-gradient(90deg, #fc8181, #e53e3e)' : 
-                      result.policyExceedanceRisk > 30 ? 
-                      'linear-gradient(90deg, #f6ad55, #dd6b20)' : 
-                      'linear-gradient(90deg, #68d391, #38a169)',
-                    transition: 'width 0.3s ease'
-                  }}></div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Exceedance Risk</span>
+                    <Badge variant={getRiskLevel(result.policyExceedanceRisk).color as any}>
+                      {getRiskLevel(result.policyExceedanceRisk).label} RISK
+                    </Badge>
+                  </div>
+                  <Progress value={result.policyExceedanceRisk} className="h-3" />
+                  <p className="text-center text-sm text-muted-foreground mt-1">
+                    {result.policyExceedanceRisk}% chance of exceeding policy limits
+                  </p>
                 </div>
-              </div>
-            </div>
+
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm">
+                    <span className="font-medium">Risk Assessment:</span>{' '}
+                    {result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
+                     result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
+                     result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
+                     'LOW RISK - Settlement well within policy limits.'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
+          {/* Value Factors Analysis */}
           {result.valueFactors && (
-            <div style={{ 
-              marginTop: '20px',
-              padding: '15px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '8px'
-            }}>
-              <h3 style={{ marginBottom: '15px', color: '#495057' }}>Settlement Analysis:</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                {result.valueFactors.increasing.length > 0 && (
-                  <div>
-                    <h4 style={{ color: '#28a745', marginBottom: '10px' }}>📈 Factors Increasing Value:</h4>
-                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                      {result.valueFactors.increasing.map((factor, index) => (
-                        <li key={index} style={{ marginBottom: '5px', color: '#28a745' }}>{factor}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {result.valueFactors.decreasing.length > 0 && (
-                  <div>
-                    <h4 style={{ color: '#dc3545', marginBottom: '10px' }}>📉 Factors Decreasing Value:</h4>
-                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                      {result.valueFactors.decreasing.map((factor, index) => (
-                        <li key={index} style={{ marginBottom: '5px', color: '#dc3545' }}>{factor}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Settlement Factor Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {result.valueFactors.increasing.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-green-600 mb-3 flex items-center gap-2">
+                        📈 Value Increasing Factors
+                      </h4>
+                      <ul className="space-y-1">
+                        {result.valueFactors.increasing.map((factor, index) => (
+                          <li key={index} className="text-sm text-green-700 pl-2 border-l-2 border-green-200">
+                            {factor}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {result.valueFactors.decreasing.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
+                        📉 Value Decreasing Factors
+                      </h4>
+                      <ul className="space-y-1">
+                        {result.valueFactors.decreasing.map((factor, index) => (
+                          <li key={index} className="text-sm text-red-700 pl-2 border-l-2 border-red-200">
+                            {factor}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Comparable Cases */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Comparable Cases</CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowComparables(!showComparables)}
+                >
+                  {showComparables ? 'Hide' : 'Show'} Similar Cases
+                </Button>
               </div>
-            </div>
-          )}
-
-          <div style={{ marginTop: '20px', textAlign: 'center' }}>
-            <button
-              onClick={() => setShowComparables(!showComparables)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              {showComparables ? 'Hide' : 'Show'} Similar Cases
-            </button>
-          </div>
-
-          {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
-            <div style={{ marginTop: '20px' }}>
-              <h3 style={{ marginBottom: '15px' }}>Comparable Cases:</h3>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                border: '1px solid #dee2e6'
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ 
-                      padding: '12px', 
-                      textAlign: 'left',
-                      border: '1px solid #dee2e6',
-                      fontWeight: 'bold'
-                    }}>
-                      Case ID
-                    </th>
-                    <th style={{ 
-                      padding: '12px', 
-                      textAlign: 'left',
-                      border: '1px solid #dee2e6',
-                      fontWeight: 'bold'
-                    }}>
-                      Settlement Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.comparableCases.map((caseItem, index) => (
-                    <tr key={caseItem.case_id} style={{
-                      backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
-                    }}>
-                      <td style={{ 
-                        padding: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        {caseItem.case_id}
-                      </td>
-                      <td style={{ 
-                        padding: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        ${caseItem.settlement_amount.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            </CardHeader>
+            {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-border rounded-lg">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="p-3 text-left border border-border font-semibold">
+                          Case ID
+                        </th>
+                        <th className="p-3 text-left border border-border font-semibold">
+                          Settlement Amount
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.comparableCases.map((caseItem, index) => (
+                        <tr key={caseItem.case_id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                          <td className="p-3 border border-border">
+                            {caseItem.case_id}
+                          </td>
+                          <td className="p-3 border border-border font-medium">
+                            ${caseItem.settlement_amount.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            )}
+          </Card>
         </div>
       )}
     </div>
