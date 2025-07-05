@@ -61,8 +61,16 @@ export async function calcEvaluatorAI(
     const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.8);
     console.log('📈 Ridge regression prediction:', regressionResult.prediction);
 
-    // Step 5: Apply smart deductions
-    const deductionResult = applyDeductions(regressionResult.prediction, newCase, narrativeText);
+    // Step 4.5: Apply weights from weights.json (if not ignored)
+    let weightedPrediction = regressionResult.prediction;
+    if (!ignoreWeights) {
+      const weightsBoost = await applyWeightsBoost(newCase, targetFeatures);
+      weightedPrediction += weightsBoost;
+      console.log(`💰 Added weights boost: $${weightsBoost.toLocaleString()}, new total: $${weightedPrediction.toLocaleString()}`);
+    }
+
+    // Step 5: Apply smart deductions  
+    const deductionResult = applyDeductions(weightedPrediction, newCase, narrativeText);
     console.log('⚖️ Applied deductions:', deductionResult);
 
     // Step 6: Calculate mediator proposal
@@ -81,7 +89,7 @@ export async function calcEvaluatorAI(
     );
 
     return {
-      evaluator: `$${regressionResult.prediction.toLocaleString()}`,
+      evaluator: `$${weightedPrediction.toLocaleString()}`,
       deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
       evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
       mediatorProposal: mediator,
@@ -94,6 +102,52 @@ export async function calcEvaluatorAI(
   } catch (error) {
     console.error('❌ AI evaluation failed:', error);
     throw new Error(`AI evaluation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Apply weights boost from weights.json
+ */
+async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<number> {
+  try {
+    // Import weights dynamically
+    const weights = await import('../valuation/weights.json');
+    let boost = 0;
+    
+    // Add injection value
+    const injectionCount = features.injectionCount || newCase.injections || 0;
+    if (injectionCount > 0) {
+      boost += injectionCount * weights.defaultInjectionValue;
+      console.log(`💉 Injection boost: ${injectionCount} × $${weights.defaultInjectionValue.toLocaleString()} = $${(injectionCount * weights.defaultInjectionValue).toLocaleString()}`);
+    }
+    
+    // Add TBI value
+    const tbiLevel = features.tbiSeverity || newCase.tbiLevel || 0;
+    const tbiLabels = ['None', 'Mild', 'Moderate', 'Severe'];
+    const tbiLabel = tbiLabels[tbiLevel] || 'None';
+    if (weights.tbiWeights[tbiLabel]) {
+      boost += weights.tbiWeights[tbiLabel];
+      console.log(`🧠 TBI boost (${tbiLabel}): $${weights.tbiWeights[tbiLabel].toLocaleString()}`);
+    }
+    
+    // Add surgery weights if available  
+    const surgeryCount = features.surgeryCount || newCase.surgeries || 0;
+    const surgeryType = newCase.surgeryType || newCase.Surgery || '';
+    if (surgeryCount > 0 && surgeryType) {
+      const surgeryKey = Object.keys(weights.surgeryWeights).find(key => 
+        surgeryType.toLowerCase().includes(key.toLowerCase())
+      );
+      if (surgeryKey) {
+        const surgeryBoost = surgeryCount * weights.surgeryWeights[surgeryKey];
+        boost += surgeryBoost;
+        console.log(`🔧 Surgery boost (${surgeryKey}): ${surgeryCount} × $${weights.surgeryWeights[surgeryKey].toLocaleString()} = $${surgeryBoost.toLocaleString()}`);
+      }
+    }
+    
+    return boost;
+  } catch (error) {
+    console.warn('Failed to load weights, skipping boost:', error);
+    return 0;
   }
 }
 
@@ -194,9 +248,20 @@ async function fallbackEvaluation(
 ): Promise<AIEvaluationResult> {
   console.log('🔄 Using fallback evaluation method...');
   
+  const ignoreWeights = process.env.IGNORE_WEIGHTS === 'true';
+  
   const similarCases = await fallbackSimilarCases(targetFeatures, 25);
   const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.8);
-  const deductionResult = applyDeductions(regressionResult.prediction, newCase, narrativeText);
+  
+  // Apply weights boost (same as main path)
+  let weightedPrediction = regressionResult.prediction;
+  if (!ignoreWeights) {
+    const weightsBoost = await applyWeightsBoost(newCase, targetFeatures);
+    weightedPrediction += weightsBoost;
+    console.log(`💰 Fallback: Added weights boost: $${weightsBoost.toLocaleString()}, new total: $${weightedPrediction.toLocaleString()}`);
+  }
+  
+  const deductionResult = applyDeductions(weightedPrediction, newCase, narrativeText);
   
   const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
   const { mediator, expiresOn } = calculateMediatorProposal(
@@ -205,14 +270,14 @@ async function fallbackEvaluation(
   );
 
   return {
-    evaluator: `$${regressionResult.prediction.toLocaleString()}`,
+    evaluator: `$${weightedPrediction.toLocaleString()}`,
     deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
     evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
     mediatorProposal: mediator,
     expiresOn,
     confidence: regressionResult.confidence,
     nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
-    rationale: generateRationale(regressionResult, deductionResult, similarCases.length, false)
+    rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights)
   };
 }
 
