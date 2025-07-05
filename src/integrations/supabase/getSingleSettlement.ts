@@ -1,12 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getWeights } from "@/integrations/supabase/getWeights";
 
 interface NewCase {
-  Venue: string;
-  Surgery: string;
+  Venue?: string;
+  Surgery?: string;
   Injuries: string;
-  LiabPct: string;
-  AccType: string;
+  LiabPct?: string;
+  AccType?: string;
   PolLim: string;
+  medicalSpecials?: number;
+  howellSpecials?: number;
+  tbiSeverity?: string;
+  surgeryType?: string;
+  injectionType?: string;
+  surgeries?: number;
+  injections?: number;
 }
 
 interface CaseRow {
@@ -26,8 +34,9 @@ interface ScoredCase extends CaseRow {
 }
 
 interface SingleSettlementResult {
-  amount: string;
-  sourceCaseID: number;
+  proposal: string;
+  rationale: string;
+  sourceCaseIDs: number[];
 }
 
 /**
@@ -96,11 +105,11 @@ function calculateSimilarity(input: NewCase, dbCase: CaseRow): number {
 }
 
 /**
- * Get single settlement amount from the 25 most similar cases
+ * Get single settlement amount using data-driven linear model
  */
 export async function getSingleSettlement(newCase: NewCase): Promise<SingleSettlementResult> {
   try {
-    // Query all cases from the database (excluding narrative)
+    // Get all cases from database
     const { data: cases, error } = await supabase
       .from('cases_master')
       .select(`
@@ -112,7 +121,8 @@ export async function getSingleSettlement(newCase: NewCase): Promise<SingleSettl
         liab_pct,
         pol_lim,
         settle,
-        acc_type
+        acc_type,
+        inject
       `);
 
     if (error) {
@@ -121,8 +131,9 @@ export async function getSingleSettlement(newCase: NewCase): Promise<SingleSettl
 
     if (!cases || cases.length === 0) {
       return {
-        amount: "$0",
-        sourceCaseID: 0
+        proposal: "$0",
+        rationale: "No comparable cases found.",
+        sourceCaseIDs: []
       };
     }
 
@@ -132,49 +143,70 @@ export async function getSingleSettlement(newCase: NewCase): Promise<SingleSettl
       score: calculateSimilarity(newCase, dbCase)
     }));
 
-    // Sort by score (highest first) and take top 25
+    // Sort by score and take top 25
     const top25Cases = scoredCases
       .sort((a, b) => b.score - a.score)
       .slice(0, 25);
 
-    // Parse settle values into numbers for the top 25
-    const settleValues = top25Cases
-      .map(c => ({ 
-        amount: parseCurrency(c.settle || ''), 
-        caseId: c.case_id 
-      }))
-      .filter(item => item.amount > 0);
+    // Get weights for linear model
+    const weights = await getWeights();
 
-    if (settleValues.length === 0) {
-      return {
-        amount: "$0",
-        sourceCaseID: 0
-      };
-    }
-
-    // Calculate midpoint of the top 25 cases
-    const amounts = settleValues.map(item => item.amount);
-    const min = Math.min(...amounts);
-    const max = Math.max(...amounts);
-    const midpoint = (min + max) / 2;
-
-    // Find the settlement closest to the midpoint
-    let closestAmount = settleValues[0].amount;
-    let closestCaseId = settleValues[0].caseId;
-    let minDistance = Math.abs(settleValues[0].amount - midpoint);
+    // Apply linear model to new case
+    let baseSettlement = 0;
     
-    for (const item of settleValues) {
-      const distance = Math.abs(item.amount - midpoint);
-      if (distance < minDistance || (distance === minDistance && item.amount < closestAmount)) {
-        closestAmount = item.amount;
-        closestCaseId = item.caseId;
-        minDistance = distance;
-      }
+    // Start with average of top 25 comparable cases
+    const comparableSettlements = top25Cases
+      .map(c => parseCurrency(c.settle || ''))
+      .filter(amount => amount > 0);
+    
+    if (comparableSettlements.length > 0) {
+      baseSettlement = comparableSettlements.reduce((a, b) => a + b, 0) / comparableSettlements.length;
     }
+
+    // Apply surgery weight
+    if (newCase.surgeryType && newCase.surgeryType !== 'none' && weights.surgeryWeights[newCase.surgeryType]) {
+      baseSettlement *= weights.surgeryWeights[newCase.surgeryType];
+    }
+
+    // Apply injection weight
+    if (newCase.injectionType && newCase.injectionType !== 'none' && weights.injectionWeights[newCase.injectionType]) {
+      baseSettlement *= weights.injectionWeights[newCase.injectionType];
+    }
+
+    // Apply TBI severity weight
+    if (newCase.tbiSeverity && weights.tbiSeverityWeights[newCase.tbiSeverity]) {
+      baseSettlement *= weights.tbiSeverityWeights[newCase.tbiSeverity];
+    }
+
+    // Add medical specials impact
+    if (newCase.medicalSpecials) {
+      baseSettlement += newCase.medicalSpecials * weights.medicalSpecialsSlope;
+    }
+
+    // Add Howell specials impact
+    if (newCase.howellSpecials) {
+      baseSettlement += newCase.howellSpecials * weights.howellSpecialsSlope;
+    }
+
+    // Round to nearest $500
+    const finalSettlement = Math.round(baseSettlement / 500) * 500;
+
+    // Get source case IDs from top 3 most similar
+    const sourceCaseIDs = top25Cases.slice(0, 3).map(c => c.case_id);
+
+    // Create rationale
+    const rationale = `Based on analysis of ${top25Cases.length} comparable cases, considering ${
+      newCase.surgeryType && newCase.surgeryType !== 'none' ? `${newCase.surgeryType} surgery, ` : ''
+    }${
+      newCase.injectionType && newCase.injectionType !== 'none' ? `${newCase.injectionType} injections, ` : ''
+    }${
+      newCase.tbiSeverity ? `${newCase.tbiSeverity} TBI, ` : ''
+    }and medical treatment patterns.`;
 
     return {
-      amount: formatCurrency(closestAmount),
-      sourceCaseID: closestCaseId
+      proposal: formatCurrency(finalSettlement),
+      rationale,
+      sourceCaseIDs
     };
 
   } catch (error) {

@@ -12,6 +12,21 @@ interface MedicalTreatmentStepProps {
 }
 
 const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepProps) => {
+  const [surgeries, setSurgeries] = useState<string[]>([]);
+  const [injections, setInjections] = useState<string[]>([]);
+
+  useEffect(() => {
+    const loadDistinctValues = async () => {
+      try {
+        const { surgeries, injections } = await getDistinctValues();
+        setSurgeries(surgeries);
+        setInjections(injections);
+      } catch (error) {
+        console.error('Error loading distinct values:', error);
+      }
+    };
+    loadDistinctValues();
+  }, []);
   const formatNumberWithCommas = (value: number | undefined): string => {
     if (value === undefined || value === null) return '';
     return value.toLocaleString('en-US');

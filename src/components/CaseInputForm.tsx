@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { CaseData } from "@/types/verdict";
 import FormWizard from "./FormWizard";
+import PartiesStep from "./wizard-steps/PartiesStep";
 import CaseTypeStep from "./wizard-steps/CaseTypeStep";
 import DateOfLossStep from "./wizard-steps/DateOfLossStep";
 import InjuryTypeStep from "./wizard-steps/InjuryTypeStep";
@@ -22,6 +23,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   console.log("CaseInputForm rendering");
   
   const [formData, setFormData] = useState<Partial<CaseData>>({
+    numberOfPlaintiffs: 1,
+    numberOfDefendants: 1,
     liabilityPercentage: 0,
     plaintiffAge: 35,
     prop213Applicable: false,
@@ -38,7 +41,6 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     injuryTypes: [],
     diagnosticTests: [],
     treatmentGap: false,
-    numberOfDefendants: 1,
   });
 
   const handleComplete = () => {
@@ -70,6 +72,11 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
 
   const steps = [
     {
+      title: "Parties",
+      description: "Enter the number of plaintiffs and defendants",
+      component: <PartiesStep formData={formData} setFormData={setFormData} />
+    },
+    {
       title: "Case Type",
       description: "Select the type of case you're evaluating",
       component: <CaseTypeStep formData={formData} setFormData={setFormData} />
@@ -85,12 +92,12 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       component: <InjuryTypeStep formData={formData} setFormData={setFormData} />
     },
     {
-      title: "Venue",
+      title: "Venue (Optional)",
       description: "Choose the county where the case will be filed",
       component: <VenueStep formData={formData} setFormData={setFormData} />
     },
     {
-      title: "Accident Type", 
+      title: "Accident Type (Optional)", 
       description: "Specify the type of accident that occurred",
       component: <AccidentTypeStep formData={formData} setFormData={setFormData} />
     },

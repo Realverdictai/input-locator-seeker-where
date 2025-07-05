@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateEnhancedValuation } from '@/utils/generateValuation';
+import { generateValuation } from '@/utils/generateValuation';
 import { findComparables } from '@/integrations/supabase/findComparables';
 
 interface FormData {
@@ -10,9 +10,12 @@ interface FormData {
   AccType: string;
   PolLim: string;
   medicalSpecials?: string;
-  age?: string;
-  narrative?: string;
-  tbiSeverity?: string; // 1-10 scale for TBI severity
+  howellSpecials?: string;
+  surgeryType?: string;
+  injectionType?: string;
+  surgeries?: string;
+  injections?: string;
+  tbiSeverity?: string;
 }
 
 interface ValuationResult {
@@ -51,8 +54,11 @@ const CaseEvaluator = () => {
     AccType: '',
     PolLim: '',
     medicalSpecials: '',
-    age: '',
-    narrative: '',
+    howellSpecials: '',
+    surgeryType: '',
+    injectionType: '',
+    surgeries: '',
+    injections: '',
     tbiSeverity: ''
   });
 
@@ -62,7 +68,7 @@ const CaseEvaluator = () => {
   const [comparableCases, setComparableCases] = useState<ComparableCase[]>([]);
   const [showComparables, setShowComparables] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -78,8 +84,8 @@ const CaseEvaluator = () => {
     setComparableCases([]);
 
     try {
-      // Call AI-enhanced valuation (no more point system!)
-      const valuation = await generateEnhancedValuation({
+      // Call data-driven valuation using database patterns
+      const valuation = await generateValuation({
         Venue: formData.Venue,
         Surgery: formData.Surgery,
         Injuries: formData.Injuries,
@@ -87,9 +93,12 @@ const CaseEvaluator = () => {
         AccType: formData.AccType,
         PolLim: formData.PolLim,
         medicalSpecials: formData.medicalSpecials ? parseInt(formData.medicalSpecials) : undefined,
-        age: formData.age ? parseInt(formData.age) : undefined,
-        narrative: formData.narrative,
-        tbiSeverity: formData.tbiSeverity ? parseInt(formData.tbiSeverity) : undefined
+        howellSpecials: formData.howellSpecials ? parseInt(formData.howellSpecials) : undefined,
+        tbiSeverity: formData.tbiSeverity,
+        surgeryType: formData.surgeryType,
+        injectionType: formData.injectionType,
+        surgeries: formData.surgeries ? parseInt(formData.surgeries) : undefined,
+        injections: formData.injections ? parseInt(formData.injections) : undefined
       });
       
       // Set results - use AI comparable cases, not separate findComparables call
@@ -104,7 +113,7 @@ const CaseEvaluator = () => {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>🤖 AI-Powered Case Evaluator</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>⚖️ Data-Driven Case Evaluator</h1>
       <div style={{ 
         textAlign: 'center', 
         marginBottom: '20px',
@@ -114,7 +123,7 @@ const CaseEvaluator = () => {
         borderRadius: '4px'
       }}>
         <p style={{ margin: 0, color: '#0066cc', fontWeight: 'bold' }}>
-          Using GPT-4.1 + 313 Real Cases (Point System Scrapped!)  
+          Using Linear Model Analysis of 313 Real Settlement Cases
         </p>
       </div>
       
@@ -245,15 +254,13 @@ const CaseEvaluator = () => {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Plaintiff Age - Optional:
+            Howell (post-contracted) Specials ($) - Optional:
             <input
               type="number"
-              name="age"
-              value={formData.age}
+              name="howellSpecials"
+              value={formData.howellSpecials}
               onChange={handleInputChange}
-              placeholder="35"
-              min="1"
-              max="100"
+              placeholder="125000"
               style={{ 
                 width: '100%', 
                 padding: '8px', 
@@ -267,15 +274,13 @@ const CaseEvaluator = () => {
 
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            TBI Severity (1-10, defense perspective) - Optional:
+            Surgery Type - Optional:
             <input
-              type="number"
-              name="tbiSeverity"
-              value={formData.tbiSeverity}
+              type="text"
+              name="surgeryType"
+              value={formData.surgeryType}
               onChange={handleInputChange}
-              placeholder="5"
-              min="1"
-              max="10"
+              placeholder="e.g., ACDF, Lumbar Fusion"
               style={{ 
                 width: '100%', 
                 padding: '8px', 
@@ -285,29 +290,94 @@ const CaseEvaluator = () => {
               }}
             />
           </label>
-          <small style={{ color: '#666', fontSize: '0.8em' }}>
-            Defense perspective: 1=minor headache, 10=severe ongoing symptoms
-          </small>
         </div>
+
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Case Narrative/Details - Optional:
-            <textarea
-              name="narrative"
-              value={formData.narrative}
+            Number of Surgeries - Optional:
+            <input
+              type="number"
+              name="surgeries"
+              value={formData.surgeries}
               onChange={handleInputChange}
-              rows={4}
-              placeholder="Additional case details that help with AI analysis..."
+              placeholder="1"
+              min="0"
               style={{ 
                 width: '100%', 
                 padding: '8px', 
                 marginTop: '5px',
                 border: '1px solid #ccc',
-                borderRadius: '4px',
-                resize: 'vertical'
+                borderRadius: '4px'
               }}
             />
           </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Injection Type - Optional:
+            <input
+              type="text"
+              name="injectionType"
+              value={formData.injectionType}
+              onChange={handleInputChange}
+              placeholder="e.g., Epidural Steroid, Facet Joint"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Number of Injections - Optional:
+            <input
+              type="number"
+              name="injections"
+              value={formData.injections}
+              onChange={handleInputChange}
+              placeholder="3"
+              min="0"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            TBI Severity - Optional:
+            <select
+              name="tbiSeverity"
+              value={formData.tbiSeverity}
+              onChange={handleInputChange}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            >
+              <option value="">Select TBI severity</option>
+              <option value="mild">Mild</option>
+              <option value="moderate">Moderate</option>
+              <option value="severe">Severe</option>
+            </select>
+          </label>
+          <small style={{ color: '#666', fontSize: '0.8em' }}>
+            Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
+          </small>
         </div>
 
         <div style={{ marginBottom: '20px' }}>
@@ -379,18 +449,8 @@ const CaseEvaluator = () => {
               margin: '0 0 10px 0',
               color: '#28a745'
             }}>
-              🤖 AI-Enhanced Settlement Analysis: {result.proposal}
+              ⚖️ Data-Driven Settlement Analysis: {result.proposal}
             </h2>
-            {result.confidence && (
-              <div style={{ 
-                fontSize: '1em', 
-                margin: '10px 0',
-                color: '#007bff',
-                fontWeight: 'bold'
-              }}>
-                AI Confidence: {result.confidence}%
-              </div>
-            )}
             <p style={{ 
               fontSize: '1.1em', 
               margin: '10px 0',
@@ -425,7 +485,7 @@ const CaseEvaluator = () => {
               border: '1px solid #dee2e6',
               borderRadius: '8px'
             }}>
-              <h3 style={{ marginBottom: '15px', color: '#495057' }}>AI Value Analysis:</h3>
+              <h3 style={{ marginBottom: '15px', color: '#495057' }}>Settlement Analysis:</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 {result.valueFactors.increasing.length > 0 && (
                   <div>
@@ -463,7 +523,7 @@ const CaseEvaluator = () => {
                 cursor: 'pointer'
               }}
             >
-              {showComparables ? 'Hide' : 'Show'} AI-Selected Similar Cases
+              {showComparables ? 'Hide' : 'Show'} Similar Cases
             </button>
           </div>
 
