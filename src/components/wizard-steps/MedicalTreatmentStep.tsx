@@ -19,6 +19,25 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
   const [isAnalyzingSurgery, setIsAnalyzingSurgery] = useState(false);
   const [isAnalyzingInjection, setIsAnalyzingInjection] = useState(false);
 
+  // Helper functions for multiple selections
+  const handleSurgeryTypeChange = (surgeryType: string, checked: boolean) => {
+    const currentTypes = formData.surgeryTypes || [];
+    if (checked) {
+      setFormData({...formData, surgeryTypes: [...currentTypes, surgeryType]});
+    } else {
+      setFormData({...formData, surgeryTypes: currentTypes.filter(t => t !== surgeryType)});
+    }
+  };
+
+  const handleInjectionTypeChange = (injectionType: string, checked: boolean) => {
+    const currentTypes = formData.injectionTypes || [];
+    if (checked) {
+      setFormData({...formData, injectionTypes: [...currentTypes, injectionType]});
+    } else {
+      setFormData({...formData, injectionTypes: currentTypes.filter(t => t !== injectionType)});
+    }
+  };
+
   // Comprehensive surgery types for personal injury cases
   const surgeryTypes = [
     "None",
@@ -87,73 +106,109 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
     setIsAnalyzingSurgery(true);
     try {
       const description = surgeryDescription.toLowerCase();
-      let suggestedSurgery = "";
+      const suggestedSurgeries: string[] = [];
 
-      // AI logic to match surgery descriptions to standard types
+      // AI logic to match surgery descriptions to standard types (can detect multiple)
       if (description.includes("arthroscop") || description.includes("scope")) {
-        suggestedSurgery = "Arthroscopic Surgery";
-      } else if (description.includes("fusion") && (description.includes("spine") || description.includes("back"))) {
-        suggestedSurgery = "Spinal Fusion";
-      } else if (description.includes("fusion") && description.includes("cervical")) {
-        suggestedSurgery = "Cervical Fusion";
-      } else if (description.includes("fusion") && description.includes("lumbar")) {
-        suggestedSurgery = "Lumbar Fusion";
-      } else if (description.includes("laminectomy")) {
-        suggestedSurgery = "Laminectomy";
-      } else if (description.includes("discectomy") || description.includes("disc")) {
-        suggestedSurgery = "Discectomy";
-      } else if (description.includes("rotator cuff")) {
-        suggestedSurgery = "Rotator Cuff Repair";
-      } else if (description.includes("shoulder")) {
-        suggestedSurgery = "Shoulder Surgery";
-      } else if (description.includes("knee") && !description.includes("replacement")) {
-        suggestedSurgery = "Knee Surgery";
-      } else if (description.includes("acl")) {
-        suggestedSurgery = "ACL Reconstruction";
-      } else if (description.includes("meniscus")) {
-        suggestedSurgery = "Meniscus Repair";
-      } else if (description.includes("hip replacement")) {
-        suggestedSurgery = "Hip Replacement";
-      } else if (description.includes("fracture") || description.includes("break") || description.includes("broken")) {
-        suggestedSurgery = "Fracture Repair";
-      } else if (description.includes("orif") || description.includes("plate") || description.includes("screw")) {
-        suggestedSurgery = "ORIF (Open Reduction Internal Fixation)";
-      } else if (description.includes("carpal tunnel")) {
-        suggestedSurgery = "Carpal Tunnel Release";
-      } else if (description.includes("hand")) {
-        suggestedSurgery = "Hand Surgery";
-      } else if (description.includes("wrist")) {
-        suggestedSurgery = "Wrist Surgery";
-      } else if (description.includes("ankle")) {
-        suggestedSurgery = "Ankle Surgery";
-      } else if (description.includes("foot")) {
-        suggestedSurgery = "Foot Surgery";
-      } else if (description.includes("back") || description.includes("spine")) {
-        suggestedSurgery = "Back Surgery";
-      } else if (description.includes("neck") || description.includes("cervical")) {
-        suggestedSurgery = "Neck Surgery";
-      } else if (description.includes("herniat")) {
-        suggestedSurgery = "Herniated Disc Surgery";
-      } else if (description.includes("decompress")) {
-        suggestedSurgery = "Decompression Surgery";
-      } else if (description.includes("replacement")) {
-        suggestedSurgery = "Joint Replacement";
-      } else if (description.includes("tendon")) {
-        suggestedSurgery = "Tendon Repair";
-      } else if (description.includes("ligament")) {
-        suggestedSurgery = "Ligament Repair";
-      } else if (description.includes("nerve")) {
-        suggestedSurgery = "Nerve Repair";
-      } else if (description.includes("plastic") || description.includes("reconstruct") || description.includes("cosmetic")) {
-        suggestedSurgery = "Plastic Surgery/Reconstruction";
-      } else if (description.includes("scar")) {
-        suggestedSurgery = "Scar Revision";
-      } else if (description.includes("multiple") || description.includes("several") || description.includes("more than one")) {
-        suggestedSurgery = "Multiple Surgeries";
+        suggestedSurgeries.push("Arthroscopic Surgery");
+      }
+      if (description.includes("fusion") && (description.includes("spine") || description.includes("back"))) {
+        suggestedSurgeries.push("Spinal Fusion");
+      }
+      if (description.includes("fusion") && description.includes("cervical")) {
+        suggestedSurgeries.push("Cervical Fusion");
+      }
+      if (description.includes("fusion") && description.includes("lumbar")) {
+        suggestedSurgeries.push("Lumbar Fusion");
+      }
+      if (description.includes("laminectomy")) {
+        suggestedSurgeries.push("Laminectomy");
+      }
+      if (description.includes("discectomy") || description.includes("disc")) {
+        suggestedSurgeries.push("Discectomy");
+      }
+      if (description.includes("rotator cuff")) {
+        suggestedSurgeries.push("Rotator Cuff Repair");
+      }
+      if (description.includes("shoulder") && !suggestedSurgeries.includes("Rotator Cuff Repair")) {
+        suggestedSurgeries.push("Shoulder Surgery");
+      }
+      if (description.includes("knee") && !description.includes("replacement")) {
+        suggestedSurgeries.push("Knee Surgery");
+      }
+      if (description.includes("acl")) {
+        suggestedSurgeries.push("ACL Reconstruction");
+      }
+      if (description.includes("meniscus")) {
+        suggestedSurgeries.push("Meniscus Repair");
+      }
+      if (description.includes("hip replacement")) {
+        suggestedSurgeries.push("Hip Replacement");
+      }
+      if (description.includes("fracture") || description.includes("break") || description.includes("broken")) {
+        suggestedSurgeries.push("Fracture Repair");
+      }
+      if (description.includes("orif") || description.includes("plate") || description.includes("screw")) {
+        suggestedSurgeries.push("ORIF (Open Reduction Internal Fixation)");
+      }
+      if (description.includes("carpal tunnel")) {
+        suggestedSurgeries.push("Carpal Tunnel Release");
+      }
+      if (description.includes("hand") && !suggestedSurgeries.includes("Carpal Tunnel Release")) {
+        suggestedSurgeries.push("Hand Surgery");
+      }
+      if (description.includes("wrist")) {
+        suggestedSurgeries.push("Wrist Surgery");
+      }
+      if (description.includes("ankle")) {
+        suggestedSurgeries.push("Ankle Surgery");
+      }
+      if (description.includes("foot")) {
+        suggestedSurgeries.push("Foot Surgery");
+      }
+      if (description.includes("back") || description.includes("spine")) {
+        if (!suggestedSurgeries.some(s => s.includes("Fusion") || s.includes("Laminectomy") || s.includes("Discectomy"))) {
+          suggestedSurgeries.push("Back Surgery");
+        }
+      }
+      if (description.includes("neck") || description.includes("cervical")) {
+        if (!suggestedSurgeries.includes("Cervical Fusion")) {
+          suggestedSurgeries.push("Neck Surgery");
+        }
+      }
+      if (description.includes("herniat")) {
+        suggestedSurgeries.push("Herniated Disc Surgery");
+      }
+      if (description.includes("decompress")) {
+        suggestedSurgeries.push("Decompression Surgery");
+      }
+      if (description.includes("replacement") && !suggestedSurgeries.includes("Hip Replacement")) {
+        suggestedSurgeries.push("Joint Replacement");
+      }
+      if (description.includes("tendon")) {
+        suggestedSurgeries.push("Tendon Repair");
+      }
+      if (description.includes("ligament")) {
+        suggestedSurgeries.push("Ligament Repair");
+      }
+      if (description.includes("nerve")) {
+        suggestedSurgeries.push("Nerve Repair");
+      }
+      if (description.includes("plastic") || description.includes("reconstruct") || description.includes("cosmetic")) {
+        suggestedSurgeries.push("Plastic Surgery/Reconstruction");
+      }
+      if (description.includes("scar")) {
+        suggestedSurgeries.push("Scar Revision");
       }
 
-      if (suggestedSurgery) {
-        setFormData({...formData, surgeryType: suggestedSurgery});
+      if (suggestedSurgeries.length > 1) {
+        suggestedSurgeries.push("Multiple Surgeries");
+      }
+
+      if (suggestedSurgeries.length > 0) {
+        const currentTypes = formData.surgeryTypes || [];
+        const newTypes = [...new Set([...currentTypes, ...suggestedSurgeries])];
+        setFormData({...formData, surgeryTypes: newTypes});
       }
     } catch (error) {
       console.error("Error analyzing surgery:", error);
@@ -168,57 +223,81 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
     setIsAnalyzingInjection(true);
     try {
       const description = injectionDescription.toLowerCase();
-      let suggestedInjection = "";
+      const suggestedInjections: string[] = [];
 
-      // AI logic to match injection descriptions to standard types
+      // AI logic to match injection descriptions to standard types (can detect multiple)
       if (description.includes("epidural") && description.includes("lumbar")) {
-        suggestedInjection = "Lumbar Epidural";
-      } else if (description.includes("epidural") && description.includes("cervical")) {
-        suggestedInjection = "Cervical Epidural";
-      } else if (description.includes("epidural") && description.includes("thoracic")) {
-        suggestedInjection = "Thoracic Epidural";
-      } else if (description.includes("epidural")) {
-        suggestedInjection = "Epidural Steroid Injection";
-      } else if (description.includes("facet")) {
-        suggestedInjection = "Facet Joint Injection";
-      } else if (description.includes("trigger point")) {
-        suggestedInjection = "Trigger Point Injection";
-      } else if (description.includes("cortisone")) {
-        suggestedInjection = "Cortisone Injection";
-      } else if (description.includes("steroid")) {
-        suggestedInjection = "Steroid Injection";
-      } else if (description.includes("nerve block")) {
-        suggestedInjection = "Nerve Block";
-      } else if (description.includes("si joint") || description.includes("sacroiliac")) {
-        suggestedInjection = "SI Joint Injection";
-      } else if (description.includes("knee")) {
-        suggestedInjection = "Knee Injection";
-      } else if (description.includes("shoulder")) {
-        suggestedInjection = "Shoulder Injection";
-      } else if (description.includes("hip")) {
-        suggestedInjection = "Hip Injection";
-      } else if (description.includes("bursa")) {
-        suggestedInjection = "Bursa Injection";
-      } else if (description.includes("radiofrequency") || description.includes("ablation")) {
-        suggestedInjection = "Radiofrequency Ablation";
-      } else if (description.includes("medial branch")) {
-        suggestedInjection = "Medial Branch Block";
-      } else if (description.includes("caudal")) {
-        suggestedInjection = "Caudal Epidural";
-      } else if (description.includes("transforaminal")) {
-        suggestedInjection = "Transforaminal Epidural";
-      } else if (description.includes("prp") || description.includes("platelet")) {
-        suggestedInjection = "Platelet Rich Plasma (PRP)";
-      } else if (description.includes("hyaluronic") || description.includes("gel")) {
-        suggestedInjection = "Hyaluronic Acid Injection";
-      } else if (description.includes("botox")) {
-        suggestedInjection = "Botox Injection";
-      } else if (description.includes("multiple") || description.includes("several") || description.includes("different")) {
-        suggestedInjection = "Multiple Injection Types";
+        suggestedInjections.push("Lumbar Epidural");
+      }
+      if (description.includes("epidural") && description.includes("cervical")) {
+        suggestedInjections.push("Cervical Epidural");
+      }
+      if (description.includes("epidural") && description.includes("thoracic")) {
+        suggestedInjections.push("Thoracic Epidural");
+      }
+      if (description.includes("epidural") && !suggestedInjections.some(i => i.includes("Epidural"))) {
+        suggestedInjections.push("Epidural Steroid Injection");
+      }
+      if (description.includes("facet")) {
+        suggestedInjections.push("Facet Joint Injection");
+      }
+      if (description.includes("trigger point")) {
+        suggestedInjections.push("Trigger Point Injection");
+      }
+      if (description.includes("cortisone")) {
+        suggestedInjections.push("Cortisone Injection");
+      }
+      if (description.includes("steroid") && !suggestedInjections.some(i => i.includes("Steroid") || i.includes("Cortisone"))) {
+        suggestedInjections.push("Steroid Injection");
+      }
+      if (description.includes("nerve block")) {
+        suggestedInjections.push("Nerve Block");
+      }
+      if (description.includes("si joint") || description.includes("sacroiliac")) {
+        suggestedInjections.push("SI Joint Injection");
+      }
+      if (description.includes("knee")) {
+        suggestedInjections.push("Knee Injection");
+      }
+      if (description.includes("shoulder")) {
+        suggestedInjections.push("Shoulder Injection");
+      }
+      if (description.includes("hip")) {
+        suggestedInjections.push("Hip Injection");
+      }
+      if (description.includes("bursa")) {
+        suggestedInjections.push("Bursa Injection");
+      }
+      if (description.includes("radiofrequency") || description.includes("ablation")) {
+        suggestedInjections.push("Radiofrequency Ablation");
+      }
+      if (description.includes("medial branch")) {
+        suggestedInjections.push("Medial Branch Block");
+      }
+      if (description.includes("caudal")) {
+        suggestedInjections.push("Caudal Epidural");
+      }
+      if (description.includes("transforaminal")) {
+        suggestedInjections.push("Transforaminal Epidural");
+      }
+      if (description.includes("prp") || description.includes("platelet")) {
+        suggestedInjections.push("Platelet Rich Plasma (PRP)");
+      }
+      if (description.includes("hyaluronic") || description.includes("gel")) {
+        suggestedInjections.push("Hyaluronic Acid Injection");
+      }
+      if (description.includes("botox")) {
+        suggestedInjections.push("Botox Injection");
       }
 
-      if (suggestedInjection) {
-        setFormData({...formData, injectionType: suggestedInjection});
+      if (suggestedInjections.length > 1) {
+        suggestedInjections.push("Multiple Injection Types");
+      }
+
+      if (suggestedInjections.length > 0) {
+        const currentTypes = formData.injectionTypes || [];
+        const newTypes = [...new Set([...currentTypes, ...suggestedInjections])];
+        setFormData({...formData, injectionTypes: newTypes});
       }
     } catch (error) {
       console.error("Error analyzing injection:", error);
@@ -263,13 +342,13 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="surgeryType">Surgery Type</Label>
+          <Label>Surgery Types (Select Multiple)</Label>
           
           {/* AI Surgery Interpreter */}
           <div className="space-y-2 mb-4">
             <div className="space-y-2">
               <Textarea
-                placeholder="Describe the surgery (e.g., 'Arthroscopic repair of torn rotator cuff' or 'L4-L5 discectomy with fusion')"
+                placeholder="Describe all surgeries (e.g., 'Arthroscopic rotator cuff repair and L4-L5 discectomy with fusion')"
                 value={surgeryDescription}
                 onChange={(e) => setSurgeryDescription(e.target.value)}
                 className="min-h-[60px]"
@@ -281,29 +360,43 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
                 variant="outline"
               >
                 <Brain className="h-4 w-4 mr-2" />
-                {isAnalyzingSurgery ? "Analyzing..." : "AI: Match Surgery Type"}
+                {isAnalyzingSurgery ? "Analyzing..." : "AI: Match Surgery Types"}
               </Button>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-blue-700 text-xs">
-                <strong>AI Tip:</strong> Describe the surgical procedure and the AI will match it to the standard surgery categories used in case valuation.
+                <strong>AI Tip:</strong> Describe all surgical procedures and the AI will detect multiple surgery types automatically.
               </p>
             </div>
           </div>
 
-          <Select 
-            value={formData.surgeryType || ''} 
-            onValueChange={(value) => setFormData({...formData, surgeryType: value})}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select surgery type" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {surgeryTypes.map(surgery => (
-                <SelectItem key={surgery} value={surgery}>{surgery}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Selected Surgery Types Display */}
+          {formData.surgeryTypes && formData.surgeryTypes.length > 0 && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <Label className="text-sm font-medium">Selected Surgery Types:</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.surgeryTypes.map(surgery => (
+                  <span key={surgery} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">
+                    {surgery}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Surgery Type Checkboxes */}
+          <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border rounded-lg p-3">
+            {surgeryTypes.map(surgery => (
+              <div key={surgery} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`surgery-${surgery}`}
+                  checked={formData.surgeryTypes?.includes(surgery) || false}
+                  onCheckedChange={(checked) => handleSurgeryTypeChange(surgery, !!checked)}
+                />
+                <Label htmlFor={`surgery-${surgery}`} className="text-sm">{surgery}</Label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -319,13 +412,13 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="injectionType">Injection Type</Label>
+          <Label>Injection Types (Select Multiple)</Label>
           
           {/* AI Injection Interpreter */}
           <div className="space-y-2 mb-4">
             <div className="space-y-2">
               <Textarea
-                placeholder="Describe the injection treatment (e.g., 'Epidural steroid injection in lower back' or 'Cortisone shot in shoulder')"
+                placeholder="Describe all injection treatments (e.g., 'Multiple epidural steroid injections and cortisone shot in shoulder')"
                 value={injectionDescription}
                 onChange={(e) => setInjectionDescription(e.target.value)}
                 className="min-h-[60px]"
@@ -337,29 +430,43 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
                 variant="outline"
               >
                 <Brain className="h-4 w-4 mr-2" />
-                {isAnalyzingInjection ? "Analyzing..." : "AI: Match Injection Type"}
+                {isAnalyzingInjection ? "Analyzing..." : "AI: Match Injection Types"}
               </Button>
             </div>
             <div className="p-2 bg-green-50 rounded-lg border border-green-200">
               <p className="text-green-700 text-xs">
-                <strong>AI Tip:</strong> Describe the injection procedure and location, and the AI will categorize it properly for case evaluation.
+                <strong>AI Tip:</strong> Describe all injection procedures and the AI will detect multiple injection types automatically.
               </p>
             </div>
           </div>
 
-          <Select 
-            value={formData.injectionType || ''} 
-            onValueChange={(value) => setFormData({...formData, injectionType: value})}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select injection type" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {injectionTypes.map(injection => (
-                <SelectItem key={injection} value={injection}>{injection}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Selected Injection Types Display */}
+          {formData.injectionTypes && formData.injectionTypes.length > 0 && (
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <Label className="text-sm font-medium">Selected Injection Types:</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.injectionTypes.map(injection => (
+                  <span key={injection} className="px-2 py-1 bg-green-100 text-green-800 rounded-md text-sm">
+                    {injection}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Injection Type Checkboxes */}
+          <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border rounded-lg p-3">
+            {injectionTypes.map(injection => (
+              <div key={injection} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`injection-${injection}`}
+                  checked={formData.injectionTypes?.includes(injection) || false}
+                  onCheckedChange={(checked) => handleInjectionTypeChange(injection, !!checked)}
+                />
+                <Label htmlFor={`injection-${injection}`} className="text-sm">{injection}</Label>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
