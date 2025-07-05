@@ -36,6 +36,7 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     surgeryTypes: [],
     injectionTypes: [],
     injuryTypes: [],
+    diagnosticTests: [],
     treatmentGap: false,
     numberOfDefendants: 1,
   });

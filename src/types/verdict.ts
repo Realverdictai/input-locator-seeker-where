@@ -17,6 +17,7 @@ export interface CaseData {
   surgeryTypes?: string[];
   injections?: number;
   injectionTypes?: string[];
+  diagnosticTests?: string[];
   physicalTherapySessions?: number;
   chiropracticSessions?: number;
   dateOfLoss: string;

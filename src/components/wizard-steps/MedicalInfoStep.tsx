@@ -34,35 +34,50 @@ const MedicalInfoStep = ({ formData, setFormData }: MedicalInfoStepProps) => {
   };
 
   const surgeryTypeOptions = [
-    // Spinal Surgeries
-    "Spinal Fusion - Cervical", "Spinal Fusion - Lumbar", "Spinal Fusion - Thoracic",
-    "Discectomy - Cervical", "Discectomy - Lumbar", "Laminectomy - Cervical", "Laminectomy - Lumbar",
-    "Foraminotomy", "Spinal Cord Stimulator - Trial", "Spinal Cord Stimulator - Permanent",
-    "Vertebroplasty", "Kyphoplasty", "Artificial Disc Replacement",
+    // Spinal Surgeries (Based on actual case data)
+    "Anterior Cervical Discectomy and Fusion (ACDF)", "Anterior Cervical Decompression & Artificial Disc Replacement",
+    "Cervical Artificial Disc Replacement", "Two-Level Cervical Artificial Disc Replacement", 
+    "Posterior Cervical Laminectomy and Fusion", "Cervical Microdiscectomy Fusion",
+    "Anterior Lumbar Interbody Fusion (ALIF)", "Posterior Lumbar Decompression and Instrumented Fusion",
+    "Lumbar Disc Replacement", "Anterior Lumbar Interbody Fusion + Total Disc Replacement",
+    "Hemilaminectomy/Foraminotomy", "Bilateral Hemilaminectomy/Foraminotomy", "Laminotomy",
+    "Microdiscectomy", "Hemilaminotomy, Bilateral Decompression & Interspinous Fusion",
+    "Lumbar Fusion", "Thoraco-lumbar Posterior Fusion", "Spinal Cord Stimulator - Trial", 
+    "Spinal Cord Stimulator - Permanent", "Spinal Cord Stimulator Removal",
+    
+    // Arthroscopic Shoulder Procedures (Highly detailed based on data)
+    "Arthroscopic Shoulder Surgery - General", "Arthroscopic Rotator Cuff Repair",
+    "Arthroscopic Rotator Cuff Repair with Subacromial Decompression", 
+    "Arthroscopic Shoulder Decompression & Debridement", "Arthroscopic Bankart Repair with Debridement",
+    "Arthroscopic Labral Repair/Subacromial Decompression/Mumford/Biceps Tenodesis",
+    "Reverse Total Shoulder Arthroplasty", "AC Joint Reconstruction", "AC Joint Reconstruction - Revision",
     
     // Joint Replacements
-    "Hip Replacement - Total", "Hip Replacement - Partial", "Hip Resurfacing",
-    "Knee Replacement - Total", "Knee Replacement - Partial", "Knee Replacement - Revision",
-    "Shoulder Replacement - Total", "Shoulder Replacement - Reverse", "Shoulder Resurfacing",
-    "Ankle Replacement", "Elbow Replacement", "Wrist Replacement",
+    "Total Hip Replacement", "Total Knee Replacement", "Complex Total Knee Arthroplasty",
+    "Shoulder Replacement - Total", "Shoulder Replacement - Reverse",
     
-    // Arthroscopic Procedures
-    "Knee Arthroscopy", "Shoulder Arthroscopy", "Hip Arthroscopy", "Ankle Arthroscopy",
-    "Wrist Arthroscopy", "Elbow Arthroscopy",
+    // Knee Procedures
+    "Knee Arthroscopy", "Arthroscopic Knee Meniscectomy", "Arthroscopic Partial Meniscectomy & Chondroplasty",
+    "Knee Arthroscopy with Bone Marrow Stem Cell Injection",
     
-    // Soft Tissue Repairs
-    "Rotator Cuff Repair", "ACL Reconstruction", "PCL Reconstruction", "MCL Repair", "LCL Repair",
-    "Meniscus Repair", "Labral Repair - Hip", "Labral Repair - Shoulder", "Bicep Tendon Repair",
-    "Achilles Tendon Repair", "Patellar Tendon Repair", "Carpal Tunnel Release",
+    // Fracture Repairs (ORIF - Open Reduction Internal Fixation)
+    "ORIF - Patella", "ORIF - Tibial Plateau", "ORIF - Calcaneus", "ORIF - Femur", 
+    "ORIF - Femoral Neck Fracture", "ORIF - Distal Radius", "ORIF - Olecranon Fracture",
+    "ORIF - Ankle", "ORIF - Pelvis/Acetabulum with Cannulated Screws",
     
-    // Fracture Repairs
-    "Open Reduction Internal Fixation (ORIF)", "Closed Reduction", "External Fixation",
-    "Intramedullary Nailing", "Plate and Screw Fixation",
+    // Hand/Wrist Surgeries
+    "Carpal Tunnel Release", "Bilateral Carpal Tunnel Releases", "Trigger Finger Release",
+    "Wrist Central Denervation", "Scaphocapitate Fusion",
+    
+    // Hardware/Revision Procedures
+    "Hardware Removal", "Hardware Removal/Dynamization", "Manipulation Under Anesthesia with Capsular Release",
+    
+    // Ankle/Foot Procedures
+    "Ankle Reconstruction with Posterior Tibial Tendon Advancement",
     
     // Other Procedures
-    "Trigger Finger Release", "Cubital Tunnel Release", "Tarsal Tunnel Release",
-    "Plantar Fascia Release", "Ganglion Cyst Removal", "Lipoma Removal",
-    "Hardware Removal", "Scar Tissue Removal", "Nerve Decompression"
+    "Femoral Intramedullary Nailing", "Closed Reduction & Percutaneous Fixation",
+    "Amputation/Ablation of Distal Phalanx"
   ];
 
   const injectionTypeOptions = [
