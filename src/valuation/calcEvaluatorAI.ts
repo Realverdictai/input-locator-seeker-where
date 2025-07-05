@@ -60,6 +60,11 @@ export async function calcEvaluatorAI(
     // Step 4: Fit ridge regression (α = 0.3 for less aggressive regularization)
     const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.3);
     console.log('📈 Ridge regression prediction:', regressionResult.prediction);
+    console.log('🔬 Target features debug:', {
+      injectionCount: targetFeatures.injectionCount,
+      tbiSeverity: targetFeatures.tbiSeverity,
+      surgeryCount: targetFeatures.surgeryCount
+    });
 
     // Step 4.5: Apply weights from weights.json (if not ignored)
     let weightedPrediction = regressionResult.prediction;
