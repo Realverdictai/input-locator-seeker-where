@@ -5,10 +5,13 @@ interface MediatorResult {
 
 /**
  * Calculate Mediator's Proposal based on Evaluator Number and Policy Limits
+ * Updated for AI-first system compatibility
  */
 export function calcMediator(evaluatorString: string, policyLimits?: number): MediatorResult {
-  // Parse evaluator amount
-  const evaluatorAmount = parseFloat(evaluatorString.replace(/[$,]/g, '')) || 0;
+  // Parse evaluator amount (handle both string and number formats)
+  const evaluatorAmount = typeof evaluatorString === 'string' 
+    ? parseFloat(evaluatorString.replace(/[$,]/g, '')) || 0
+    : evaluatorString || 0;
   
   let proposalAmount: number;
   

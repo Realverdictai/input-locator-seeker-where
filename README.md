@@ -88,12 +88,30 @@ After making changes to the weights file, redeploy the application for the chang
 
 ### Testing the Valuation System
 
-To test case valuations with or without the weights system:
+To test case valuations with different approaches:
 
 ```bash
-# Test with weights enabled (default)
+# Test traditional evaluator with weights enabled (default)
 IGNORE_WEIGHTS=false ts-node scripts/testOneCase.ts
 
-# Test with weights disabled (regression only)
+# Test traditional evaluator with weights disabled (regression only)
 IGNORE_WEIGHTS=true ts-node scripts/testOneCase.ts
+
+# Test AI-first evaluator with smart deductions
+ts-node scripts/testAIEvaluator.ts
+
+# Test AI-first evaluator with weights disabled
+IGNORE_WEIGHTS=true ts-node scripts/testAIEvaluator.ts
 ```
+
+### AI-First Evaluation System
+
+The application now includes an advanced AI-first case evaluation system with:
+
+- **Enhanced Feature Extraction**: 16 key factors including surgery complexity, treatment gaps, venue economics, and risk flags
+- **Smart Deduction Engine**: Automatic deductions for subsequent accidents, treatment gaps, pre-existing conditions, non-compliance, and conflicting medical opinions
+- **Ridge Regression Model**: Uses top-K similar cases for more accurate predictions
+- **Confidence Scoring**: Provides reliability metrics for each evaluation
+- **Transparent Deductions**: Shows exactly what factors reduced the evaluation and by how much
+
+To adjust deduction percentages or add new risk factors, edit the deduction engine in `src/valuation/deductionEngine.ts`.

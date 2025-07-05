@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { calcEvaluator } from '@/valuation/calcEvaluator';
+import { calcEvaluatorAI } from '@/valuation/calcEvaluatorAI';
 import { calcMediator } from '@/valuation/calcMediator';
 import { runTestHarness } from '@/valuation/testHarness';
 
@@ -23,6 +24,9 @@ interface EvaluationResult {
   evaluator: string;
   rationale: string;
   sourceCases: number[];
+  deductions?: Array<{ name: string; pct: number }>;
+  evaluatorNet?: string;
+  confidence?: number;
 }
 
 interface MediatorResult {
@@ -57,6 +61,7 @@ const CaseEvaluator = () => {
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [mediatorResult, setMediatorResult] = useState<MediatorResult | null>(null);
   const [showComparables, setShowComparables] = useState(false);
+  const [useAIEvaluator, setUseAIEvaluator] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -91,9 +96,26 @@ const CaseEvaluator = () => {
         policyLimits: formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined
       };
 
-      // Calculate evaluator number using new algorithm
-      const evaluation = await calcEvaluator(newCase);
-      setEvaluationResult(evaluation);
+      // Calculate evaluator number using selected algorithm
+      if (useAIEvaluator) {
+        const aiEvaluation = await calcEvaluatorAI(newCase);
+        setEvaluationResult({
+          evaluator: aiEvaluation.evaluator,
+          rationale: aiEvaluation.rationale,
+          sourceCases: aiEvaluation.nearestCases,
+          deductions: aiEvaluation.deductions,
+          evaluatorNet: aiEvaluation.evaluatorNet,
+          confidence: aiEvaluation.confidence
+        });
+        // Auto-set mediator result from AI evaluation
+        setMediatorResult({
+          mediator: aiEvaluation.mediatorProposal,
+          expiresOn: aiEvaluation.expiresOn
+        });
+      } else {
+        const evaluation = await calcEvaluator(newCase);
+        setEvaluationResult(evaluation);
+      }
       
     } catch (err) {
       setError(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
@@ -421,6 +443,21 @@ const CaseEvaluator = () => {
           </label>
         </div>
 
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold', marginBottom: '15px' }}>
+            <input
+              type="checkbox"
+              checked={useAIEvaluator}
+              onChange={(e) => setUseAIEvaluator(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            Use AI-First Evaluator (with smart deductions)
+          </label>
+          <small style={{ color: '#666', fontSize: '0.9em', marginLeft: '24px' }}>
+            AI-first uses 16 enhanced features, ridge regression, and smart deduction engine
+          </small>
+        </div>
+
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             type="submit"
@@ -428,7 +465,7 @@ const CaseEvaluator = () => {
             style={{
               flex: 1,
               padding: '12px',
-              backgroundColor: loading ? '#ccc' : '#007bff',
+              backgroundColor: loading ? '#ccc' : useAIEvaluator ? '#9b59b6' : '#007bff',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -437,7 +474,7 @@ const CaseEvaluator = () => {
               cursor: loading ? 'not-allowed' : 'pointer'
             }}
           >
-            {loading ? 'Calculating...' : 'Calculate Evaluator Number'}
+            {loading ? 'Calculating...' : useAIEvaluator ? 'Calculate AI Evaluation' : 'Calculate Evaluator Number'}
           </button>
           
           <button
@@ -490,8 +527,20 @@ const CaseEvaluator = () => {
               margin: '0 0 10px 0',
               color: '#28a745'
             }}>
-              Evaluator Number: {evaluationResult.evaluator}
+              {useAIEvaluator ? 'AI Evaluation' : 'Evaluator Number'}: {evaluationResult.evaluator}
             </h2>
+            
+            {evaluationResult.confidence && (
+              <p style={{ 
+                fontSize: '1em', 
+                margin: '5px 0',
+                color: '#17a2b8',
+                fontWeight: 'bold'
+              }}>
+                Confidence: {evaluationResult.confidence}%
+              </p>
+            )}
+            
             <p style={{ 
               fontSize: '1.1em', 
               margin: '10px 0',
@@ -500,6 +549,35 @@ const CaseEvaluator = () => {
             }}>
               {evaluationResult.rationale}
             </p>
+            
+            {evaluationResult.deductions && evaluationResult.deductions.length > 0 && (
+              <div style={{ 
+                margin: '15px 0',
+                padding: '15px',
+                backgroundColor: '#fff3cd',
+                border: '1px solid #ffeaa7',
+                borderRadius: '4px'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#856404' }}>Applied Deductions:</h4>
+                {evaluationResult.deductions.map((deduction, idx) => (
+                  <div key={idx} style={{ margin: '5px 0', color: '#856404' }}>
+                    • {deduction.name}: {deduction.pct}%
+                  </div>
+                ))}
+                {evaluationResult.evaluatorNet && (
+                  <div style={{ 
+                    marginTop: '10px', 
+                    paddingTop: '10px', 
+                    borderTop: '1px solid #ffeaa7',
+                    fontWeight: 'bold',
+                    color: '#856404'
+                  }}>
+                    Net Evaluation: {evaluationResult.evaluatorNet}
+                  </div>
+                )}
+              </div>
+            )}
+            
             <p style={{ 
               fontSize: '0.9em', 
               margin: '10px 0',
@@ -510,25 +588,27 @@ const CaseEvaluator = () => {
             </p>
           </div>
 
-          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <button
-              onClick={handleGenerateProposal}
-              disabled={!!mediatorResult}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: mediatorResult ? '#ccc' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: mediatorResult ? 'not-allowed' : 'pointer',
-                marginRight: '10px'
-              }}
-            >
-              {mediatorResult ? 'Proposal Generated' : 'Generate Mediator Proposal'}
-            </button>
-          </div>
+          {!useAIEvaluator && (
+            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+              <button
+                onClick={handleGenerateProposal}
+                disabled={!!mediatorResult}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: mediatorResult ? '#ccc' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: mediatorResult ? 'not-allowed' : 'pointer',
+                  marginRight: '10px'
+                }}
+              >
+                {mediatorResult ? 'Proposal Generated' : 'Generate Mediator Proposal'}
+              </button>
+            </div>
+          )}
 
           {mediatorResult && (
             <div style={{ 
