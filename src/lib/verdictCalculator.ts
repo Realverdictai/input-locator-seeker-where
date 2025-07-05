@@ -55,11 +55,12 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   // Surgery premium calculation with specific surgery types
   const surgeries = caseData.surgeries || 0;
   let surgeryPremium = surgeries * 40000;
-  if (caseData.surgeryTypes?.includes("Spinal Fusion")) surgeryPremium += 75000;
-  if (caseData.surgeryTypes?.includes("Hip Replacement")) surgeryPremium += 60000;
-  if (caseData.surgeryTypes?.includes("Knee Replacement")) surgeryPremium += 50000;
-  if (caseData.surgeryTypes?.includes("Spinal Cord Stimulator Permanent")) surgeryPremium += 100000;
-  if (caseData.surgeryTypes?.includes("Spinal Cord Stimulator Trial")) surgeryPremium += 25000;
+  // Premium adjustments for specific high-value surgery types
+  if (caseData.surgeryTypes?.some(type => type.includes("Spinal Fusion"))) surgeryPremium += 75000;
+  if (caseData.surgeryTypes?.some(type => type.includes("Hip Replacement"))) surgeryPremium += 60000;
+  if (caseData.surgeryTypes?.some(type => type.includes("Knee Replacement"))) surgeryPremium += 50000;
+  if (caseData.surgeryTypes?.some(type => type.includes("Spinal Cord Stimulator - Permanent"))) surgeryPremium += 100000;
+  if (caseData.surgeryTypes?.some(type => type.includes("Spinal Cord Stimulator - Trial"))) surgeryPremium += 25000;
   
   // Injection premium calculation
   const injections = caseData.injections || 0;
@@ -186,7 +187,7 @@ const generateEnhancedRationale = (caseData: CaseData, estimates: any): string =
   // Surgery analysis
   if (caseData.surgeries > 0) {
     rationale += `The ${caseData.surgeries} surgical procedure${caseData.surgeries > 1 ? 's' : ''} `;
-    if (caseData.surgeryTypes?.includes("Spinal Fusion")) {
+    if (caseData.surgeryTypes?.some(type => type.includes("Spinal Fusion"))) {
       rationale += `including spinal fusion `;
     }
     rationale += `significantly increases award potential. `;

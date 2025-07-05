@@ -30,12 +30,70 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
   };
 
   const surgeryTypeOptions = [
-    "Spinal Fusion", "Hip Replacement", "Knee Replacement", "Shoulder Surgery",
-    "Arthroscopy", "Rotator Cuff Repair", "ACL Reconstruction"
+    // Spinal Surgeries
+    "Spinal Fusion - Cervical", "Spinal Fusion - Lumbar", "Spinal Fusion - Thoracic",
+    "Discectomy - Cervical", "Discectomy - Lumbar", "Laminectomy - Cervical", "Laminectomy - Lumbar",
+    "Foraminotomy", "Spinal Cord Stimulator - Trial", "Spinal Cord Stimulator - Permanent",
+    "Vertebroplasty", "Kyphoplasty", "Artificial Disc Replacement",
+    
+    // Joint Replacements
+    "Hip Replacement - Total", "Hip Replacement - Partial", "Hip Resurfacing",
+    "Knee Replacement - Total", "Knee Replacement - Partial", "Knee Replacement - Revision",
+    "Shoulder Replacement - Total", "Shoulder Replacement - Reverse", "Shoulder Resurfacing",
+    "Ankle Replacement", "Elbow Replacement", "Wrist Replacement",
+    
+    // Arthroscopic Procedures
+    "Knee Arthroscopy", "Shoulder Arthroscopy", "Hip Arthroscopy", "Ankle Arthroscopy",
+    "Wrist Arthroscopy", "Elbow Arthroscopy",
+    
+    // Soft Tissue Repairs
+    "Rotator Cuff Repair", "ACL Reconstruction", "PCL Reconstruction", "MCL Repair", "LCL Repair",
+    "Meniscus Repair", "Labral Repair - Hip", "Labral Repair - Shoulder", "Bicep Tendon Repair",
+    "Achilles Tendon Repair", "Patellar Tendon Repair", "Carpal Tunnel Release",
+    
+    // Fracture Repairs
+    "Open Reduction Internal Fixation (ORIF)", "Closed Reduction", "External Fixation",
+    "Intramedullary Nailing", "Plate and Screw Fixation",
+    
+    // Other Procedures
+    "Trigger Finger Release", "Cubital Tunnel Release", "Tarsal Tunnel Release",
+    "Plantar Fascia Release", "Ganglion Cyst Removal", "Lipoma Removal",
+    "Hardware Removal", "Scar Tissue Removal", "Nerve Decompression"
   ];
 
   const injectionTypeOptions = [
-    "Epidural Steroid", "Facet Joint", "Trigger Point", "Cortisone", "PRP", "Stem Cell"
+    // Spinal Injections
+    "Epidural Steroid - Cervical", "Epidural Steroid - Thoracic", "Epidural Steroid - Lumbar",
+    "Facet Joint - Cervical", "Facet Joint - Thoracic", "Facet Joint - Lumbar",
+    "Trigger Point - Cervical", "Trigger Point - Thoracic", "Trigger Point - Lumbar",
+    "Nerve Block - Cervical", "Nerve Block - Lumbar", "Selective Nerve Root Block",
+    "Caudal Epidural", "Transforaminal Epidural", "Interlaminar Epidural",
+    "Medial Branch Block", "Radiofrequency Ablation",
+    
+    // Joint Injections
+    "Cortisone - Shoulder", "Cortisone - Hip", "Cortisone - Knee", "Cortisone - Ankle",
+    "Cortisone - Elbow", "Cortisone - Wrist", "Cortisone - SI Joint",
+    "Hyaluronic Acid - Knee", "Hyaluronic Acid - Hip", "Hyaluronic Acid - Shoulder",
+    
+    // Regenerative Medicine
+    "PRP - Knee", "PRP - Hip", "PRP - Shoulder", "PRP - Elbow", "PRP - Ankle",
+    "PRP - Plantar Fascia", "PRP - Achilles", "PRP - Rotator Cuff",
+    "Stem Cell - Knee", "Stem Cell - Hip", "Stem Cell - Shoulder", "Stem Cell - Spine",
+    "Bone Marrow Aspirate", "Prolotherapy",
+    
+    // Muscle/Soft Tissue Injections  
+    "Trigger Point - Trapezius", "Trigger Point - Piriformis", "Trigger Point - Quadratus Lumborum",
+    "Trigger Point - Levator Scapulae", "Trigger Point - Rhomboid", "Trigger Point - Gluteal",
+    "Botox - Muscle Spasm", "Myofascial Release Injection",
+    
+    // Peripheral Nerve Injections
+    "Occipital Nerve Block", "Suprascapular Nerve Block", "Lateral Femoral Cutaneous Nerve Block",
+    "Pudendal Nerve Block", "Intercostal Nerve Block", "Stellate Ganglion Block",
+    
+    // Other Specialized Injections
+    "Bursa - Shoulder", "Bursa - Hip", "Bursa - Knee", "Bursa - Elbow",
+    "Ganglion Cyst Aspiration", "Joint Aspiration", "Tendon Sheath Injection",
+    "Carpal Tunnel Injection", "Plantar Fascia Injection"
   ];
 
   const toggleSurgeryType = (surgeryType: string) => {
@@ -82,7 +140,7 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
 
       <div className="space-y-2">
         <Label>Surgery Types</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
           {surgeryTypeOptions.map(surgery => (
             <div key={surgery} className="flex items-center space-x-2">
               <Checkbox
@@ -97,8 +155,8 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
       </div>
 
       <div className="space-y-2">
-        <Label>Injection Types</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <Label>Injection Types (by Location)</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
           {injectionTypeOptions.map(injection => (
             <div key={injection} className="flex items-center space-x-2">
               <Checkbox
