@@ -1,14 +1,5 @@
 import { useState } from 'react';
 import { generateValuation } from '@/utils/generateValuation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface FormData {
   Venue: string;
@@ -121,356 +112,544 @@ const CaseEvaluator = () => {
   };
 
   const getRiskLevel = (risk: number) => {
-    if (risk > 85) return { label: 'CRITICAL', color: 'destructive', icon: AlertCircle };
-    if (risk > 60) return { label: 'HIGH', color: 'destructive', icon: AlertTriangle };
-    if (risk > 30) return { label: 'MODERATE', color: 'warning', icon: AlertTriangle };
-    return { label: 'LOW', color: 'success', icon: CheckCircle };
+    if (risk > 85) return { label: 'CRITICAL', color: '#dc2626', bgColor: '#fef2f2' };
+    if (risk > 60) return { label: 'HIGH', color: '#ea580c', bgColor: '#fff7ed' };
+    if (risk > 30) return { label: 'MODERATE', color: '#ca8a04', bgColor: '#fefce8' };
+    return { label: 'LOW', color: '#16a34a', bgColor: '#f0fdf4' };
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-4">⚖️ Verdict AI Case Evaluator</h1>
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#2c3e50', marginBottom: '10px' }}>
+          ⚖️ Verdict AI Case Evaluator
+        </h1>
+        <div style={{ 
+          display: 'inline-block', 
+          padding: '8px 16px', 
+          backgroundColor: '#e3f2fd', 
+          color: '#1976d2', 
+          border: '1px solid #bbdefb', 
+          borderRadius: '6px',
+          fontSize: '14px'
+        }}>
           Using Linear Model Analysis of 313 Real Settlement Cases
-        </Badge>
+        </div>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Case Information</CardTitle>
-          <CardDescription>Enter case details for data-driven settlement analysis</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="venue">Venue</Label>
-                <Input
-                  id="venue"
-                  value={formData.Venue}
-                  onChange={(e) => handleInputChange('Venue', e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="acctype">Accident Type</Label>
-                <Input
-                  id="acctype"
-                  value={formData.AccType}
-                  onChange={(e) => handleInputChange('AccType', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="surgery">Surgery (or "None")</Label>
-                <Input
-                  id="surgery"
-                  value={formData.Surgery}
-                  onChange={(e) => handleInputChange('Surgery', e.target.value)}
-                  placeholder="None"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="liabpct">Liability % (0-100)</Label>
-                <Input
-                  id="liabpct"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.LiabPct}
-                  onChange={(e) => handleInputChange('LiabPct', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <Label htmlFor="injuries">Injuries</Label>
-                <Textarea
-                  id="injuries"
-                  value={formData.Injuries}
-                  onChange={(e) => handleInputChange('Injuries', e.target.value)}
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="medicalSpecials">Medical Specials ($)</Label>
-                <Input
-                  id="medicalSpecials"
-                  type="number"
-                  value={formData.medicalSpecials}
-                  onChange={(e) => handleInputChange('medicalSpecials', e.target.value)}
-                  placeholder="150000"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="howellSpecials">Howell Specials ($)</Label>
-                <Input
-                  id="howellSpecials"
-                  type="number"
-                  value={formData.howellSpecials}
-                  onChange={(e) => handleInputChange('howellSpecials', e.target.value)}
-                  placeholder="125000"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="surgeryType">Surgery Type</Label>
-                <Input
-                  id="surgeryType"
-                  value={formData.surgeryType}
-                  onChange={(e) => handleInputChange('surgeryType', e.target.value)}
-                  placeholder="e.g., ACDF, Lumbar Fusion"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="surgeries">Number of Surgeries</Label>
-                <Input
-                  id="surgeries"
-                  type="number"
-                  min="0"
-                  value={formData.surgeries}
-                  onChange={(e) => handleInputChange('surgeries', e.target.value)}
-                  placeholder="1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="injectionType">Injection Type</Label>
-                <Input
-                  id="injectionType"
-                  value={formData.injectionType}
-                  onChange={(e) => handleInputChange('injectionType', e.target.value)}
-                  placeholder="e.g., Epidural Steroid"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="injections">Number of Injections</Label>
-                <Input
-                  id="injections"
-                  type="number"
-                  min="0"
-                  value={formData.injections}
-                  onChange={(e) => handleInputChange('injections', e.target.value)}
-                  placeholder="3"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="tbiSeverity">TBI Severity</Label>
-                <Select value={formData.tbiSeverity} onValueChange={(value) => handleInputChange('tbiSeverity', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select TBI severity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mild">Mild</SelectItem>
-                    <SelectItem value="moderate">Moderate</SelectItem>
-                    <SelectItem value="severe">Severe</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="pollim">Policy Limits ($)</Label>
-                <Input
-                  id="pollim"
-                  value={formData.PolLim}
-                  onChange={(e) => handleInputChange('PolLim', e.target.value)}
-                  placeholder="$250,000"
-                  required
-                />
-              </div>
+      <div style={{ 
+        backgroundColor: 'white', 
+        border: '1px solid #ddd', 
+        borderRadius: '8px', 
+        padding: '20px', 
+        marginBottom: '30px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px', color: '#2c3e50' }}>
+          Case Information
+        </h2>
+        <p style={{ color: '#666', marginBottom: '20px' }}>
+          Enter case details for data-driven settlement analysis
+        </p>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '15px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Venue</label>
+              <input
+                type="text"
+                value={formData.Venue}
+                onChange={(e) => handleInputChange('Venue', e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Accident Type</label>
+              <input
+                type="text"
+                value={formData.AccType}
+                onChange={(e) => handleInputChange('AccType', e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Analyzing Case...' : 'Evaluate Case'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Surgery (or "None")</label>
+              <input
+                type="text"
+                value={formData.Surgery}
+                onChange={(e) => handleInputChange('Surgery', e.target.value)}
+                placeholder="None"
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Liability % (0-100)</label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={formData.LiabPct}
+                onChange={(e) => handleInputChange('LiabPct', e.target.value)}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Injuries</label>
+              <textarea
+                value={formData.Injuries}
+                onChange={(e) => handleInputChange('Injuries', e.target.value)}
+                rows={3}
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Medical Specials ($)</label>
+              <input
+                type="number"
+                value={formData.medicalSpecials}
+                onChange={(e) => handleInputChange('medicalSpecials', e.target.value)}
+                placeholder="150000"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Howell Specials ($)</label>
+              <input
+                type="number"
+                value={formData.howellSpecials}
+                onChange={(e) => handleInputChange('howellSpecials', e.target.value)}
+                placeholder="125000"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Surgery Type</label>
+              <input
+                type="text"
+                value={formData.surgeryType}
+                onChange={(e) => handleInputChange('surgeryType', e.target.value)}
+                placeholder="e.g., ACDF, Lumbar Fusion"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Number of Surgeries</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.surgeries}
+                onChange={(e) => handleInputChange('surgeries', e.target.value)}
+                placeholder="1"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Injection Type</label>
+              <input
+                type="text"
+                value={formData.injectionType}
+                onChange={(e) => handleInputChange('injectionType', e.target.value)}
+                placeholder="e.g., Epidural Steroid"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Number of Injections</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.injections}
+                onChange={(e) => handleInputChange('injections', e.target.value)}
+                placeholder="3"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>TBI Severity</label>
+              <select
+                value={formData.tbiSeverity}
+                onChange={(e) => handleInputChange('tbiSeverity', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              >
+                <option value="">Select TBI severity</option>
+                <option value="mild">Mild</option>
+                <option value="moderate">Moderate</option>
+                <option value="severe">Severe</option>
+              </select>
+              <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                Defense perspective: Mild=minor symptoms, Severe=significant ongoing symptoms
+              </p>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#374151' }}>Policy Limits ($)</label>
+              <input
+                type="text"
+                value={formData.PolLim}
+                onChange={(e) => handleInputChange('PolLim', e.target.value)}
+                placeholder="$250,000"
+                required
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: '15px 30px',
+              backgroundColor: loading ? '#9ca3af' : '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            {loading ? 'Analyzing Case...' : 'Evaluate Case'}
+          </button>
+        </form>
+      </div>
 
       {error && (
-        <Card className="mb-6 border-destructive bg-destructive/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-4 h-4" />
-              <p className="font-medium">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div style={{
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#dc2626' }}>
+            <span>⚠️</span>
+            <p style={{ fontWeight: 'bold', margin: 0 }}>{error}</p>
+          </div>
+        </div>
       )}
 
       {result && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Main Settlement Result */}
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-green-700">
-                ⚖️ Settlement Analysis: {result.proposal}
-              </CardTitle>
-              <CardDescription className="text-base">
-                {result.rationale}
-              </CardDescription>
-              <div className="flex justify-center gap-4 text-sm text-muted-foreground">
-                <span>Case #{result.sourceCaseID}</span>
-                <span>•</span>
-                <span className="text-red-600 font-medium">Expires: {result.expiresOn}</span>
-              </div>
-            </CardHeader>
-          </Card>
+          <div style={{
+            backgroundColor: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '8px',
+            padding: '24px',
+            textAlign: 'center'
+          }}>
+            <h2 style={{ fontSize: '28px', color: '#15803d', marginBottom: '12px', fontWeight: 'bold' }}>
+              ⚖️ Settlement Analysis: {result.proposal}
+            </h2>
+            <p style={{ fontSize: '16px', color: '#374151', marginBottom: '16px' }}>
+              {result.rationale}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '14px', color: '#6b7280' }}>
+              <span>Case #{result.sourceCaseID}</span>
+              <span>•</span>
+              <span style={{ color: '#dc2626', fontWeight: 'bold' }}>Expires: {result.expiresOn}</span>
+            </div>
+          </div>
 
           {/* Policy Exceedance Risk Analysis */}
           {result.policyExceedanceRisk !== undefined && result.policyLimit && result.policyLimit > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {getRiskLevel(result.policyExceedanceRisk).icon === AlertCircle && <AlertCircle className="w-5 h-5 text-red-500" />}
-                  {getRiskLevel(result.policyExceedanceRisk).icon === AlertTriangle && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
-                  {getRiskLevel(result.policyExceedanceRisk).icon === CheckCircle && <CheckCircle className="w-5 h-5 text-green-500" />}
-                  Policy Limit Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Policy Limit:</span>
-                    <p className="text-lg font-bold">${result.policyLimit.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Settlement:</span>
-                    <p className="text-lg font-bold">{result.proposal}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium">Coverage Ratio:</span>
-                    <p className="text-lg font-bold">
-                      {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}%
-                    </p>
-                  </div>
-                </div>
-
+            <div style={{
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                marginBottom: '20px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#1f2937'
+              }}>
+                {result.policyExceedanceRisk > 60 ? '🚨' : result.policyExceedanceRisk > 30 ? '⚠️' : '✅'}
+                Policy Limit Analysis
+              </div>
+              
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+                gap: '16px',
+                marginBottom: '20px'
+              }}>
                 <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Exceedance Risk</span>
-                    <Badge variant={getRiskLevel(result.policyExceedanceRisk).color as any}>
-                      {getRiskLevel(result.policyExceedanceRisk).label} RISK
-                    </Badge>
-                  </div>
-                  <Progress value={result.policyExceedanceRisk} className="h-3" />
-                  <p className="text-center text-sm text-muted-foreground mt-1">
-                    {result.policyExceedanceRisk}% chance of exceeding policy limits
+                  <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Policy Limit:</span>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>${result.policyLimit.toLocaleString()}</p>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Settlement:</span>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{result.proposal}</p>
+                </div>
+                <div>
+                  <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Coverage Ratio:</span>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
+                    {((result.settlementAmount || 0) / result.policyLimit * 100).toFixed(1)}%
                   </p>
                 </div>
+              </div>
 
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm">
-                    <span className="font-medium">Risk Assessment:</span>{' '}
-                    {result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
-                     result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
-                     result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
-                     'LOW RISK - Settlement well within policy limits.'}
-                  </p>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold' }}>Exceedance Risk</span>
+                  <div style={{
+                    padding: '4px 8px',
+                    backgroundColor: getRiskLevel(result.policyExceedanceRisk).bgColor,
+                    color: getRiskLevel(result.policyExceedanceRisk).color,
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    {getRiskLevel(result.policyExceedanceRisk).label} RISK
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div style={{
+                  width: '100%',
+                  height: '12px',
+                  backgroundColor: '#e5e7eb',
+                  borderRadius: '6px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${result.policyExceedanceRisk}%`,
+                    height: '100%',
+                    backgroundColor: getRiskLevel(result.policyExceedanceRisk).color,
+                    transition: 'width 0.3s ease'
+                  }}></div>
+                </div>
+                <p style={{ textAlign: 'center', fontSize: '14px', color: '#6b7280', marginTop: '4px', margin: 0 }}>
+                  {result.policyExceedanceRisk}% chance of exceeding policy limits
+                </p>
+              </div>
+
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#f9fafb',
+                borderRadius: '6px'
+              }}>
+                <p style={{ fontSize: '14px', margin: 0 }}>
+                  <span style={{ fontWeight: 'bold' }}>Risk Assessment:</span>{' '}
+                  {result.policyExceedanceRisk > 85 ? 'CRITICAL - Settlement likely exceeds policy limits. Significant excess exposure risk.' :
+                   result.policyExceedanceRisk > 60 ? 'HIGH RISK - Settlement approaching policy limits. Monitor for excess exposure.' :
+                   result.policyExceedanceRisk > 30 ? 'MODERATE RISK - Settlement within reasonable range of policy limits.' :
+                   'LOW RISK - Settlement well within policy limits.'}
+                </p>
+              </div>
+            </div>
           )}
 
           {/* Value Factors Analysis */}
           {result.valueFactors && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Settlement Factor Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {result.valueFactors.increasing.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-green-600 mb-3 flex items-center gap-2">
-                        📈 Value Increasing Factors
-                      </h4>
-                      <ul className="space-y-1">
-                        {result.valueFactors.increasing.map((factor, index) => (
-                          <li key={index} className="text-sm text-green-700 pl-2 border-l-2 border-green-200">
-                            {factor}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {result.valueFactors.decreasing.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-red-600 mb-3 flex items-center gap-2">
-                        📉 Value Decreasing Factors
-                      </h4>
-                      <ul className="space-y-1">
-                        {result.valueFactors.decreasing.map((factor, index) => (
-                          <li key={index} className="text-sm text-red-700 pl-2 border-l-2 border-red-200">
-                            {factor}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div style={{
+              backgroundColor: 'white',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+            }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', color: '#1f2937' }}>
+                Settlement Factor Analysis
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+                {result.valueFactors.increasing.length > 0 && (
+                  <div>
+                    <h4 style={{ fontWeight: 'bold', color: '#059669', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      📈 Value Increasing Factors
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {result.valueFactors.increasing.map((factor, index) => (
+                        <li key={index} style={{
+                          fontSize: '14px',
+                          color: '#065f46',
+                          paddingLeft: '8px',
+                          borderLeft: '2px solid #34d399',
+                          marginBottom: '4px'
+                        }}>
+                          {factor}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {result.valueFactors.decreasing.length > 0 && (
+                  <div>
+                    <h4 style={{ fontWeight: 'bold', color: '#dc2626', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      📉 Value Decreasing Factors
+                    </h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {result.valueFactors.decreasing.map((factor, index) => (
+                        <li key={index} style={{
+                          fontSize: '14px',
+                          color: '#991b1b',
+                          paddingLeft: '8px',
+                          borderLeft: '2px solid #f87171',
+                          marginBottom: '4px'
+                        }}>
+                          {factor}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Comparable Cases */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Comparable Cases</CardTitle>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowComparables(!showComparables)}
-                >
-                  {showComparables ? 'Hide' : 'Show'} Similar Cases
-                </Button>
-              </div>
-            </CardHeader>
+          <div style={{
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            padding: '24px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#1f2937' }}>Comparable Cases</h3>
+              <button
+                onClick={() => setShowComparables(!showComparables)}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {showComparables ? 'Hide' : 'Show'} Similar Cases
+              </button>
+            </div>
             {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-border rounded-lg">
-                    <thead>
-                      <tr className="bg-muted/50">
-                        <th className="p-3 text-left border border-border font-semibold">
-                          Case ID
-                        </th>
-                        <th className="p-3 text-left border border-border font-semibold">
-                          Settlement Amount
-                        </th>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f9fafb' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb', fontWeight: 'bold' }}>
+                        Case ID
+                      </th>
+                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb', fontWeight: 'bold' }}>
+                        Settlement Amount
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.comparableCases.map((caseItem, index) => (
+                      <tr key={caseItem.case_id} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f9fafb' }}>
+                        <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
+                          {caseItem.case_id}
+                        </td>
+                        <td style={{ padding: '12px', border: '1px solid #e5e7eb', fontWeight: 'bold' }}>
+                          ${caseItem.settlement_amount.toLocaleString()}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {result.comparableCases.map((caseItem, index) => (
-                        <tr key={caseItem.case_id} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                          <td className="p-3 border border-border">
-                            {caseItem.case_id}
-                          </td>
-                          <td className="p-3 border border-border font-medium">
-                            ${caseItem.settlement_amount.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </Card>
+          </div>
         </div>
       )}
     </div>
