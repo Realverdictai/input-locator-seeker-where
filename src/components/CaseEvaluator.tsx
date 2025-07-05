@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { findComparables } from '@/integrations/supabase/findComparables';
 import { generateValuation } from '@/utils/generateValuation';
+import { findComparables } from '@/integrations/supabase/findComparables';
 
 interface FormData {
   Venue: string;
@@ -12,10 +12,10 @@ interface FormData {
 }
 
 interface ValuationResult {
-  recommendedRange: string;
+  proposal: string;
   rationale: string;
-  midpoint: number;
-  comparables: number[];
+  sourceCaseID: number;
+  expiresOn: string;
 }
 
 interface ComparableCase {
@@ -37,6 +37,7 @@ const CaseEvaluator = () => {
   const [error, setError] = useState('');
   const [result, setResult] = useState<ValuationResult | null>(null);
   const [comparableCases, setComparableCases] = useState<ComparableCase[]>([]);
+  const [showComparables, setShowComparables] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -54,15 +55,15 @@ const CaseEvaluator = () => {
     setComparableCases([]);
 
     try {
-      // Call findComparables to get 5 rows
-      const comparables = await findComparables(formData);
+      // Call generateValuation with new single settlement approach
+      const valuation = await generateValuation(formData);
       
-      // Call generateValuation
-      const valuation = generateValuation(formData, comparables);
+      // Get comparables for optional display
+      const comparables = await findComparables(formData);
       
       // Set results
       setResult(valuation);
-      setComparableCases(comparables.map(c => ({
+      setComparableCases(comparables.slice(0, 5).map(c => ({
         CaseID: c.CaseID,
         Settle: c.Settle
       })));
@@ -252,19 +253,51 @@ const CaseEvaluator = () => {
               margin: '0 0 10px 0',
               color: '#28a745'
             }}>
-              Settlement Range: {result.recommendedRange}
+              Mediator's Single-Number Proposal: {result.proposal}
             </h2>
             <p style={{ 
               fontSize: '1.1em', 
-              margin: '0',
+              margin: '10px 0',
               color: '#6c757d',
               lineHeight: '1.4'
             }}>
               {result.rationale}
             </p>
+            <p style={{ 
+              fontSize: '0.9em', 
+              margin: '10px 0',
+              color: '#666',
+              fontStyle: 'italic'
+            }}>
+              (from Case #{result.sourceCaseID})
+            </p>
+            <p style={{ 
+              fontSize: '1em', 
+              margin: '0',
+              color: '#dc3545',
+              fontWeight: 'bold'
+            }}>
+              Open for acceptance until {result.expiresOn}
+            </p>
           </div>
 
-          {comparableCases.length > 0 && (
+          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+            <button
+              onClick={() => setShowComparables(!showComparables)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              {showComparables ? 'Hide' : 'Show'} Similar Cases
+            </button>
+          </div>
+
+          {showComparables && comparableCases.length > 0 && (
             <div>
               <h3 style={{ marginBottom: '15px' }}>Comparable Cases:</h3>
               <table style={{ 

@@ -12,7 +12,7 @@ interface MediationProposalRequest {
   plaintiffEmail: string;
   defenseEmail: string;
   proposalAmount: string;
-  recommendedRange: string;
+  sourceCaseID: number;
   rationale: string;
   expiresOn: string;
 }
@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
       plaintiffEmail, 
       defenseEmail, 
       proposalAmount, 
-      recommendedRange, 
+      sourceCaseID, 
       rationale, 
       expiresOn 
     }: MediationProposalRequest = await req.json();
@@ -44,7 +44,8 @@ const handler = async (req: Request): Promise<Response> => {
             Proposal Amount: ${proposalAmount}
           </h2>
           
-          <p><strong>Settlement Range:</strong> ${recommendedRange}</p>
+          <p><strong>Proposal Amount:</strong> ${proposalAmount}</p>
+          <p><strong>Source Case:</strong> #{sourceCaseID}</p>
           <p><strong>Rationale:</strong> ${rationale}</p>
           <p style="color: #dc3545; font-weight: bold;">
             This proposal expires on ${expiresOn} at 5:00 PM.

@@ -35,6 +35,19 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
 
   const isAutoCase = formData.caseType === 'auto-accident';
   const accidentTypes = isAutoCase ? autoAccidentTypes : nonAutoAccidentTypes;
+  
+  // Auto-hide for Motor Vehicle + Rear-End
+  const isRearEndAuto = isAutoCase && formData.accidentType === 'rear-end-collision';
+  
+  // Auto-set rear-end for motor vehicle accidents if not already set
+  if (isAutoCase && !formData.accidentType) {
+    setFormData({...formData, accidentType: 'rear-end-collision'});
+  }
+
+  // Skip this step entirely for rear-end auto accidents
+  if (isRearEndAuto) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

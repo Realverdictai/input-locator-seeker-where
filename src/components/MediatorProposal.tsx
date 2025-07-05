@@ -2,20 +2,20 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MediatorProposalProps {
-  recommendedRange: string;
-  midpoint: number;
-  rationale: string;
   proposal: string;
+  rationale: string;
+  sourceCaseID: number;
+  expiresOn: string;
 }
 
-const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: MediatorProposalProps) => {
+const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: MediatorProposalProps) => {
   const [plaintiffEmail, setPlaintiffEmail] = useState('');
   const [defenseEmail, setDefenseEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
   
-  const expiryDate = new Date();
-  expiryDate.setDate(expiryDate.getDate() + 7);
+  // Parse the provided expiration date
+  const expiryDate = new Date(expiresOn);
 
   const handleSendProposal = async () => {
     if (!plaintiffEmail || !defenseEmail) {
@@ -32,9 +32,9 @@ const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: M
           plaintiffEmail,
           defenseEmail,
           proposalAmount: proposal,
-          recommendedRange,
+          sourceCaseID,
           rationale,
-          expiresOn: expiryDate.toLocaleDateString()
+          expiresOn
         }
       });
 
@@ -101,7 +101,7 @@ const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: M
         </p>
         
         <p style={{ margin: '10px 0', color: '#495057' }}>
-          <strong>Settlement Range:</strong> {recommendedRange}
+          <strong>Source Case:</strong> #{sourceCaseID}
         </p>
         
         <p style={{ margin: '10px 0', color: '#495057' }}>
@@ -113,7 +113,7 @@ const MediatorProposal = ({ recommendedRange, midpoint, rationale, proposal }: M
           color: '#dc3545',
           fontWeight: 'bold'
         }}>
-          This proposal expires on {expiryDate.toLocaleDateString()} at 5:00 PM.
+          This proposal expires on {expiresOn} at 5:00 PM.
         </p>
       </div>
 
