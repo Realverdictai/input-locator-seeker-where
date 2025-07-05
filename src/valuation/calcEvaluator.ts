@@ -1,5 +1,6 @@
 import { getWeights } from './weights';
 import { getComparables } from './getComparables';
+import weightsData from './weights.json';
 
 interface NewCase {
   Venue?: string;
@@ -57,11 +58,14 @@ function parseInjectionVector(inject: string | null, injectionType?: string): Re
 }
 
 /**
- * Calculate the Evaluator Number using comprehensive scoring
+ * Calculate the Evaluator Number using comprehensive scoring with weights and outlier filtering
  */
 export async function calcEvaluator(newCase: NewCase): Promise<EvaluatorResult> {
   const weights = await getWeights();
-  const comparables = await getComparables(newCase, 25);
+  const ignoreWeights = process.env.IGNORE_WEIGHTS === 'true';
+  
+  // Get comparables with outlier filtering
+  const comparables = await getComparables(newCase, 25, !ignoreWeights);
   
   // Step 1: Base calculation from Howell specials
   const howell = newCase.howell || newCase.medicalSpecials * 0.6 || 0;
@@ -147,6 +151,39 @@ export async function calcEvaluator(newCase: NewCase): Promise<EvaluatorResult> 
     const accidentReduction = base * -0.15; // -15%
     base += accidentReduction;
     factorBreakdown.push(`Prior/subsequent accident ($${Math.round(accidentReduction).toLocaleString()})`);
+  }
+  
+  // Apply weights-based adjustments if not ignoring weights
+  if (!ignoreWeights) {
+    // Add injection value adjustments
+    const injectionCount = newCase.injections || 0;
+    if (injectionCount > 0) {
+      const injectionValue = injectionCount * weightsData.defaultInjectionValue;
+      base += injectionValue;
+      factorBreakdown.push(`Injection weights (+$${Math.round(injectionValue).toLocaleString()})`);
+    }
+    
+    // Add surgery weight adjustments
+    const surgeryCount = newCase.surgeries || 0;
+    if (surgeryCount > 0 && newCase.surgeryType) {
+      const surgeryWeight = weightsData.surgeryWeights[newCase.surgeryType.toLowerCase()] || 0;
+      if (surgeryWeight > 0) {
+        const surgeryValue = surgeryWeight * surgeryCount;
+        base += surgeryValue;
+        factorBreakdown.push(`Surgery weights (+$${Math.round(surgeryValue).toLocaleString()})`);
+      }
+    }
+    
+    // Add TBI weight adjustments
+    if (newCase.tbiLevel) {
+      const tbiLabels = ['None', 'Mild', 'Moderate', 'Severe'];
+      const tbiLabel = tbiLabels[newCase.tbiLevel] || 'None';
+      const tbiWeight = weightsData.tbiWeights[tbiLabel] || 0;
+      if (tbiWeight > 0) {
+        base += tbiWeight;
+        factorBreakdown.push(`TBI weights (+$${Math.round(tbiWeight).toLocaleString()})`);
+      }
+    }
   }
   
   // Round to nearest $500

@@ -71,3 +71,29 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Case Valuation System
+
+This application includes an advanced case valuation system with customizable weights for different medical procedures and treatments.
+
+### Adjusting Surgery and Treatment Values
+
+To adjust how much specific medical procedures add to case valuations, edit the `src/valuation/weights.json` file:
+
+- **Surgery weights**: Adjust values for fusion, arthroscopy, rotator cuff repair, ACL repair, and disc replacement surgeries
+- **Injection values**: Modify the default injection value that applies to all injection treatments
+- **TBI weights**: Set compensation amounts for different levels of traumatic brain injury (None, Mild, Moderate, Severe)
+
+After making changes to the weights file, redeploy the application for the changes to take effect.
+
+### Testing the Valuation System
+
+To test case valuations with or without the weights system:
+
+```bash
+# Test with weights enabled (default)
+IGNORE_WEIGHTS=false ts-node scripts/testOneCase.ts
+
+# Test with weights disabled (regression only)
+IGNORE_WEIGHTS=true ts-node scripts/testOneCase.ts
+```

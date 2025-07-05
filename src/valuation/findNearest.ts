@@ -20,7 +20,8 @@ interface NearestCase {
 export async function findNearestCases(
   embedding: number[],
   newCase: any,
-  limit: number = 25
+  limit: number = 25,
+  excludeOutliers: boolean = false
 ): Promise<NearestCase[]> {
   try {
     // Convert embedding array to pgvector format
@@ -51,26 +52,31 @@ export async function findNearestCases(
     if (error) {
       console.error('Error finding similar cases:', error);
       // Fallback to basic similarity if RPC fails
-      return await fallbackSimilaritySearch(newCase, limit);
+      return await fallbackSimilaritySearch(newCase, limit, excludeOutliers);
     }
 
     return (data as NearestCase[]) || [];
     
   } catch (error) {
     console.error('Error in findNearestCases:', error);
-    return await fallbackSimilaritySearch(newCase, limit);
+    return await fallbackSimilaritySearch(newCase, limit, excludeOutliers);
   }
 }
 
 /**
  * Fallback similarity search without embeddings
  */
-async function fallbackSimilaritySearch(newCase: any, limit: number): Promise<NearestCase[]> {
-  const { data, error } = await supabase
+async function fallbackSimilaritySearch(newCase: any, limit: number, excludeOutliers: boolean = false): Promise<NearestCase[]> {
+  let query = supabase
     .from('v_case_flat')
     .select('*')
-    .not('settlement', 'is', null)
-    .limit(limit);
+    .not('settlement', 'is', null);
+  
+  if (excludeOutliers) {
+    query = query.eq('is_outlier', false);
+  }
+  
+  const { data, error } = await query.limit(limit);
 
   if (error) {
     throw error;

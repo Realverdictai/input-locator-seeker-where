@@ -100,14 +100,19 @@ function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): nu
 /**
  * Fetch top comparable cases using similarity scoring
  */
-export async function getComparables(newCase: NewCase, limit: number = 25): Promise<ComparableCase[]> {
+export async function getComparables(newCase: NewCase, limit: number = 25, excludeOutliers: boolean = false): Promise<ComparableCase[]> {
   try {
-    // Fetch cases using the clean structured view  
-    const { data: allCases, error } = await supabase
+    // Fetch cases using the clean structured view with optional outlier filtering
+    let query = supabase
       .from('v_case_flat')
       .select('*')
-      .not('settlement', 'is', null)
-      .limit(500); // Get larger sample for better matching
+      .not('settlement', 'is', null);
+    
+    if (excludeOutliers) {
+      query = query.eq('is_outlier', false);
+    }
+    
+    const { data: allCases, error } = await query.limit(500); // Get larger sample for better matching
     
     if (error) {
       console.error('Error fetching cases for comparison:', error);

@@ -1,0 +1,16 @@
+{
+  "defaultInjectionValue": 50000,
+  "surgeryWeights": {
+    "fusion": 180000,
+    "arthroscopy": 70000,
+    "rotator": 95000,
+    "acl": 90000,
+    "discReplacement": 160000
+  },
+  "tbiWeights": {
+    "None": 0,
+    "Mild": 15000,
+    "Moderate": 50000,
+    "Severe": 120000
+  }
+}

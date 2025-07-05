@@ -196,6 +196,7 @@ export type Database = {
           injection_count: number | null
           injection_list: Json | null
           injuries: string | null
+          is_outlier: boolean | null
           liab_pct: number | null
           narrative: string | null
           policy_limits: number | null
@@ -215,6 +216,7 @@ export type Database = {
           injection_count?: never
           injection_list?: never
           injuries?: never
+          is_outlier?: never
           liab_pct?: never
           narrative?: never
           policy_limits?: never
@@ -234,6 +236,7 @@ export type Database = {
           injection_count?: never
           injection_list?: never
           injuries?: never
+          is_outlier?: never
           liab_pct?: never
           narrative?: never
           policy_limits?: never
