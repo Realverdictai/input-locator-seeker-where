@@ -10,6 +10,7 @@ interface EnhancedCaseInput {
   medicalSpecials?: number;
   age?: number;
   narrative?: string;
+  tbiSeverity?: number;
 }
 
 interface EnhancedSettlementResult {
@@ -64,7 +65,7 @@ export async function getEnhancedSettlement(caseInput: EnhancedCaseInput): Promi
 /**
  * Format the enhanced settlement result for display
  */
-export function formatEnhancedResult(result: EnhancedSettlementResult) {
+export function formatEnhancedResult(result: any) {
   return {
     proposal: `$${result.settlement_recommendation.toLocaleString()}`,
     rationale: result.reasoning,
@@ -75,7 +76,12 @@ export function formatEnhancedResult(result: EnhancedSettlementResult) {
       year: 'numeric'
     }),
     confidence: result.confidence_score,
-    comparableCases: result.top_comparable_cases,
-    valueFactors: result.value_factors
+    comparableCases: result.top_comparable_cases || [],
+    valueFactors: result.value_factors,
+    settlementRange: {
+      low: result.settlement_range_low,
+      high: result.settlement_range_high
+    },
+    policyExceedanceRisk: result.policy_exceedance_risk || 0
   };
 }

@@ -12,6 +12,7 @@ interface FormData {
   medicalSpecials?: string;
   age?: string;
   narrative?: string;
+  tbiSeverity?: string; // 1-10 scale for TBI severity
 }
 
 interface ValuationResult {
@@ -26,10 +27,14 @@ interface ValuationResult {
   };
   comparableCases?: Array<{
     case_id: number;
-    similarity_score: number;
     settlement_amount: number;
-    key_similarities: string[];
+    similarity_reason: string;
   }>;
+  settlementRange?: {
+    low: number;
+    high: number;
+  };
+  policyExceedanceRisk?: number;
 }
 
 interface ComparableCase {
@@ -47,7 +52,8 @@ const CaseEvaluator = () => {
     PolLim: '',
     medicalSpecials: '',
     age: '',
-    narrative: ''
+    narrative: '',
+    tbiSeverity: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -82,18 +88,12 @@ const CaseEvaluator = () => {
         PolLim: formData.PolLim,
         medicalSpecials: formData.medicalSpecials ? parseInt(formData.medicalSpecials) : undefined,
         age: formData.age ? parseInt(formData.age) : undefined,
-        narrative: formData.narrative
+        narrative: formData.narrative,
+        tbiSeverity: formData.tbiSeverity ? parseInt(formData.tbiSeverity) : undefined
       });
       
-      // Get comparables for optional display
-      const comparables = await findComparables(formData);
-      
-      // Set results
+      // Set results - use AI comparable cases, not separate findComparables call
       setResult(valuation);
-      setComparableCases(comparables.slice(0, 5).map(c => ({
-        CaseID: c.CaseID,
-        Settle: c.Settle
-      })));
       
     } catch (err) {
       setError(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
@@ -265,6 +265,30 @@ const CaseEvaluator = () => {
           </label>
         </div>
 
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            TBI Severity (1-10, defense perspective) - Optional:
+            <input
+              type="number"
+              name="tbiSeverity"
+              value={formData.tbiSeverity}
+              onChange={handleInputChange}
+              placeholder="5"
+              min="1"
+              max="10"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+          <small style={{ color: '#666', fontSize: '0.8em' }}>
+            Defense perspective: 1=minor headache, 10=severe ongoing symptoms
+          </small>
+        </div>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
             Case Narrative/Details - Optional:
@@ -443,7 +467,7 @@ const CaseEvaluator = () => {
             </button>
           </div>
 
-          {showComparables && comparableCases.length > 0 && (
+          {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
             <div>
               <h3 style={{ marginBottom: '15px' }}>Comparable Cases:</h3>
               <table style={{ 
@@ -472,21 +496,21 @@ const CaseEvaluator = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {comparableCases.map((caseItem, index) => (
-                    <tr key={caseItem.CaseID} style={{
+                  {result.comparableCases.map((caseItem, index) => (
+                    <tr key={caseItem.case_id} style={{
                       backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
                     }}>
                       <td style={{ 
                         padding: '12px',
                         border: '1px solid #dee2e6'
                       }}>
-                        {caseItem.CaseID}
+                        {caseItem.case_id}
                       </td>
                       <td style={{ 
                         padding: '12px',
                         border: '1px solid #dee2e6'
                       }}>
-                        {caseItem.Settle}
+                        ${caseItem.settlement_amount.toLocaleString()}
                       </td>
                     </tr>
                   ))}

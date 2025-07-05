@@ -11,6 +11,7 @@ interface NewCase {
   medicalSpecials?: number;
   age?: number;
   narrative?: string;
+  tbiSeverity?: number;
 }
 
 interface ValuationResult {
@@ -25,10 +26,14 @@ interface ValuationResult {
   };
   comparableCases?: Array<{
     case_id: number;
-    similarity_score: number;
     settlement_amount: number;
-    key_similarities: string[];
+    similarity_reason: string;
   }>;
+  settlementRange?: {
+    low: number;
+    high: number;
+  };
+  policyExceedanceRisk?: number;
 }
 
 /**
@@ -92,7 +97,8 @@ export async function generateEnhancedValuation(newCase: NewCase): Promise<Valua
       polLim: newCase.PolLim,
       medicalSpecials: newCase.medicalSpecials,
       age: newCase.age,
-      narrative: newCase.narrative
+      narrative: newCase.narrative,
+      tbiSeverity: newCase.tbiSeverity
     });
 
     // Format the result
