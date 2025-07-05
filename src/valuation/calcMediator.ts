@@ -1,15 +1,12 @@
 interface MediatorResult {
-  mediatorProposal: string;
+  mediator: string;
   expiresOn: string;
 }
 
 /**
- * Calculate Mediator's Proposal based on Evaluator Number
+ * Calculate Mediator's Proposal based on Evaluator Number and Policy Limits
  */
-export function calcMediatorProposal(
-  evaluatorString: string, 
-  policyLimits?: number
-): MediatorResult {
+export function calcMediator(evaluatorString: string, policyLimits?: number): MediatorResult {
   // Parse evaluator amount
   const evaluatorAmount = parseFloat(evaluatorString.replace(/[$,]/g, '')) || 0;
   
@@ -19,7 +16,7 @@ export function calcMediatorProposal(
     const policyLimit90Percent = policyLimits * 0.90;
     
     // If evaluator exceeds 90% of policy limits, cap at 90%
-    if (evaluatorAmount > policyLimit90Percent) {
+    if (evaluatorAmount >= policyLimit90Percent) {
       proposalAmount = policyLimit90Percent;
     } else {
       // Otherwise, apply 95% of evaluator (slightly plaintiff-unfriendly)
@@ -49,7 +46,7 @@ export function calcMediatorProposal(
   });
   
   return {
-    mediatorProposal: `$${proposalAmount.toLocaleString()}`,
+    mediator: `$${proposalAmount.toLocaleString()}`,
     expiresOn
   };
 }

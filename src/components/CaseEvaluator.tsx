@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { calcEvaluatorNumber } from '@/valuation/calcEvaluatorNumber';
-import { calcMediatorProposal } from '@/valuation/calcMediatorProposal';
+import { calcEvaluator } from '@/valuation/calcEvaluator';
+import { calcMediator } from '@/valuation/calcMediator';
+import { runTestHarness } from '@/valuation/testHarness';
 
 interface FormData {
   Venue: string;
@@ -21,11 +22,11 @@ interface FormData {
 interface EvaluationResult {
   evaluator: string;
   rationale: string;
-  sourceRows: number[];
+  sourceCases: number[];
 }
 
 interface MediatorResult {
-  mediatorProposal: string;
+  mediator: string;
   expiresOn: string;
 }
 
@@ -73,24 +74,25 @@ const CaseEvaluator = () => {
     setMediatorResult(null);
 
     try {
-      // Convert form data to CaseData format
-      const caseData = {
-        venue: formData.Venue,
+      // Convert form data to new case format
+      const newCase = {
+        Venue: formData.Venue,
+        Surgery: formData.Surgery,
+        Injuries: formData.Injuries,
+        LiabPct: formData.LiabPct,
+        AccType: formData.AccType,
+        howell: formData.howellSpecials ? parseInt(formData.howellSpecials) : undefined,
         medicalSpecials: formData.medicalSpecials ? parseInt(formData.medicalSpecials) : undefined,
-        howellHanifDeductions: formData.howellSpecials ? parseInt(formData.howellSpecials) : undefined,
-        surgeries: formData.surgeries ? parseInt(formData.surgeries) : undefined,
         surgeryType: formData.surgeryType,
-        injections: formData.injections ? parseInt(formData.injections) : undefined,
+        surgeries: formData.surgeries ? parseInt(formData.surgeries) : undefined,
         injectionType: formData.injectionType,
-        liabilityPercentage: formData.LiabPct ? parseInt(formData.LiabPct) : undefined,
-        tbiSeverity: formData.tbiSeverity,
-        policyLimits: formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined,
-        accidentType: formData.AccType,
-        injuries: formData.Injuries
+        injections: formData.injections ? parseInt(formData.injections) : undefined,
+        tbiLevel: formData.tbiSeverity ? ['mild', 'moderate', 'severe'].indexOf(formData.tbiSeverity) + 1 : undefined,
+        policyLimits: formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined
       };
 
-      // Calculate evaluator number
-      const evaluation = await calcEvaluatorNumber(caseData);
+      // Calculate evaluator number using new algorithm
+      const evaluation = await calcEvaluator(newCase);
       setEvaluationResult(evaluation);
       
     } catch (err) {
@@ -104,8 +106,29 @@ const CaseEvaluator = () => {
     if (!evaluationResult) return;
     
     const policyLimits = formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined;
-    const proposal = calcMediatorProposal(evaluationResult.evaluator, policyLimits);
+    const proposal = calcMediator(evaluationResult.evaluator, policyLimits);
     setMediatorResult(proposal);
+  };
+
+  const handleRunTest = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { evalRes, medRes } = await runTestHarness();
+      setEvaluationResult({
+        evaluator: evalRes.evaluator,
+        rationale: evalRes.rationale,
+        sourceCases: evalRes.sourceCases
+      });
+      setMediatorResult({
+        mediator: medRes.mediator,
+        expiresOn: medRes.expiresOn
+      });
+    } catch (err) {
+      setError(`Test failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -398,23 +421,44 @@ const CaseEvaluator = () => {
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: loading ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Calculating...' : 'Calculate Evaluator Number'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '12px',
+              backgroundColor: loading ? '#ccc' : '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Calculating...' : 'Calculate Evaluator Number'}
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleRunTest}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '12px',
+              backgroundColor: loading ? '#ccc' : '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? 'Testing...' : 'Run Test Harness'}
+          </button>
+        </div>
       </form>
 
       {error && (
@@ -462,7 +506,7 @@ const CaseEvaluator = () => {
               color: '#666',
               fontStyle: 'italic'
             }}>
-              (based on Cases #{evaluationResult.sourceRows.join(', #')})
+              (based on Cases #{evaluationResult.sourceCases.join(', #')})
             </p>
           </div>
 
@@ -501,7 +545,7 @@ const CaseEvaluator = () => {
                 margin: '0 0 10px 0',
                 color: '#28a745'
               }}>
-                Mediator's Proposal: {mediatorResult.mediatorProposal}
+                Mediator's Proposal: {mediatorResult.mediator}
               </h3>
               <p style={{ 
                 fontSize: '1em', 

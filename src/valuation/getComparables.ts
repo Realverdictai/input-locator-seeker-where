@@ -1,0 +1,140 @@
+import { supabase } from "@/integrations/supabase/client";
+
+interface NewCase {
+  Venue?: string;
+  Surgery?: string;
+  Injuries?: string;
+  LiabPct?: string;
+  AccType?: string;
+  [key: string]: any;
+}
+
+interface ComparableCase {
+  case_id: number;
+  surgery: string | null;
+  inject: string | null;
+  injuries: string | null;
+  settle: string | null;
+  pol_lim: string | null;
+  venue: string | null;
+  liab_pct: string | null;
+  acc_type: string | null;
+  similarity_score?: number;
+}
+
+/**
+ * Calculate word overlap between two strings
+ */
+function wordOverlap(str1: string | null, str2: string | null): number {
+  if (!str1 || !str2) return 0;
+  
+  const words1 = str1.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const words2 = str2.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  
+  const overlap = words1.filter(word => words2.includes(word)).length;
+  const total = Math.max(words1.length, words2.length);
+  
+  return total > 0 ? (overlap / total) * 10 : 0;
+}
+
+/**
+ * Calculate simple text similarity (0-10 scale)
+ */
+function textSimilarity(str1: string | null, str2: string | null): number {
+  if (!str1 || !str2) return 0;
+  
+  const s1 = str1.toLowerCase().trim();
+  const s2 = str2.toLowerCase().trim();
+  
+  if (s1 === s2) return 10;
+  if (s1.includes(s2) || s2.includes(s1)) return 7;
+  
+  // Simple character overlap
+  const chars1 = s1.split('');
+  const chars2 = s2.split('');
+  const common = chars1.filter(char => chars2.includes(char)).length;
+  const total = Math.max(chars1.length, chars2.length);
+  
+  return total > 0 ? (common / total) * 5 : 0;
+}
+
+/**
+ * Calculate similarity score for a case vs new case
+ */
+function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): number {
+  let score = 0;
+  
+  // Venue match (20 points)
+  if (caseRow.venue && newCase.Venue && 
+      caseRow.venue.toLowerCase().trim() === newCase.Venue.toLowerCase().trim()) {
+    score += 20;
+  }
+  
+  // Surgery similarity (10 points)
+  if (caseRow.surgery && newCase.Surgery) {
+    score += textSimilarity(caseRow.surgery, newCase.Surgery);
+  }
+  
+  // Injuries word overlap (10 points)  
+  if (caseRow.injuries && newCase.Injuries) {
+    score += wordOverlap(caseRow.injuries, newCase.Injuries);
+  }
+  
+  // Liability percentage proximity (4 points max)
+  if (caseRow.liab_pct && newCase.LiabPct) {
+    const case_liab = parseFloat(caseRow.liab_pct) || 100;
+    const new_liab = parseFloat(newCase.LiabPct) || 100;
+    const liab_diff = Math.abs(case_liab - new_liab);
+    score += Math.max(0, 4 - (liab_diff / 25));
+  }
+  
+  // Accident type match (3 points)
+  if (caseRow.acc_type && newCase.AccType && 
+      caseRow.acc_type.toLowerCase().trim() === newCase.AccType.toLowerCase().trim()) {
+    score += 3;
+  }
+  
+  return score;
+}
+
+/**
+ * Fetch top comparable cases using similarity scoring
+ */
+export async function getComparables(newCase: NewCase, limit: number = 25): Promise<ComparableCase[]> {
+  try {
+    // Fetch all cases from database for similarity calculation
+    const { data: allCases, error } = await supabase
+      .from('cases_master')
+      .select('case_id, surgery, inject, injuries, settle, pol_lim, venue, liab_pct, acc_type')
+      .not('settle', 'is', null)
+      .limit(500); // Get larger sample for better matching
+    
+    if (error) {
+      console.error('Error fetching cases for comparison:', error);
+      throw error;
+    }
+    
+    if (!allCases || allCases.length === 0) {
+      throw new Error('No cases available for comparison');
+    }
+    
+    // Calculate similarity scores for all cases
+    const scoredCases = allCases.map(caseRow => ({
+      ...caseRow,
+      similarity_score: calculateSimilarityScore(caseRow, newCase)
+    }));
+    
+    // Sort by similarity score (highest first) and return top matches
+    const topComparables = scoredCases
+      .sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0))
+      .slice(0, limit);
+    
+    console.log(`Found ${topComparables.length} comparable cases. Top score: ${topComparables[0]?.similarity_score || 0}`);
+    
+    return topComparables;
+    
+  } catch (error) {
+    console.error('Error getting comparable cases:', error);
+    throw error;
+  }
+}
