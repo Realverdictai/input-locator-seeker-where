@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CaseData } from "@/types/verdict";
@@ -36,13 +37,15 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
   const isAutoCase = formData.caseType === 'auto-accident';
   const accidentTypes = isAutoCase ? autoAccidentTypes : nonAutoAccidentTypes;
   
+  // Auto-set rear-end for motor vehicle accidents if not already set
+  useEffect(() => {
+    if (isAutoCase && !formData.accidentType) {
+      setFormData({...formData, accidentType: 'rear-end-collision'});
+    }
+  }, [isAutoCase, formData.accidentType, formData, setFormData]);
+  
   // Auto-hide for Motor Vehicle + Rear-End
   const isRearEndAuto = isAutoCase && formData.accidentType === 'rear-end-collision';
-  
-  // Auto-set rear-end for motor vehicle accidents if not already set
-  if (isAutoCase && !formData.accidentType) {
-    setFormData({...formData, accidentType: 'rear-end-collision'});
-  }
 
   // Skip this step entirely for rear-end auto accidents
   if (isRearEndAuto) {
