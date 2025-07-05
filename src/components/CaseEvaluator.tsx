@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { generateValuation } from '@/utils/generateValuation';
-import { findComparables } from '@/integrations/supabase/findComparables';
+import { calcEvaluatorNumber } from '@/valuation/calcEvaluatorNumber';
+import { calcMediatorProposal } from '@/valuation/calcMediatorProposal';
 
 interface FormData {
   Venue: string;
@@ -18,28 +18,15 @@ interface FormData {
   tbiSeverity?: string;
 }
 
-interface ValuationResult {
-  proposal: string;
+interface EvaluationResult {
+  evaluator: string;
   rationale: string;
-  sourceCaseID: number;
+  sourceRows: number[];
+}
+
+interface MediatorResult {
+  mediatorProposal: string;
   expiresOn: string;
-  confidence?: number;
-  valueFactors?: {
-    increasing: string[];  
-    decreasing: string[];
-  };
-  comparableCases?: Array<{
-    case_id: number;
-    settlement_amount: number;
-    similarity_reason: string;
-  }>;
-  settlementRange?: {
-    low: number;
-    high: number;
-  };
-  policyExceedanceRisk?: number;
-  policyLimit?: number;
-  settlementAmount?: number;
 }
 
 interface ComparableCase {
@@ -66,8 +53,8 @@ const CaseEvaluator = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<ValuationResult | null>(null);
-  const [comparableCases, setComparableCases] = useState<ComparableCase[]>([]);
+  const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
+  const [mediatorResult, setMediatorResult] = useState<MediatorResult | null>(null);
   const [showComparables, setShowComparables] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -82,35 +69,43 @@ const CaseEvaluator = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setResult(null);
-    setComparableCases([]);
+    setEvaluationResult(null);
+    setMediatorResult(null);
 
     try {
-      // Call data-driven valuation using database patterns
-      const valuation = await generateValuation({
-        Venue: formData.Venue,
-        Surgery: formData.Surgery,
-        Injuries: formData.Injuries,
-        LiabPct: formData.LiabPct,
-        AccType: formData.AccType,
-        PolLim: formData.PolLim,
+      // Convert form data to CaseData format
+      const caseData = {
+        venue: formData.Venue,
         medicalSpecials: formData.medicalSpecials ? parseInt(formData.medicalSpecials) : undefined,
-        howellSpecials: formData.howellSpecials ? parseInt(formData.howellSpecials) : undefined,
-        tbiSeverity: formData.tbiSeverity,
-        surgeryType: formData.surgeryType,
-        injectionType: formData.injectionType,
+        howellHanifDeductions: formData.howellSpecials ? parseInt(formData.howellSpecials) : undefined,
         surgeries: formData.surgeries ? parseInt(formData.surgeries) : undefined,
-        injections: formData.injections ? parseInt(formData.injections) : undefined
-      });
-      
-      // Set results - use AI comparable cases, not separate findComparables call
-      setResult(valuation);
+        surgeryType: formData.surgeryType,
+        injections: formData.injections ? parseInt(formData.injections) : undefined,
+        injectionType: formData.injectionType,
+        liabilityPercentage: formData.LiabPct ? parseInt(formData.LiabPct) : undefined,
+        tbiSeverity: formData.tbiSeverity,
+        policyLimits: formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined,
+        accidentType: formData.AccType,
+        injuries: formData.Injuries
+      };
+
+      // Calculate evaluator number
+      const evaluation = await calcEvaluatorNumber(caseData);
+      setEvaluationResult(evaluation);
       
     } catch (err) {
       setError(`Error: ${err instanceof Error ? err.message : 'Unknown error occurred'}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateProposal = () => {
+    if (!evaluationResult) return;
+    
+    const policyLimits = formData.PolLim ? parseInt(formData.PolLim.replace(/[$,]/g, '')) : undefined;
+    const proposal = calcMediatorProposal(evaluationResult.evaluator, policyLimits);
+    setMediatorResult(proposal);
   };
 
   return (
@@ -418,7 +413,7 @@ const CaseEvaluator = () => {
             cursor: loading ? 'not-allowed' : 'pointer'
           }}
         >
-          {loading ? 'Loading...' : 'Evaluate Case'}
+          {loading ? 'Calculating...' : 'Calculate Evaluator Number'}
         </button>
       </form>
 
@@ -435,7 +430,7 @@ const CaseEvaluator = () => {
         </div>
       )}
 
-      {result && (
+      {evaluationResult && (
         <div style={{ marginTop: '30px' }}>
           <div style={{ 
             textAlign: 'center', 
@@ -451,7 +446,7 @@ const CaseEvaluator = () => {
               margin: '0 0 10px 0',
               color: '#28a745'
             }}>
-              ⚖️ Data-Driven Settlement Analysis: {result.proposal}
+              Evaluator Number: {evaluationResult.evaluator}
             </h2>
             <p style={{ 
               fontSize: '1.1em', 
@@ -459,7 +454,7 @@ const CaseEvaluator = () => {
               color: '#6c757d',
               lineHeight: '1.4'
             }}>
-              {result.rationale}
+              {evaluationResult.rationale}
             </p>
             <p style={{ 
               fontSize: '0.9em', 
@@ -467,84 +462,55 @@ const CaseEvaluator = () => {
               color: '#666',
               fontStyle: 'italic'
             }}>
-              (from Case #{result.sourceCaseID})
-            </p>
-            <p style={{ 
-              fontSize: '1em', 
-              margin: '0',
-              color: '#dc3545',
-              fontWeight: 'bold'
-            }}>
-              Open for acceptance until {result.expiresOn}
+              (based on Cases #{evaluationResult.sourceRows.join(', #')})
             </p>
           </div>
-
 
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
             <button
-              onClick={() => setShowComparables(!showComparables)}
+              onClick={handleGenerateProposal}
+              disabled={!!mediatorResult}
               style={{
-                padding: '8px 16px',
-                backgroundColor: '#6c757d',
+                padding: '12px 24px',
+                backgroundColor: mediatorResult ? '#ccc' : '#28a745',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'pointer'
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: mediatorResult ? 'not-allowed' : 'pointer',
+                marginRight: '10px'
               }}
             >
-              {showComparables ? 'Hide' : 'Show'} Similar Cases
+              {mediatorResult ? 'Proposal Generated' : 'Generate Mediator Proposal'}
             </button>
           </div>
 
-          {showComparables && result.comparableCases && result.comparableCases.length > 0 && (
-            <div>
-              <h3 style={{ marginBottom: '15px' }}>Comparable Cases:</h3>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                border: '1px solid #dee2e6'
+          {mediatorResult && (
+            <div style={{ 
+              textAlign: 'center', 
+              marginTop: '20px',
+              padding: '20px',
+              backgroundColor: '#e8f5e8',
+              border: '1px solid #28a745',
+              borderRadius: '8px'
+            }}>
+              <h3 style={{ 
+                fontSize: '1.8em', 
+                fontWeight: 'bold', 
+                margin: '0 0 10px 0',
+                color: '#28a745'
               }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ 
-                      padding: '12px', 
-                      textAlign: 'left',
-                      border: '1px solid #dee2e6',
-                      fontWeight: 'bold'
-                    }}>
-                      Case ID
-                    </th>
-                    <th style={{ 
-                      padding: '12px', 
-                      textAlign: 'left',
-                      border: '1px solid #dee2e6',
-                      fontWeight: 'bold'
-                    }}>
-                      Settlement Amount
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.comparableCases.map((caseItem, index) => (
-                    <tr key={caseItem.case_id} style={{
-                      backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa'
-                    }}>
-                      <td style={{ 
-                        padding: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        {caseItem.case_id}
-                      </td>
-                      <td style={{ 
-                        padding: '12px',
-                        border: '1px solid #dee2e6'
-                      }}>
-                        ${caseItem.settlement_amount.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                Mediator's Proposal: {mediatorResult.mediatorProposal}
+              </h3>
+              <p style={{ 
+                fontSize: '1em', 
+                margin: '0',
+                color: '#dc3545',
+                fontWeight: 'bold'
+              }}>
+                Expires: {mediatorResult.expiresOn} at 5:00 PM
+              </p>
             </div>
           )}
         </div>

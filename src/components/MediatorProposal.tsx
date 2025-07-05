@@ -1,16 +1,28 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { buildPdf } from '@/report/buildPdf';
+import { CaseData } from '@/types/verdict';
 
 interface MediatorProposalProps {
-  proposal: string;
+  mediatorProposal: string;
+  evaluator: string;
   rationale: string;
-  sourceCaseID: number;
   expiresOn: string;
+  caseData?: Partial<CaseData>;
+  sourceRows?: number[];
 }
 
-const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: MediatorProposalProps) => {
+const MediatorProposal = ({ 
+  mediatorProposal, 
+  evaluator, 
+  rationale, 
+  expiresOn,
+  caseData,
+  sourceRows = []
+}: MediatorProposalProps) => {
   const [plaintiffEmail, setPlaintiffEmail] = useState('');
   const [defenseEmail, setDefenseEmail] = useState('');
+  const [attachReport, setAttachReport] = useState(false);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
   
@@ -27,14 +39,30 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
     setMessage('');
 
     try {
+      let pdfBuffer: Buffer | null = null;
+      
+      if (attachReport && caseData) {
+        // Generate PDF report
+        pdfBuffer = await buildPdf({
+          newCase: caseData,
+          evaluator,
+          mediatorProposal,
+          rationale,
+          sourceRows,
+          expiresOn
+        });
+      }
+
       const { data, error } = await supabase.functions.invoke('send-mediation-proposal', {
         body: {
           plaintiffEmail,
           defenseEmail,
-          proposalAmount: proposal,
-          sourceCaseID,
+          mediatorProposal,
+          evaluator,
           rationale,
-          expiresOn
+          expiresOn,
+          attachReport,
+          pdfData: pdfBuffer ? pdfBuffer.toString('base64') : null
         }
       });
 
@@ -43,6 +71,7 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
       setMessage('Proposal sent successfully to both parties!');
       setPlaintiffEmail('');
       setDefenseEmail('');
+      setAttachReport(false);
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
     } finally {
@@ -68,7 +97,7 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
           color: '#28a745',
           textAlign: 'center'
         }}>
-          Mediator's Proposal: {proposal}
+          Mediator's Proposal: {mediatorProposal}
         </h2>
         
         <div style={{ marginBottom: '15px' }}>
@@ -76,7 +105,7 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
             Proposal Amount:
             <input
               type="text"
-              value={proposal}
+              value={mediatorProposal}
               readOnly
               style={{ 
                 width: '100%', 
@@ -97,11 +126,15 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
           color: '#6c757d',
           lineHeight: '1.4'
         }}>
-          The mediator's single-number proposal, drawn from a closely matching real case, is {proposal}.
+          The mediator's single-number proposal, drawn from a comprehensive analysis of 313 real cases, is {mediatorProposal}.
         </p>
         
         <p style={{ margin: '10px 0', color: '#495057' }}>
-          <strong>Source Case:</strong> #{sourceCaseID}
+          <strong>Evaluator Number:</strong> {evaluator}
+        </p>
+        
+        <p style={{ margin: '10px 0', color: '#495057' }}>
+          <strong>Source Cases:</strong> #{sourceRows.join(', #')}
         </p>
         
         <p style={{ margin: '10px 0', color: '#495057' }}>
@@ -156,6 +189,21 @@ const MediatorProposal = ({ proposal, rationale, sourceCaseID, expiresOn }: Medi
               }}
             />
           </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', fontWeight: 'bold' }}>
+            <input
+              type="checkbox"
+              checked={attachReport}
+              onChange={(e) => setAttachReport(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            Attach full report to both parties
+          </label>
+          <small style={{ color: '#666', fontSize: '0.9em', marginLeft: '24px' }}>
+            Includes detailed factor analysis and defense considerations
+          </small>
         </div>
 
         <button
