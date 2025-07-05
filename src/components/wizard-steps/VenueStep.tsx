@@ -17,16 +17,66 @@ const VenueStep = ({ formData, setFormData }: VenueStepProps) => {
   const [aiDescription, setAiDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Complete list of all 58 California counties
-  const californiaCounties = [
-    "Alameda", "Alpine", "Amador", "Butte", "Calaveras", "Colusa", "Contra Costa", "Del Norte",
-    "El Dorado", "Fresno", "Glenn", "Humboldt", "Imperial", "Inyo", "Kern", "Kings",
-    "Lake", "Lassen", "Los Angeles", "Madera", "Marin", "Mariposa", "Mendocino", "Merced",
-    "Modoc", "Mono", "Monterey", "Napa", "Nevada", "Orange", "Placer", "Plumas",
-    "Riverside", "Sacramento", "San Benito", "San Bernardino", "San Diego", "San Francisco",
-    "San Joaquin", "San Luis Obispo", "San Mateo", "Santa Barbara", "Santa Clara", "Santa Cruz",
-    "Shasta", "Sierra", "Siskiyou", "Solano", "Sonoma", "Stanislaus", "Sutter", "Tehama",
-    "Trinity", "Tulare", "Tuolumne", "Ventura", "Yolo", "Yuba"
+  // Complete list of California Superior Courts (civil courts)
+  const californiaCivilCourts = [
+    "Alameda County Superior Court",
+    "Alpine County Superior Court", 
+    "Amador County Superior Court",
+    "Butte County Superior Court",
+    "Calaveras County Superior Court",
+    "Colusa County Superior Court",
+    "Contra Costa County Superior Court",
+    "Del Norte County Superior Court",
+    "El Dorado County Superior Court",
+    "Fresno County Superior Court",
+    "Glenn County Superior Court",
+    "Humboldt County Superior Court",
+    "Imperial County Superior Court",
+    "Inyo County Superior Court",
+    "Kern County Superior Court",
+    "Kings County Superior Court",
+    "Lake County Superior Court",
+    "Lassen County Superior Court",
+    "Los Angeles County Superior Court",
+    "Madera County Superior Court",
+    "Marin County Superior Court",
+    "Mariposa County Superior Court",
+    "Mendocino County Superior Court",
+    "Merced County Superior Court",
+    "Modoc County Superior Court",
+    "Mono County Superior Court",
+    "Monterey County Superior Court",
+    "Napa County Superior Court",
+    "Nevada County Superior Court",
+    "Orange County Superior Court",
+    "Placer County Superior Court",
+    "Plumas County Superior Court",
+    "Riverside County Superior Court",
+    "Sacramento County Superior Court",
+    "San Benito County Superior Court",
+    "San Bernardino County Superior Court",
+    "San Diego County Superior Court",
+    "San Francisco County Superior Court",
+    "San Joaquin County Superior Court",
+    "San Luis Obispo County Superior Court",
+    "San Mateo County Superior Court",
+    "Santa Barbara County Superior Court",
+    "Santa Clara County Superior Court",
+    "Santa Cruz County Superior Court",
+    "Shasta County Superior Court",
+    "Sierra County Superior Court",
+    "Siskiyou County Superior Court",
+    "Solano County Superior Court",
+    "Sonoma County Superior Court",
+    "Stanislaus County Superior Court",
+    "Sutter County Superior Court",
+    "Tehama County Superior Court",
+    "Trinity County Superior Court",
+    "Tulare County Superior Court",
+    "Tuolumne County Superior Court",
+    "Ventura County Superior Court",
+    "Yolo County Superior Court",
+    "Yuba County Superior Court"
   ];
 
   const analyzeVenueWithAI = async () => {
@@ -38,59 +88,59 @@ const VenueStep = ({ formData, setFormData }: VenueStepProps) => {
       const description = aiDescription.toLowerCase();
       let suggestedVenue = "";
 
-      // Basic keyword matching for venue interpretation
+      // Basic keyword matching for court interpretation
       if (description.includes("los angeles") || description.includes("la") || description.includes("hollywood") || description.includes("beverly hills")) {
-        suggestedVenue = "los-angeles";
+        suggestedVenue = "Los Angeles County Superior Court";
       } else if (description.includes("san francisco") || description.includes("sf") || description.includes("bay area")) {
-        suggestedVenue = "san-francisco";
+        suggestedVenue = "San Francisco County Superior Court";
       } else if (description.includes("orange") || description.includes("anaheim") || description.includes("newport")) {
-        suggestedVenue = "orange";
+        suggestedVenue = "Orange County Superior Court";
       } else if (description.includes("san diego") || description.includes("chula vista")) {
-        suggestedVenue = "san-diego";
+        suggestedVenue = "San Diego County Superior Court";
       } else if (description.includes("sacramento") || description.includes("capital")) {
-        suggestedVenue = "sacramento";
+        suggestedVenue = "Sacramento County Superior Court";
       } else if (description.includes("riverside") || description.includes("corona")) {
-        suggestedVenue = "riverside";
+        suggestedVenue = "Riverside County Superior Court";
       } else if (description.includes("san bernardino") || description.includes("inland empire")) {
-        suggestedVenue = "san-bernardino";
+        suggestedVenue = "San Bernardino County Superior Court";
       } else if (description.includes("fresno") || description.includes("central valley")) {
-        suggestedVenue = "fresno";
+        suggestedVenue = "Fresno County Superior Court";
       } else if (description.includes("santa clara") || description.includes("san jose") || description.includes("silicon valley")) {
-        suggestedVenue = "santa-clara";
+        suggestedVenue = "Santa Clara County Superior Court";
       } else if (description.includes("alameda") || description.includes("oakland") || description.includes("berkeley")) {
-        suggestedVenue = "alameda";
+        suggestedVenue = "Alameda County Superior Court";
       } else if (description.includes("contra costa") || description.includes("concord") || description.includes("richmond")) {
-        suggestedVenue = "contra-costa";
+        suggestedVenue = "Contra Costa County Superior Court";
       } else if (description.includes("ventura") || description.includes("oxnard")) {
-        suggestedVenue = "ventura";
+        suggestedVenue = "Ventura County Superior Court";
       } else if (description.includes("santa barbara") || description.includes("goleta")) {
-        suggestedVenue = "santa-barbara";
+        suggestedVenue = "Santa Barbara County Superior Court";
       } else if (description.includes("kern") || description.includes("bakersfield")) {
-        suggestedVenue = "kern";
+        suggestedVenue = "Kern County Superior Court";
       } else if (description.includes("san mateo") || description.includes("palo alto")) {
-        suggestedVenue = "san-mateo";
+        suggestedVenue = "San Mateo County Superior Court";
       } else if (description.includes("monterey") || description.includes("salinas")) {
-        suggestedVenue = "monterey";
+        suggestedVenue = "Monterey County Superior Court";
       } else if (description.includes("sonoma") || description.includes("santa rosa")) {
-        suggestedVenue = "sonoma";
+        suggestedVenue = "Sonoma County Superior Court";
       } else if (description.includes("placer") || description.includes("roseville")) {
-        suggestedVenue = "placer";
+        suggestedVenue = "Placer County Superior Court";
       } else if (description.includes("san joaquin") || description.includes("stockton")) {
-        suggestedVenue = "san-joaquin";
+        suggestedVenue = "San Joaquin County Superior Court";
       } else if (description.includes("tulare") || description.includes("visalia")) {
-        suggestedVenue = "tulare";
+        suggestedVenue = "Tulare County Superior Court";
       } else if (description.includes("santa cruz") || description.includes("watsonville")) {
-        suggestedVenue = "santa-cruz";
+        suggestedVenue = "Santa Cruz County Superior Court";
       } else if (description.includes("merced") || description.includes("los banos")) {
-        suggestedVenue = "merced";
+        suggestedVenue = "Merced County Superior Court";
       } else if (description.includes("stanislaus") || description.includes("modesto")) {
-        suggestedVenue = "stanislaus";
+        suggestedVenue = "Stanislaus County Superior Court";
       } else if (description.includes("solano") || description.includes("vallejo")) {
-        suggestedVenue = "solano";
+        suggestedVenue = "Solano County Superior Court";
       } else if (description.includes("napa") || description.includes("wine country")) {
-        suggestedVenue = "napa";
+        suggestedVenue = "Napa County Superior Court";
       } else if (description.includes("marin") || description.includes("san rafael")) {
-        suggestedVenue = "marin";
+        suggestedVenue = "Marin County Superior Court";
       }
 
       if (suggestedVenue) {
@@ -133,18 +183,18 @@ const VenueStep = ({ formData, setFormData }: VenueStepProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="venue">Venue/County (All 58 CA Counties)</Label>
+        <Label htmlFor="venue">Venue/Court (California Superior Courts)</Label>
         <Select 
           value={formData.venue || ''} 
           onValueChange={(value) => setFormData({...formData, venue: value})}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select county" />
+            <SelectValue placeholder="Select superior court" />
           </SelectTrigger>
           <SelectContent className="bg-white z-50 max-h-60">
-            {californiaCounties.map(county => (
-              <SelectItem key={county} value={county.toLowerCase().replace(/\s+/g, '-')}>
-                {county} County
+            {californiaCivilCourts.map(court => (
+              <SelectItem key={court} value={court}>
+                {court}
               </SelectItem>
             ))}
           </SelectContent>
@@ -153,7 +203,7 @@ const VenueStep = ({ formData, setFormData }: VenueStepProps) => {
 
       <div className="p-4 bg-green-50 rounded-lg border border-green-200">
         <p className="text-green-700 text-sm">
-          <strong>Venue Impact:</strong> The venue can significantly impact case valuation. Different counties have varying jury demographics and verdict tendencies. Use the AI interpreter above for location-based suggestions.
+          <strong>Court Impact:</strong> The specific superior court can significantly impact case valuation. Different courts have varying jury demographics and verdict tendencies. Use the AI interpreter above for location-based court suggestions.
         </p>
       </div>
     </div>
