@@ -1,170 +1,395 @@
-import { Scale, TrendingUp, Shield, Zap, BarChart3, Users, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
 
-export default function Index() {
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import CaseInputForm from "@/components/CaseInputForm";
+import VerdictResults from "@/components/VerdictResults";
+import AuthForm from "@/components/AuthForm";
+import MediationDashboard from "@/components/MediationDashboard";
+import { CaseData, VerdictEstimate } from "@/types/verdict";
+import { evaluateCase } from "@/lib/verdictCalculator";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Sparkles, Scale, Brain, Shield, Users, TrendingUp } from "lucide-react";
+
+const Index = () => {
+  console.log("Index component rendering");
+  
+  const { user, userProfile, loading, signOut } = useAuth();
+  const [caseData, setCaseData] = useState<CaseData | null>(null);
+  const [verdictEstimate, setVerdictEstimate] = useState<VerdictEstimate | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [currentSessionCode, setCurrentSessionCode] = useState<string | null>(null);
+  const [showEvaluation, setShowEvaluation] = useState(false);
+  const { toast } = useToast();
+
+  const handleAuthSuccess = () => {
+    // User will be automatically set by the auth hook
+  };
+
+  const handleStartEvaluation = (sessionCode?: string) => {
+    setCurrentSessionCode(sessionCode || null);
+    setShowEvaluation(true);
+  };
+
+  const handleBackToDashboard = () => {
+    setShowEvaluation(false);
+    setCaseData(null);
+    setVerdictEstimate(null);
+    setCurrentSessionCode(null);
+  };
+
+  const handleCaseSubmit = async (data: CaseData) => {
+    console.log("Case submitted:", data);
+    setIsEvaluating(true);
+    setCaseData(data);
+    
+    // Simulate evaluation processing time
+    setTimeout(async () => {
+      try {
+        const estimate = evaluateCase(data);
+        console.log("Evaluation complete:", estimate);
+        setVerdictEstimate(estimate);
+        
+        // Save case evaluation to database
+        if (user) {
+          const { error } = await supabase
+            .from('case_evaluations')
+            .insert({
+              user_id: user.id,
+              case_data: data as any
+            });
+
+          if (error) {
+            console.error('Error saving case evaluation:', error);
+          }
+
+          // If this is part of a mediation session, update the session
+          if (currentSessionCode) {
+            await updateMediationSession(data, estimate);
+          }
+        }
+        
+        setIsEvaluating(false);
+      } catch (error) {
+        console.error("Error evaluating case:", error);
+        setIsEvaluating(false);
+      }
+    }, 2000);
+  };
+
+  const updateMediationSession = async (caseData: CaseData, estimate: VerdictEstimate) => {
+    try {
+      // Get the current session
+      const { data: session, error: fetchError } = await supabase
+        .from('mediation_sessions')
+        .select('*')
+        .eq('session_code', currentSessionCode)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Get the latest case evaluation ID
+      const { data: evaluation, error: evalError } = await supabase
+        .from('case_evaluations')
+        .select('id')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (evalError) throw evalError;
+
+      // Update session with evaluation ID
+      const updateData: any = {};
+      if (userProfile?.user_type === 'pi_lawyer') {
+        updateData.pi_evaluation_id = evaluation.id;
+      } else {
+        updateData.insurance_evaluation_id = evaluation.id;
+      }
+
+      const { error: updateError } = await supabase
+        .from('mediation_sessions')
+        .update(updateData)
+        .eq('id', session.id);
+
+      if (updateError) throw updateError;
+
+      // Check if both parties have submitted and generate mediation proposal
+      const updatedSession = { ...session, ...updateData };
+      if (updatedSession.pi_evaluation_id && updatedSession.insurance_evaluation_id) {
+        await generateMediationProposal(updatedSession);
+      }
+
+    } catch (error) {
+      console.error('Error updating mediation session:', error);
+    }
+  };
+
+  const generateMediationProposal = async (session: any) => {
+    try {
+      console.log('Generating mediation proposal for session:', session.id);
+      
+      const { data, error } = await supabase.functions.invoke('send-mediation-proposal', {
+        body: {
+          sessionId: session.id,
+          piEvaluationId: session.pi_evaluation_id,
+          insuranceEvaluationId: session.insurance_evaluation_id
+        }
+      });
+
+      if (error) {
+        console.error('Error calling mediation proposal function:', error);
+        throw error;
+      }
+
+      console.log('Mediation proposal response:', data);
+
+      toast({
+        title: "Mediation Proposal Generated!",
+        description: "Both parties have submitted their evaluations. A mediation proposal has been generated and sent to all parties.",
+      });
+    } catch (error) {
+      console.error('Error generating mediation proposal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate mediation proposal. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReset = () => {
+    setCaseData(null);
+    setVerdictEstimate(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full mx-auto mb-6"></div>
+          <p className="text-gray-600 text-lg font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !userProfile) {
+    return <AuthForm onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  if (!showEvaluation) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-12">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+                  <Scale className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold text-gray-900">
+                    Verdict AI
+                  </h1>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Sparkles className="h-4 w-4 text-blue-600" />
+                    <span className="text-gray-600 font-medium">Legal Intelligence Platform</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-600 rounded-lg">
+                    <Shield className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-gray-900 font-semibold">{userProfile.company_name}</p>
+                    <p className="text-gray-600 text-sm">
+                      {userProfile.user_type === 'pi_lawyer' ? 'Personal Injury Lawyer' : 'Insurance & Defense Counsel'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={signOut} 
+              variant="outline" 
+              className="hover:bg-gray-100"
+            >
+              Sign Out
+            </Button>
+          </div>
+          
+          <MediationDashboard 
+            userProfile={userProfile} 
+            onStartEvaluation={handleStartEvaluation}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  console.log("Rendering Index with state:", { caseData: !!caseData, verdictEstimate: !!verdictEstimate, isEvaluating });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/10">
-      {/* Professional Header */}
-      <header className="glass-panel sticky top-0 z-50 border-b-0 mb-0">
-        <div className="container-pro py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary-glow rounded-xl flex items-center justify-center shadow-lg">
-                <Scale className="w-6 h-6 text-primary-foreground" />
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-600 rounded-xl shadow-lg">
+                <Brain className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="font-serif text-xl font-bold text-foreground">CaseLogic</h1>
-                <p className="text-xs text-muted-foreground font-medium tracking-wide">Professional</p>
-              </div>
-            </div>
-
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/evaluator" className="nav-item">Case Evaluator</Link>
-              <Link to="/admin" className="nav-item">Data Management</Link>
-              <Link to="/evaluator" className="accent-button">
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="section-spacing">
-        <div className="container-pro">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="mb-8">
-              <h1 className="display-heading mb-6">
-                Advanced Settlement
-                <span className="block text-gradient animate-float">Analytics Platform</span>
-              </h1>
-              <p className="body-large max-w-2xl mx-auto mb-8">
-                Leverage data-driven insights from 313+ verified settlement cases to make informed 
-                decisions with precision and confidence in personal injury litigation.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link to="/evaluator" className="accent-button">
-                <Zap className="w-5 h-5 mr-2" />
-                Start Case Analysis
-              </Link>
-              <Link to="/admin" className="premium-button">
-                <BarChart3 className="w-5 h-5 mr-2" />
-                View Data Insights
-              </Link>
-            </div>
-
-            {/* Feature Grid */}
-            <div className="grid md:grid-cols-3 gap-8 mt-16">
-              <div className="professional-card p-8 text-center group hover:scale-[1.02] transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-secondary to-primary-glow rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:animate-float">
-                  <BarChart3 className="w-8 h-8 text-primary-foreground" />
+                <h1 className="text-4xl font-bold text-gray-900">
+                  Verdict AI
+                </h1>
+                <div className="flex items-center space-x-2 mt-1">
+                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <span className="text-gray-600 font-medium">Case Evaluation Engine</span>
                 </div>
-                <h3 className="card-heading">Data-Driven Analysis</h3>
-                <p className="body-medium">
-                  Linear model analysis of 313 verified settlement cases for accurate valuations
-                </p>
               </div>
-
-              <div className="professional-card p-8 text-center group hover:scale-[1.02] transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-accent to-warning rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:animate-glow">
-                  <Shield className="w-8 h-8 text-accent-foreground" />
+            </div>
+            
+            {currentSessionCode && (
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="text-blue-800 font-medium">Active Mediation Session</p>
+                    <p className="text-blue-600 text-sm font-mono">{currentSessionCode}</p>
+                  </div>
                 </div>
-                <h3 className="card-heading">Risk Assessment</h3>
-                <p className="body-medium">
-                  Advanced policy exceedance analysis with real-time risk indicators
-                </p>
               </div>
-
-              <div className="professional-card p-8 text-center group hover:scale-[1.02] transition-transform duration-300">
-                <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:animate-float">
-                  <TrendingUp className="w-8 h-8 text-primary-foreground" />
-                </div>
-                <h3 className="card-heading">Precision Targeting</h3>
-                <p className="body-medium">
-                  Single-number proposals within $25K-$50K ranges for strategic negotiations
-                </p>
-              </div>
-            </div>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleBackToDashboard} 
+              variant="outline"
+              className="hover:bg-gray-100"
+            >
+              Dashboard
+            </Button>
+            <Button 
+              onClick={signOut} 
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Sign Out
+            </Button>
           </div>
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="section-spacing bg-muted/20">
-        <div className="container-pro">
-          <div className="text-center mb-12">
-            <h2 className="section-heading text-gradient">Trusted by Legal Professionals</h2>
-            <p className="body-large">Data that drives results</p>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-gray-900">
+                  <div className="p-2 bg-green-600 rounded-lg shadow-lg">
+                    <Scale className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <span>
+                      Comprehensive Case Analysis
+                    </span>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-green-600 text-xs font-medium">AI-Powered</span>
+                    </div>
+                  </div>
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Enter detailed case information for accurate evaluation including medical, economic, and legal factors
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-[80vh] overflow-y-auto">
+                <CaseInputForm onSubmit={handleCaseSubmit} isLoading={isEvaluating} />
+                {verdictEstimate && (
+                  <Button 
+                    onClick={handleReset} 
+                    variant="outline" 
+                    className="w-full mt-4 hover:bg-gray-100"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Evaluate New Case
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="metric-card hover:scale-105 transition-transform duration-300">
-              <div className="metric-value">313+</div>
-              <div className="metric-label">Verified Cases</div>
-            </div>
-            <div className="metric-card hover:scale-105 transition-transform duration-300">
-              <div className="metric-value">$2.4M</div>
-              <div className="metric-label">Avg Settlement Range</div>
-            </div>
-            <div className="metric-card hover:scale-105 transition-transform duration-300">
-              <div className="metric-value">92%</div>  
-              <div className="metric-label">Accuracy Rate</div>
-            </div>
-            <div className="metric-card hover:scale-105 transition-transform duration-300">
-              <div className="metric-value">24/7</div>
-              <div className="metric-label">Platform Access</div>
-            </div>
+          <div className="space-y-6">
+            <Card className="shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-gray-900">
+                  <div className="p-2 bg-purple-600 rounded-lg shadow-lg">
+                    <Brain className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <span>
+                      Advanced Evaluation Results
+                    </span>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="text-purple-600 text-xs font-medium">Neural Analysis</span>
+                    </div>
+                  </div>
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  AI-powered comprehensive verdict and settlement analysis with predictive modeling
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-[80vh] overflow-y-auto">
+                {!verdictEstimate && !isEvaluating && (
+                  <div className="text-center py-16 text-gray-500">
+                    <div className="relative mb-6">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200">
+                        <TrendingUp className="w-10 h-10 text-gray-400" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready for Analysis</h3>
+                    <p className="text-gray-600 max-w-sm mx-auto">
+                      Complete the comprehensive case information to receive your detailed AI-powered evaluation
+                    </p>
+                  </div>
+                )}
+                
+                {isEvaluating && (
+                  <div className="text-center py-16">
+                    <div className="relative mb-8">
+                      <div className="w-20 h-20 mx-auto">
+                        <div className="absolute inset-0 animate-spin w-20 h-20 border-4 border-blue-200 border-t-blue-600 rounded-full"></div>
+                        <div className="absolute inset-2 w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                          <Brain className="w-8 h-8 text-blue-600" />
+                        </div>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Analysis in Progress</h3>
+                    <p className="text-gray-600 mb-4">Processing comprehensive case data and generating detailed estimates...</p>
+                    <div className="bg-blue-50 rounded-lg p-4 max-w-md mx-auto">
+                      <p className="text-sm text-blue-700">
+                        <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                        Analyzing medical records, legal factors, and insurance coverage...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {verdictEstimate && <VerdictResults estimate={verdictEstimate} />}
+              </CardContent>
+            </Card>
           </div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="section-spacing">
-        <div className="container-pro">
-          <div className="glass-panel p-12 text-center max-w-4xl mx-auto">
-            <h2 className="section-heading mb-6 text-gradient">Ready to Transform Your Practice?</h2>
-            <p className="body-large mb-8 max-w-2xl mx-auto">
-              Join leading legal professionals who rely on CaseLogic Pro for strategic 
-              settlement analysis and risk assessment.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/evaluator" className="accent-button">
-                <Zap className="w-5 h-5 mr-2" />
-                Start Free Analysis
-              </Link>
-              <div className="premium-button cursor-pointer">
-                <Users className="w-5 h-5 mr-2" />
-                Schedule Demo
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Professional Footer */}  
-      <footer className="border-t bg-muted/30 py-12">
-        <div className="container-pro">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-primary to-primary-glow rounded-lg flex items-center justify-center shadow-md">
-                <Scale className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <span className="font-serif font-bold text-foreground">CaseLogic Professional</span>
-                <p className="text-xs text-muted-foreground">Advanced Settlement Analytics</p>
-              </div>
-            </div>
-            <div className="text-center md:text-right">
-              <p className="text-sm text-muted-foreground">
-                © 2024 CaseLogic Professional. Data-driven legal technology.
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
-}
+};
+
+export default Index;
