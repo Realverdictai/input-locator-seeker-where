@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateValuation } from '@/utils/generateValuation';
+import { generateEnhancedValuation } from '@/utils/generateValuation';
 import { findComparables } from '@/integrations/supabase/findComparables';
 
 interface FormData {
@@ -9,6 +9,9 @@ interface FormData {
   LiabPct: string;
   AccType: string;
   PolLim: string;
+  medicalSpecials?: string;
+  age?: string;
+  narrative?: string;
 }
 
 interface ValuationResult {
@@ -16,6 +19,17 @@ interface ValuationResult {
   rationale: string;
   sourceCaseID: number;
   expiresOn: string;
+  confidence?: number;
+  valueFactors?: {
+    increasing: string[];  
+    decreasing: string[];
+  };
+  comparableCases?: Array<{
+    case_id: number;
+    similarity_score: number;
+    settlement_amount: number;
+    key_similarities: string[];
+  }>;
 }
 
 interface ComparableCase {
@@ -30,7 +44,10 @@ const CaseEvaluator = () => {
     Injuries: '',
     LiabPct: '',
     AccType: '',
-    PolLim: ''
+    PolLim: '',
+    medicalSpecials: '',
+    age: '',
+    narrative: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -55,8 +72,18 @@ const CaseEvaluator = () => {
     setComparableCases([]);
 
     try {
-      // Call generateValuation with new single settlement approach
-      const valuation = await generateValuation(formData);
+      // Call AI-enhanced valuation (no more point system!)
+      const valuation = await generateEnhancedValuation({
+        Venue: formData.Venue,
+        Surgery: formData.Surgery,
+        Injuries: formData.Injuries,
+        LiabPct: formData.LiabPct,
+        AccType: formData.AccType,
+        PolLim: formData.PolLim,
+        medicalSpecials: formData.medicalSpecials ? parseInt(formData.medicalSpecials) : undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        narrative: formData.narrative
+      });
       
       // Get comparables for optional display
       const comparables = await findComparables(formData);
@@ -77,7 +104,19 @@ const CaseEvaluator = () => {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Case Evaluator</h1>
+      <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>🤖 AI-Powered Case Evaluator</h1>
+      <div style={{ 
+        textAlign: 'center', 
+        marginBottom: '20px',
+        padding: '10px',
+        backgroundColor: '#e7f3ff',
+        border: '1px solid #007bff',
+        borderRadius: '4px'
+      }}>
+        <p style={{ margin: 0, color: '#0066cc', fontWeight: 'bold' }}>
+          Using GPT-4.1 + 313 Real Cases (Point System Scrapped!)  
+        </p>
+      </div>
       
       <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
         <div style={{ marginBottom: '15px' }}>
@@ -184,6 +223,69 @@ const CaseEvaluator = () => {
           </label>
         </div>
 
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Medical Specials ($) - Optional:
+            <input
+              type="number"
+              name="medicalSpecials"
+              value={formData.medicalSpecials}
+              onChange={handleInputChange}
+              placeholder="150000"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Plaintiff Age - Optional:
+            <input
+              type="number"
+              name="age"
+              value={formData.age}
+              onChange={handleInputChange}
+              placeholder="35"
+              min="1"
+              max="100"
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+            Case Narrative/Details - Optional:
+            <textarea
+              name="narrative"
+              value={formData.narrative}
+              onChange={handleInputChange}
+              rows={4}
+              placeholder="Additional case details that help with AI analysis..."
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                marginTop: '5px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                resize: 'vertical'
+              }}
+            />
+          </label>
+        </div>
+
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
             Policy Limits ($):
@@ -253,8 +355,18 @@ const CaseEvaluator = () => {
               margin: '0 0 10px 0',
               color: '#28a745'
             }}>
-              Mediator's Single-Number Proposal: {result.proposal}
+              🤖 AI-Enhanced Settlement Analysis: {result.proposal}
             </h2>
+            {result.confidence && (
+              <div style={{ 
+                fontSize: '1em', 
+                margin: '10px 0',
+                color: '#007bff',
+                fontWeight: 'bold'
+              }}>
+                AI Confidence: {result.confidence}%
+              </div>
+            )}
             <p style={{ 
               fontSize: '1.1em', 
               margin: '10px 0',
@@ -281,6 +393,40 @@ const CaseEvaluator = () => {
             </p>
           </div>
 
+          {result.valueFactors && (
+            <div style={{ 
+              marginTop: '20px',
+              padding: '15px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '8px'
+            }}>
+              <h3 style={{ marginBottom: '15px', color: '#495057' }}>AI Value Analysis:</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                {result.valueFactors.increasing.length > 0 && (
+                  <div>
+                    <h4 style={{ color: '#28a745', marginBottom: '10px' }}>📈 Factors Increasing Value:</h4>
+                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                      {result.valueFactors.increasing.map((factor, index) => (
+                        <li key={index} style={{ marginBottom: '5px', color: '#28a745' }}>{factor}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {result.valueFactors.decreasing.length > 0 && (
+                  <div>
+                    <h4 style={{ color: '#dc3545', marginBottom: '10px' }}>📉 Factors Decreasing Value:</h4>
+                    <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                      {result.valueFactors.decreasing.map((factor, index) => (
+                        <li key={index} style={{ marginBottom: '5px', color: '#dc3545' }}>{factor}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
             <button
               onClick={() => setShowComparables(!showComparables)}
@@ -293,7 +439,7 @@ const CaseEvaluator = () => {
                 cursor: 'pointer'
               }}
             >
-              {showComparables ? 'Hide' : 'Show'} Similar Cases
+              {showComparables ? 'Hide' : 'Show'} AI-Selected Similar Cases
             </button>
           </div>
 
