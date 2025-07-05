@@ -58,6 +58,7 @@ export interface CaseData {
   futureSurgeryDetails?: string;
   futureSurgeryDate?: string;
   willGetFutureSurgery?: boolean;
+  willNotGetFutureSurgery?: boolean;
   treatmentGaps?: number;
   priorConditions?: string;
   medicalRecordsAnalysis?: string;

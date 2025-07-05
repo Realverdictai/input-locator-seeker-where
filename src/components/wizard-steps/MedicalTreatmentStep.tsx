@@ -535,25 +535,17 @@ const MedicalTreatmentStep = ({ formData, setFormData }: MedicalTreatmentStepPro
                 checked={formData.willGetFutureSurgery || false}
                 onCheckedChange={(checked) => setFormData({...formData, willGetFutureSurgery: !!checked})}
               />
-              <Label htmlFor="willGetFutureSurgery">Patient will definitely get this future surgery</Label>
+              <Label htmlFor="willGetFutureSurgery">Plaintiff will definitely get this future surgery</Label>
             </div>
 
-            {/* Impact Warning */}
-            {(!formData.willGetFutureSurgery || !formData.futureSurgeryDate) && (
-              <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                <p className="text-yellow-700 text-sm">
-                  <strong>Valuation Impact:</strong> Future surgery costs will be minimized in the case evaluation since the surgery is {!formData.willGetFutureSurgery ? 'uncertain' : 'not scheduled'}.
-                </p>
-              </div>
-            )}
-
-            {formData.willGetFutureSurgery && formData.futureSurgeryDate && (
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-green-700 text-sm">
-                  <strong>Valuation Impact:</strong> Future surgery costs will be fully factored into the case evaluation since surgery is confirmed and scheduled.
-                </p>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="willNotGetFutureSurgery"
+                checked={formData.willNotGetFutureSurgery || false}
+                onCheckedChange={(checked) => setFormData({...formData, willNotGetFutureSurgery: !!checked})}
+              />
+              <Label htmlFor="willNotGetFutureSurgery">Plaintiff will not get this future surgery</Label>
+            </div>
           </div>
         )}
 
