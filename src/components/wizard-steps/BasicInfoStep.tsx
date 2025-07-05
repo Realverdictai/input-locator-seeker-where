@@ -11,11 +11,16 @@ interface BasicInfoStepProps {
 }
 
 const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
+  // Complete list of all 58 California counties
   const californiaCounties = [
-    "los-angeles", "san-francisco", "orange", "san-diego", "santa-clara", "alameda",
-    "riverside", "sacramento", "san-bernardino", "contra-costa", "fresno", "kern",
-    "ventura", "san-joaquin", "sonoma", "tulare", "santa-barbara", "solano", 
-    "monterey", "placer", "san-mateo", "merced", "stanislaus", "santa-cruz", "napa", "marin"
+    "alameda", "alpine", "amador", "butte", "calaveras", "colusa", "contra-costa", "del-norte",
+    "el-dorado", "fresno", "glenn", "humboldt", "imperial", "inyo", "kern", "kings",
+    "lake", "lassen", "los-angeles", "madera", "marin", "mariposa", "mendocino", "merced",
+    "modoc", "mono", "monterey", "napa", "nevada", "orange", "placer", "plumas",
+    "riverside", "sacramento", "san-benito", "san-bernardino", "san-diego", "san-francisco",
+    "san-joaquin", "san-luis-obispo", "san-mateo", "santa-barbara", "santa-clara", "santa-cruz",
+    "shasta", "sierra", "siskiyou", "solano", "sonoma", "stanislaus", "sutter", "tehama",
+    "trinity", "tulare", "tuolumne", "ventura", "yolo", "yuba"
   ];
 
   return (
@@ -52,7 +57,7 @@ const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="venue">Venue/County</Label>
+        <Label htmlFor="venue">Venue/County (All 58 CA Counties)</Label>
         <Select 
           value={formData.venue || ''} 
           onValueChange={(value) => setFormData({...formData, venue: value})}
@@ -60,10 +65,10 @@ const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
           <SelectTrigger>
             <SelectValue placeholder="Select venue" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-60">
             {californiaCounties.map(county => (
               <SelectItem key={county} value={county}>
-                {county.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {county.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} County
               </SelectItem>
             ))}
           </SelectContent>
