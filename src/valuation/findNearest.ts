@@ -67,18 +67,27 @@ export async function findNearestCases(
  */
 async function fallbackSimilaritySearch(newCase: any, limit: number): Promise<NearestCase[]> {
   const { data, error } = await supabase
-    .from('cases_master')
+    .from('v_case_flat')
     .select('*')
-    .not('settle', 'is', null)
+    .not('settlement', 'is', null)
     .limit(limit);
 
   if (error) {
     throw error;
   }
 
-  // Calculate similarity scores manually
+  // Calculate similarity scores manually, mapping to expected format
   const scoredCases = (data || []).map(caseRow => ({
-    ...caseRow,
+    case_id: caseRow.case_id,
+    surgery: caseRow.surgery_list?.[0] || null,
+    inject: caseRow.injection_list?.[0] || null,
+    injuries: caseRow.injuries,
+    settle: String(caseRow.settlement || ''),
+    pol_lim: String(caseRow.policy_limits || ''),
+    venue: caseRow.venue,
+    liab_pct: String(caseRow.liab_pct || ''),
+    acc_type: caseRow.acc_type,
+    narrative: caseRow.narrative,
     score: calculateFallbackSimilarity(caseRow, newCase)
   }));
 
@@ -117,7 +126,7 @@ function calculateFallbackSimilarity(caseRow: any, newCase: any): number {
   }
 
   // Liability percentage proximity (4 points max)
-  const case_liab = (caseRow as any).liab_pct_num || (caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100);
+  const case_liab = caseRow.liab_pct || 100;
   const new_liab = newCase.liab_pct_num || (newCase.LiabPct ? parseFloat(newCase.LiabPct) : 100);
   if (case_liab && new_liab) {
     const liab_diff = Math.abs(case_liab - new_liab);

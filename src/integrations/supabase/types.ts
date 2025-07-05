@@ -38,6 +38,7 @@ export type Database = {
           acc_type: string | null
           case_id: number
           case_type: string
+          clean_data: Json | null
           created_at: string
           dol: string | null
           embedding: string | null
@@ -58,6 +59,7 @@ export type Database = {
           acc_type?: string | null
           case_id: number
           case_type: string
+          clean_data?: Json | null
           created_at?: string
           dol?: string | null
           embedding?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           acc_type?: string | null
           case_id?: number
           case_type?: string
+          clean_data?: Json | null
           created_at?: string
           dol?: string | null
           embedding?: string | null
@@ -182,12 +185,75 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_case_flat: {
+        Row: {
+          acc_type: string | null
+          case_id: number | null
+          case_type: string | null
+          dol: string | null
+          has_injections: boolean | null
+          has_surgery: boolean | null
+          injection_count: number | null
+          injection_list: Json | null
+          injuries: string | null
+          liab_pct: number | null
+          narrative: string | null
+          policy_limits: number | null
+          settlement: number | null
+          structured_data: Json | null
+          surgery_count: number | null
+          surgery_list: Json | null
+          venue: string | null
+        }
+        Insert: {
+          acc_type?: never
+          case_id?: number | null
+          case_type?: never
+          dol?: never
+          has_injections?: never
+          has_surgery?: never
+          injection_count?: never
+          injection_list?: never
+          injuries?: never
+          liab_pct?: never
+          narrative?: never
+          policy_limits?: never
+          settlement?: never
+          structured_data?: Json | null
+          surgery_count?: never
+          surgery_list?: never
+          venue?: never
+        }
+        Update: {
+          acc_type?: never
+          case_id?: number | null
+          case_type?: never
+          dol?: never
+          has_injections?: never
+          has_surgery?: never
+          injection_count?: never
+          injection_list?: never
+          injuries?: never
+          liab_pct?: never
+          narrative?: never
+          policy_limits?: never
+          settlement?: never
+          structured_data?: Json | null
+          surgery_count?: never
+          surgery_list?: never
+          venue?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      fn_normalize_case: {
+        Args: { p_case_id: number }
+        Returns: undefined
       }
       halfvec_avg: {
         Args: { "": number[] }

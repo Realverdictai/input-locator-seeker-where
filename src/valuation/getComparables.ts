@@ -80,8 +80,8 @@ function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): nu
     score += wordOverlap(caseRow.injuries, newCase.Injuries);
   }
   
-  // Liability percentage proximity (4 points max)
-  const case_liab = (caseRow as any).liab_pct_num || (caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100);
+  // Liability percentage proximity (4 points max) - use structured data
+  const case_liab = caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100;
   const new_liab = newCase.liab_pct_num || (newCase.LiabPct ? parseFloat(newCase.LiabPct) : 100);
   if (case_liab && new_liab) {
     const liab_diff = Math.abs(case_liab - new_liab);
@@ -102,11 +102,11 @@ function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): nu
  */
 export async function getComparables(newCase: NewCase, limit: number = 25): Promise<ComparableCase[]> {
   try {
-    // Fetch all cases from database for similarity calculation
+    // Fetch cases using the clean structured view  
     const { data: allCases, error } = await supabase
-      .from('cases_master')
-      .select('case_id, surgery, inject, injuries, settle, settle_num, pol_lim, policy_limits_num, venue, liab_pct, liab_pct_num, acc_type')
-      .not('settle', 'is', null)
+      .from('v_case_flat')
+      .select('*')
+      .not('settlement', 'is', null)
       .limit(500); // Get larger sample for better matching
     
     if (error) {
@@ -118,10 +118,28 @@ export async function getComparables(newCase: NewCase, limit: number = 25): Prom
       throw new Error('No cases available for comparison');
     }
     
-    // Calculate similarity scores for all cases
+    // Calculate similarity scores for all cases - map to expected format
     const scoredCases = allCases.map(caseRow => ({
-      ...caseRow,
-      similarity_score: calculateSimilarityScore(caseRow, newCase)
+      case_id: caseRow.case_id,
+      surgery: caseRow.surgery_list?.[0] || null,
+      inject: caseRow.injection_list?.[0] || null,
+      injuries: caseRow.injuries,
+      settle: String(caseRow.settlement || ''),
+      pol_lim: String(caseRow.policy_limits || ''),
+      venue: caseRow.venue,
+      liab_pct: String(caseRow.liab_pct || ''),
+      acc_type: caseRow.acc_type,
+      similarity_score: calculateSimilarityScore({
+        case_id: caseRow.case_id,
+        surgery: caseRow.surgery_list?.[0] || null,
+        inject: caseRow.injection_list?.[0] || null,
+        injuries: caseRow.injuries,
+        settle: String(caseRow.settlement || ''),
+        pol_lim: String(caseRow.policy_limits || ''),
+        venue: caseRow.venue,
+        liab_pct: String(caseRow.liab_pct || ''),
+        acc_type: caseRow.acc_type
+      }, newCase)
     }));
     
     // Sort by similarity score (highest first) and return top matches
