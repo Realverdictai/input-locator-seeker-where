@@ -2,16 +2,19 @@ import { getSingleSettlement } from '@/integrations/supabase/getSingleSettlement
 import { getEnhancedSettlement, formatEnhancedResult } from '@/integrations/supabase/getEnhancedSettlement';
 
 interface NewCase {
-  Venue: string;
-  Surgery: string;
+  Venue?: string;
+  Surgery?: string;
   Injuries: string;
-  LiabPct: string;
-  AccType: string;
+  LiabPct?: string;
+  AccType?: string;
   PolLim: string;
   medicalSpecials?: number;
-  age?: number;
-  narrative?: string;
-  tbiSeverity?: number;
+  howellSpecials?: number;
+  tbiSeverity?: string;
+  surgeryType?: string;
+  injectionType?: string;
+  surgeries?: number;
+  injections?: number;
 }
 
 interface ValuationResult {
@@ -77,36 +80,13 @@ export async function generateValuation(newCase: NewCase): Promise<ValuationResu
 
 /**
  * Generate AI-enhanced valuation using 313 cases + GPT-4 analysis
+ * @deprecated - Use generateValuation for data-driven approach
  */
 export async function generateEnhancedValuation(newCase: NewCase): Promise<ValuationResult> {
   try {
-    // Get AI-enhanced settlement analysis
-    const enhancedResult = await getEnhancedSettlement({
-      venue: newCase.Venue,
-      surgery: newCase.Surgery,
-      injuries: newCase.Injuries,
-      liabPct: newCase.LiabPct,
-      accType: newCase.AccType,
-      polLim: newCase.PolLim,
-      medicalSpecials: newCase.medicalSpecials,
-      age: newCase.age,
-      narrative: newCase.narrative,
-      tbiSeverity: newCase.tbiSeverity
-    });
-
-    // Format the result
-    const formatted = formatEnhancedResult(enhancedResult);
-
-    return {
-      proposal: formatted.proposal,
-      rationale: formatted.rationale,
-      sourceCaseID: formatted.sourceCaseID,
-      expiresOn: formatted.expiresOn,
-      confidence: formatted.confidence,
-      valueFactors: formatted.valueFactors,
-      comparableCases: formatted.comparableCases
-    };
-
+    // Fallback to basic valuation since we're using data-driven approach
+    console.log('Using data-driven valuation instead of AI-enhanced...');
+    return await generateValuation(newCase);
   } catch (error) {
     console.error('Error generating enhanced valuation:', error);
     

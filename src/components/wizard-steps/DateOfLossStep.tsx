@@ -1,6 +1,6 @@
-
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CaseData } from "@/types/verdict";
 
 interface DateOfLossStepProps {
@@ -9,6 +9,22 @@ interface DateOfLossStepProps {
 }
 
 const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
+  // Check statute of limitations for auto accidents
+  const checkStatuteOfLimitations = (dateOfLoss: string, caseType: string) => {
+    if (caseType !== "Auto Accident" || !dateOfLoss) return false;
+    
+    const dolDate = new Date(dateOfLoss);
+    const today = new Date();
+    const covidTollDays = 178; // CA Emergency Rule: 4 Apr 2020 – 1 Oct 2020
+    const twoYearsInMs = 2 * 365 * 24 * 60 * 60 * 1000;
+    const covidTollMs = covidTollDays * 24 * 60 * 60 * 1000;
+    
+    const timeDiff = today.getTime() - dolDate.getTime();
+    return timeDiff > (twoYearsInMs + covidTollMs);
+  };
+
+  const isSOLExpired = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseType || '');
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -21,11 +37,13 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
         />
       </div>
       
-      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-blue-700 text-sm">
-          Select the date when the incident occurred. This will help determine the applicable statute of limitations and other time-sensitive factors.
-        </p>
-      </div>
+      {isSOLExpired && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            ⚠️ Statute of limitations may have expired.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };

@@ -4,10 +4,16 @@ export interface CaseData {
   otherCaseType?: string;
   injuryTypes?: string[];
   otherInjuryType?: string;
+  otherInjuryText?: string;
   liabilityDisputed?: string;
   treatmentGap?: boolean;
+  numberOfPlaintiffs?: number;
   numberOfDefendants?: number;
   umbrellaCoverage?: string;
+  tbiSeverity?: string;
+  surgeryType?: string;
+  injectionType?: string;
+  howellSpecials?: number;
   
   // Existing fields
   injuryType: string;
