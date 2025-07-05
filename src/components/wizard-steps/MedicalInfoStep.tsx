@@ -200,8 +200,8 @@ const MedicalInfoStep = ({ formData, setFormData }: MedicalInfoStepProps) => {
           <Label htmlFor="injections">Number of Injections</Label>
           <Input
             id="injections"
-            type="text"
-            value={formatNumberWithCommas(formData.injections)}
+            type="number"
+            value={formData.injections || ''}
             onChange={(e) => handleFormattedNumberChange('injections', e.target.value)}
             placeholder="Enter number"
           />

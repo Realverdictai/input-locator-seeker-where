@@ -381,7 +381,7 @@ const CaseEvaluator = () => {
             <input
               type="number"
               name="injections"
-              value={formData.injections}
+              value={formData.injections || ''}
               onChange={handleInputChange}
               placeholder="3"
               min="0"
