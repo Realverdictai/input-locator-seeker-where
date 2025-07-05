@@ -382,7 +382,13 @@ const Index = () => {
                   </div>
                 )}
 
-                {verdictEstimate && <VerdictResults estimate={verdictEstimate} />}
+                {verdictEstimate && (
+                  <VerdictResults 
+                    estimate={verdictEstimate} 
+                    policyLimits={caseData?.policyLimits}
+                    mediatorProposal={caseData?.policyLimits ? Math.round((verdictEstimate.settlementRangeLow + verdictEstimate.settlementRangeHigh) / 2) : undefined}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>

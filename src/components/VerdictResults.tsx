@@ -6,9 +6,11 @@ import { VerdictEstimate } from "@/types/verdict";
 
 interface VerdictResultsProps {
   estimate: VerdictEstimate;
+  policyLimits?: number;
+  mediatorProposal?: number;
 }
 
-const VerdictResults = ({ estimate }: VerdictResultsProps) => {
+const VerdictResults = ({ estimate, policyLimits, mediatorProposal }: VerdictResultsProps) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -24,7 +26,21 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
     return { label: 'Very High', color: 'bg-red-500' };
   };
 
-  const riskLevel = getRiskLevel(estimate.policyExceedanceChance);
+  // Calculate policy exceedance based on high verdict vs policy limits
+  const calculatePolicyExceedance = () => {
+    if (!policyLimits || policyLimits <= 0) return 0;
+    if (estimate.highVerdict <= policyLimits) return 0;
+    
+    // Calculate percentage of exceedance
+    const exceedanceAmount = estimate.highVerdict - policyLimits;
+    const exceedancePercentage = (exceedanceAmount / policyLimits) * 100;
+    
+    // Cap at 100% for display purposes
+    return Math.min(100, exceedancePercentage);
+  };
+
+  const policyExceedancePercentage = calculatePolicyExceedance();
+  const riskLevel = getRiskLevel(policyExceedancePercentage);
 
   return (
     <div className="space-y-6">
@@ -61,45 +77,6 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
         </Card>
       )}
 
-      {/* Verdict Estimates */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Verdict Estimates</h3>
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600">Low Estimate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-bold text-green-600">
-                {formatCurrency(estimate.lowVerdict)}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center border-blue-200">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-blue-600">Mid Estimate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-bold text-blue-600">
-                {formatCurrency(estimate.midVerdict)}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="text-center">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-600">High Estimate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-bold text-orange-600">
-                {formatCurrency(estimate.highVerdict)}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       {/* Settlement Range */}
       <div className="space-y-3">
         <h3 className="text-lg font-semibold">Suggested Settlement Range</h3>
@@ -109,11 +86,33 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
               <p className="text-2xl font-bold text-blue-700">
                 {formatCurrency(estimate.settlementRangeLow)} - {formatCurrency(estimate.settlementRangeHigh)}
               </p>
-              <p className="text-sm text-blue-600 mt-1">Recommended negotiation range</p>
+              <p className="text-sm text-blue-600 mt-1">
+                {mediatorProposal ? 
+                  `Midpoint target: ${formatCurrency(mediatorProposal)}` : 
+                  'Recommended negotiation range'
+                }
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Mediation Notice */}
+      <div className="space-y-3">
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-sm text-amber-700 font-medium">
+                📧 A mediator's proposal will be emailed to you once the other side has completed their session.
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                Both parties must complete their evaluations before the mediation proposal is sent.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
 
       {/* Policy Exceedance Risk */}
       <div className="space-y-3">
@@ -126,9 +125,13 @@ const VerdictResults = ({ estimate }: VerdictResultsProps) => {
                 {riskLevel.label}
               </Badge>
             </div>
-            <Progress value={estimate.policyExceedanceChance} className="mb-2" />
+            <Progress value={policyExceedancePercentage} className="mb-2" />
             <p className="text-center text-sm text-gray-600">
-              {estimate.policyExceedanceChance}% chance of exceeding policy limits
+              {policyLimits ? (
+                policyExceedancePercentage > 0 ? 
+                  `High verdict (${formatCurrency(estimate.highVerdict)}) exceeds policy limits (${formatCurrency(policyLimits)}) by ${Math.round(policyExceedancePercentage)}%`
+                  : `Case value within policy limits (${formatCurrency(policyLimits)})`
+              ) : 'Policy limits not specified'}
             </p>
           </CardContent>
         </Card>
