@@ -48,9 +48,10 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
   const isRearEndAuto = isAutoCase && formData.accidentType === 'rear-end-collision';
 
   // Skip this step entirely for rear-end auto accidents
-  if (isRearEndAuto) {
-    return null;
-  }
+  // Temporarily disabled to debug dropdown issue
+  // if (isRearEndAuto) {
+  //   return null;
+  // }
 
   return (
     <div className="space-y-6">
@@ -65,7 +66,7 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
           <SelectTrigger>
             <SelectValue placeholder="Select accident type" />
           </SelectTrigger>
-          <SelectContent className="bg-white z-50">
+          <SelectContent className="bg-background border border-border shadow-md z-50">
             {accidentTypes.map(type => (
               <SelectItem key={type} value={type.toLowerCase().replace(/[^a-z0-9]/g, '-')}>
                 {type}
