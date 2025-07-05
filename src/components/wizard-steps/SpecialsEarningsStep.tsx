@@ -41,6 +41,22 @@ const SpecialsEarningsStep = ({ formData, setFormData }: SpecialsEarningsStepPro
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="howellHanifDeductions">Howell Deductions ($)</Label>
+          <Input
+            id="howellHanifDeductions"
+            type="text"
+            value={formatNumberWithCommas(formData.howellHanifDeductions)}
+            onChange={(e) => handleFormattedNumberChange('howellHanifDeductions', e.target.value)}
+            placeholder="0"
+          />
+          <p className="text-sm text-muted-foreground">
+            Amount after insurance adjustments or reasonable value of services
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
           <Label htmlFor="futureMedicals">Future Specials ($)</Label>
           <Input
             id="futureMedicals"
