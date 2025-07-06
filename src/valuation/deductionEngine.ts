@@ -71,8 +71,17 @@ export function applyDeductions(
     reason: conflictingOpinions ? 'Medical experts disagree on diagnosis/causation' : undefined
   });
 
-  // Calculate total deduction (capped at 40%)
-  const totalDeductionPct = Math.min(40, Math.abs(deductions.reduce((sum, d) => sum + d.pct, 0)));
+  // 6. Early resolution discount (20-25% based on case factors)
+  const earlyResolutionDiscount = calculateEarlyResolutionDiscount(caseData, narrative);
+  deductions.push({
+    name: 'Early resolution discount',
+    pct: -earlyResolutionDiscount,
+    triggered: earlyResolutionDiscount > 0,
+    reason: earlyResolutionDiscount > 0 ? 'Insurance discount for early case resolution' : undefined
+  });
+
+  // Calculate total deduction (capped at 50% to account for early resolution)
+  const totalDeductionPct = Math.min(50, Math.abs(deductions.reduce((sum, d) => sum + d.pct, 0)));
   
   // Apply deductions
   const evaluatorAfterDeductions = Math.round(basePrediction * (1 - totalDeductionPct / 100) / 500) * 500;
@@ -178,4 +187,52 @@ function checkConflictingMedicalOpinions(narrative: string): boolean {
   ];
   
   return patterns.some(pattern => pattern.test(narrative));
+}
+
+/**
+ * Calculate early resolution discount (20-25% based on case factors)
+ */
+function calculateEarlyResolutionDiscount(caseData: any, narrative: string): number {
+  let discount = 20; // Base 20% discount
+  
+  // Age factor - older plaintiffs get higher discount
+  const age = caseData.age || caseData.plaintiff_age || 0;
+  if (age > 65) {
+    discount += 2; // +2% for elderly plaintiffs
+  } else if (age > 50) {
+    discount += 1; // +1% for middle-aged plaintiffs
+  }
+  
+  // Pending surgery factor - reduces discount (case worth more)
+  const hasPendingSurgery = /pending.*surgery/gi.test(narrative) || 
+                           /scheduled.*surgery/gi.test(narrative) ||
+                           /future.*surgery/gi.test(narrative);
+  if (hasPendingSurgery) {
+    discount -= 3; // -3% if pending surgery (case more valuable)
+  }
+  
+  // Severity factor - higher severity reduces discount
+  const surgeryCount = caseData.surgeries || caseData.surgery_count || 0;
+  const injectionCount = caseData.injections || caseData.injection_count || 0;
+  
+  if (surgeryCount >= 2 || injectionCount >= 4) {
+    discount -= 2; // -2% for severe cases
+  } else if (surgeryCount >= 1 || injectionCount >= 2) {
+    discount -= 1; // -1% for moderate cases
+  }
+  
+  // TBI factor - reduces discount significantly
+  const hasTBI = /TBI/gi.test(narrative) || /traumatic.*brain/gi.test(narrative);
+  if (hasTBI) {
+    discount -= 3; // -3% for TBI cases (high value)
+  }
+  
+  // Policy limits factor - high policy limits reduce discount
+  const policyLimits = caseData.policyLimits || caseData.policy_limits_num || 0;
+  if (policyLimits > 1000000) {
+    discount -= 2; // -2% for high policy limits
+  }
+  
+  // Cap discount between 15-25%
+  return Math.max(15, Math.min(25, discount));
 }
