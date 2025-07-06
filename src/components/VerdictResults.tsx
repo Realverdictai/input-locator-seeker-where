@@ -26,21 +26,101 @@ const VerdictResults = ({ estimate, policyLimits, mediatorProposal }: VerdictRes
     return { label: 'Very High', color: 'bg-red-500' };
   };
 
-  // Calculate policy exceedance based on high verdict vs policy limits
-  const calculatePolicyExceedance = () => {
-    if (!policyLimits || policyLimits <= 0) return 0;
-    if (estimate.highVerdict <= policyLimits) return 0;
+  // Enhanced risk assessment for policy exceedance
+  const calculateComprehensiveRisk = () => {
+    if (!policyLimits || policyLimits <= 0) {
+      return {
+        exceedanceRisk: 0,
+        reserveAdequacy: 'Unknown',
+        badFaithRisk: 'Low',
+        recommendation: 'Set policy limits to enable risk analysis',
+        riskFactors: []
+      };
+    }
+
+    const midpoint = (estimate.settlementRangeLow + estimate.settlementRangeHigh) / 2;
+    const evaluatorAmount = estimate.highVerdict; // Using high verdict as evaluator
     
-    // Calculate percentage of exceedance
-    const exceedanceAmount = estimate.highVerdict - policyLimits;
-    const exceedancePercentage = (exceedanceAmount / policyLimits) * 100;
+    // Calculate probability of exceeding policy limits
+    let exceedanceRisk = 0;
+    const riskFactors = [];
     
-    // Cap at 100% for display purposes
-    return Math.min(100, exceedancePercentage);
+    // Risk based on evaluator vs policy limits
+    const evaluatorRatio = evaluatorAmount / policyLimits;
+    if (evaluatorRatio > 1.0) {
+      exceedanceRisk = 85; // High risk if evaluator exceeds limits
+      riskFactors.push('Evaluator exceeds policy limits');
+    } else if (evaluatorRatio > 0.9) {
+      exceedanceRisk = 65; // High risk if close to limits
+      riskFactors.push('Evaluator near policy limits (>90%)');
+    } else if (evaluatorRatio > 0.8) {
+      exceedanceRisk = 45; // Moderate risk
+      riskFactors.push('Evaluator at 80-90% of limits');
+    } else if (evaluatorRatio > 0.6) {
+      exceedanceRisk = 25; // Low-moderate risk
+      riskFactors.push('Evaluator at 60-80% of limits');
+    } else {
+      exceedanceRisk = 10; // Low risk
+    }
+
+    // Adjust for settlement range volatility
+    const rangeSpread = estimate.settlementRangeHigh - estimate.settlementRangeLow;
+    const volatilityFactor = rangeSpread / midpoint;
+    if (volatilityFactor > 0.5) {
+      exceedanceRisk += 15;
+      riskFactors.push('High settlement range volatility');
+    } else if (volatilityFactor > 0.3) {
+      exceedanceRisk += 8;
+      riskFactors.push('Moderate settlement volatility');
+    }
+
+    // Policy exceedance chance from verdict estimate
+    if (estimate.policyExceedanceChance && estimate.policyExceedanceChance > 0) {
+      exceedanceRisk = Math.max(exceedanceRisk, estimate.policyExceedanceChance);
+      riskFactors.push(`${estimate.policyExceedanceChance}% statistical exceedance chance`);
+    }
+
+    // Cap at 95%
+    exceedanceRisk = Math.min(95, exceedanceRisk);
+
+    // Reserve adequacy assessment
+    let reserveAdequacy = 'Adequate';
+    if (evaluatorRatio > 0.95) reserveAdequacy = 'Critically Inadequate';
+    else if (evaluatorRatio > 0.85) reserveAdequacy = 'Inadequate';  
+    else if (evaluatorRatio > 0.75) reserveAdequacy = 'Marginal';
+    else if (evaluatorRatio > 0.6) reserveAdequacy = 'Adequate';
+    else reserveAdequacy = 'Conservative';
+
+    // Bad faith risk assessment
+    let badFaithRisk = 'Low';
+    if (evaluatorRatio > 0.9 && exceedanceRisk > 60) badFaithRisk = 'High';
+    else if (evaluatorRatio > 0.8 && exceedanceRisk > 40) badFaithRisk = 'Moderate';
+    else if (evaluatorRatio > 0.7) badFaithRisk = 'Low-Moderate';
+
+    // Risk management recommendations
+    let recommendation = '';
+    if (exceedanceRisk > 70) {
+      recommendation = 'URGENT: Consider excess carrier notification and aggressive settlement';
+    } else if (exceedanceRisk > 50) {
+      recommendation = 'Consider increased reserves and proactive settlement discussions';
+    } else if (exceedanceRisk > 30) {
+      recommendation = 'Monitor closely and maintain adequate reserves';
+    } else {
+      recommendation = 'Continue standard case management protocols';
+    }
+
+    return {
+      exceedanceRisk,
+      reserveAdequacy,
+      badFaithRisk,
+      recommendation,
+      riskFactors,
+      evaluatorRatio
+    };
   };
 
-  const policyExceedancePercentage = calculatePolicyExceedance();
-  const riskLevel = getRiskLevel(policyExceedancePercentage);
+  const riskAssessment = calculateComprehensiveRisk();
+  const riskLevel = getRiskLevel(riskAssessment.exceedanceRisk);
 
   return (
     <div className="space-y-6">
@@ -113,25 +193,104 @@ const VerdictResults = ({ estimate, policyLimits, mediatorProposal }: VerdictRes
         </Card>
       </div>
 
-
-      {/* Policy Exceedance Risk */}
+      {/* Enhanced Risk Assessment */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Policy Limits Exceedance Risk</h3>
+        <h3 className="text-lg font-semibold">Comprehensive Risk Assessment</h3>
+        
+        {/* Policy Exceedance Risk */}
         <Card>
-          <CardContent className="pt-6">
+          <CardHeader>
+            <CardTitle className="text-base">Policy Limits Exceedance Risk</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Risk Level</span>
               <Badge className={`${riskLevel.color} text-white`}>
-                {riskLevel.label}
+                {riskLevel.label} ({riskAssessment.exceedanceRisk}%)
               </Badge>
             </div>
-            <Progress value={policyExceedancePercentage} className="mb-2" />
+            <Progress value={riskAssessment.exceedanceRisk} className="mb-2" />
             <p className="text-center text-sm text-gray-600">
               {policyLimits ? (
-                policyExceedancePercentage > 0 ? 
-                  `High verdict (${formatCurrency(estimate.highVerdict)}) exceeds policy limits (${formatCurrency(policyLimits)}) by ${Math.round(policyExceedancePercentage)}%`
-                  : `Case value within policy limits (${formatCurrency(policyLimits)})`
+                `Evaluator: ${formatCurrency(estimate.highVerdict)} vs Policy Limits: ${formatCurrency(policyLimits)} (${Math.round(riskAssessment.evaluatorRatio * 100)}% of limits)`
               ) : 'Policy limits not specified'}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Reserve Adequacy */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Reserve Adequacy Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Current Reserve Status</span>
+              <Badge className={
+                riskAssessment.reserveAdequacy === 'Critically Inadequate' ? 'bg-red-500' :
+                riskAssessment.reserveAdequacy === 'Inadequate' ? 'bg-orange-500' :
+                riskAssessment.reserveAdequacy === 'Marginal' ? 'bg-yellow-500' :
+                riskAssessment.reserveAdequacy === 'Adequate' ? 'bg-green-500' :
+                'bg-blue-500'
+              }>
+                {riskAssessment.reserveAdequacy}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bad Faith Risk */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Bad Faith Exposure Risk</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Bad Faith Risk Level</span>
+              <Badge className={
+                riskAssessment.badFaithRisk === 'High' ? 'bg-red-500' :
+                riskAssessment.badFaithRisk === 'Moderate' ? 'bg-orange-500' :
+                riskAssessment.badFaithRisk === 'Low-Moderate' ? 'bg-yellow-500' :
+                'bg-green-500'
+              }>
+                {riskAssessment.badFaithRisk}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Risk Factors */}
+        {riskAssessment.riskFactors.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Key Risk Factors</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-1">
+                {riskAssessment.riskFactors.map((factor, index) => (
+                  <li key={index} className="text-sm text-gray-700 flex items-start">
+                    <span className="text-orange-500 mr-2">•</span>
+                    {factor}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Risk Management Recommendation */}
+        <Card className={
+          riskAssessment.exceedanceRisk > 70 ? 'bg-red-50 border-red-200' :
+          riskAssessment.exceedanceRisk > 50 ? 'bg-orange-50 border-orange-200' :
+          riskAssessment.exceedanceRisk > 30 ? 'bg-yellow-50 border-yellow-200' :
+          'bg-green-50 border-green-200'
+        }>
+          <CardHeader>
+            <CardTitle className="text-base">Risk Management Recommendation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-medium">
+              {riskAssessment.recommendation}
             </p>
           </CardContent>
         </Card>
