@@ -1,0 +1,38 @@
+/* VerdictAI Brand Override Styles */
+:root {
+  --brand-primary: #005B98;   /* Verdict blue */
+  --brand-secondary: #2CA36C; /* Verdict green */
+  --brand-font: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background-color: #f7f8fa;
+  font-family: var(--brand-font);
+}
+
+/* Hide Lovable branding elements */
+.lovable-footer {
+  display: none !important;
+}
+
+.lovable-remix-btn {
+  display: none !important;
+}
+
+/* Override any Lovable badges or branding */
+[class*="lovable"] {
+  display: none !important;
+}
+
+/* Apply brand colors to primary elements */
+.bg-primary {
+  background-color: var(--brand-primary) !important;
+}
+
+.text-primary {
+  color: var(--brand-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--brand-primary) !important;
+}
