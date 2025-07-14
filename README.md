@@ -115,3 +115,10 @@ The application now includes an advanced AI-first case evaluation system with:
 - **Transparent Deductions**: Shows exactly what factors reduced the evaluation and by how much
 
 To adjust deduction percentages or add new risk factors, edit the deduction engine in `src/valuation/deductionEngine.ts`.
+
+## Document Upload and Case Categories
+
+- Plaintiff and insurance/defense users can optionally upload case documents at the start of the wizard.
+- Uploaded text is parsed and used to prefill fields and provide context for AI evaluation.
+- Case types are organized into categories with relevant sub-categories (e.g. `Auto Accident` > `T-Bone/Broadside`).
+- The evaluation engine uses the uploaded narrative when calling `calcEvaluatorAI`.
