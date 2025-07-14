@@ -1,6 +1,8 @@
 interface MediatorResult {
   mediator: string;
   expiresOn: string;
+  rangeLow: string;
+  rangeHigh: string;
 }
 
 /**
@@ -47,9 +49,21 @@ export function calcMediator(evaluatorString: string, policyLimits?: number): Me
     day: 'numeric',
     year: 'numeric'
   });
-  
+
+  // Settlement range around proposal (±5%)
+  let rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
+  let rangeHigh = Math.round(proposalAmount * 1.05 / 500) * 500;
+  if (policyLimits && rangeHigh > policyLimits) {
+    rangeHigh = policyLimits;
+  }
+
+  const rangeLowStr = `$${rangeLow.toLocaleString()}`;
+  const rangeHighStr = `$${rangeHigh.toLocaleString()}`;
+
   return {
     mediator: `$${proposalAmount.toLocaleString()}`,
-    expiresOn
+    expiresOn,
+    rangeLow: rangeLowStr,
+    rangeHigh: rangeHighStr
   };
 }

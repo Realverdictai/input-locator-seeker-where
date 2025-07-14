@@ -32,6 +32,8 @@ interface EvaluationResult {
 interface MediatorResult {
   mediator: string;
   expiresOn: string;
+  rangeLow: string;
+  rangeHigh: string;
 }
 
 interface ComparableCase {
@@ -110,7 +112,9 @@ const CaseEvaluator = () => {
         // Auto-set mediator result from AI evaluation
         setMediatorResult({
           mediator: aiEvaluation.mediatorProposal,
-          expiresOn: aiEvaluation.expiresOn
+          expiresOn: aiEvaluation.expiresOn,
+          rangeLow: aiEvaluation.settlementRangeLow,
+          rangeHigh: aiEvaluation.settlementRangeHigh
         });
       } else {
         const evaluation = await calcEvaluator(newCase);
@@ -144,7 +148,9 @@ const CaseEvaluator = () => {
       });
       setMediatorResult({
         mediator: medRes.mediator,
-        expiresOn: medRes.expiresOn
+        expiresOn: medRes.expiresOn,
+        rangeLow: medRes.rangeLow,
+        rangeHigh: medRes.rangeHigh
       });
     } catch (err) {
       setError(`Test failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -627,8 +633,11 @@ const CaseEvaluator = () => {
               }}>
                 Mediator's Proposal: {mediatorResult.mediator}
               </h3>
-              <p style={{ 
-                fontSize: '1em', 
+              <p style={{ fontSize: '0.9em', margin: '0 0 5px 0' }}>
+                Suggested Range: {mediatorResult.rangeLow} - {mediatorResult.rangeHigh}
+              </p>
+              <p style={{
+                fontSize: '1em',
                 margin: '0',
                 color: '#dc3545',
                 fontWeight: 'bold'

@@ -10,6 +10,7 @@ interface LiabilityImpactStepProps {
 }
 
 const LiabilityImpactStep = ({ formData, setFormData }: LiabilityImpactStepProps) => {
+  const showImpact = formData.caseType !== 'dog-bite';
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -46,22 +47,24 @@ const LiabilityImpactStep = ({ formData, setFormData }: LiabilityImpactStepProps
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Severity of Impact (1-10): {formData.impactSeverity || 5}</Label>
-        <Slider
-          value={[formData.impactSeverity || 5]}
-          onValueChange={(value) => setFormData({...formData, impactSeverity: value[0]})}
-          max={10}
-          min={1}
-          step={1}
-          className="w-full"
-        />
-        <div className="flex justify-between text-xs text-gray-500">
-          <span>1 (Minor)</span>
-          <span>5 (Moderate)</span>
-          <span>10 (Severe)</span>
+      {showImpact && (
+        <div className="space-y-2">
+          <Label>Severity of Impact (1-10): {formData.impactSeverity || 5}</Label>
+          <Slider
+            value={[formData.impactSeverity || 5]}
+            onValueChange={(value) => setFormData({...formData, impactSeverity: value[0]})}
+            max={10}
+            min={1}
+            step={1}
+            className="w-full"
+          />
+          <div className="flex justify-between text-xs text-gray-500">
+            <span>1 (Minor)</span>
+            <span>5 (Moderate)</span>
+            <span>10 (Severe)</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
