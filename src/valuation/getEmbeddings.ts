@@ -47,7 +47,7 @@ export function serializeCaseForEmbedding(caseData: any): string {
     caseData.injuries || caseData.Injuries || '',
     caseData.surgery || caseData.Surgery || '',
     caseData.inject || caseData.Inject || '',
-    caseData.pol_lim || caseData.PolicyLimits || '',
+    caseData.pol_lim || caseData.policyLimits || caseData.PolicyLimits || '',
     caseData.liab_pct || caseData.LiabPct || '',
     caseData.narrative || caseData.Narrative || '',
     caseData.venue || caseData.Venue || '',

@@ -30,7 +30,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Get parameters for hybrid search
     const liabPct = parseFloat(newCase.LiabPct || '100') || 100;
-    const policyLimits = parseInt(String(newCase.PolicyLimits || '0').replace(/[$,]/g, '')) || 0;
+    const policyLimitStr = newCase.policyLimits ?? newCase.PolicyLimits ?? '0';
+    const policyLimits = newCase.policy_limits_num || parseInt(String(policyLimitStr).replace(/[$,]/g, '')) || 0;
     const policyBucket = policyLimits > 500000 ? 'high' : policyLimits > 100000 ? 'mid' : 'low';
     const tbiLevel = newCase.tbiLevel || 0;
     const hasSurgery = !!(newCase.Surgery && newCase.Surgery !== 'None');

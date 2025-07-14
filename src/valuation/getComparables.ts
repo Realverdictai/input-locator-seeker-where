@@ -82,7 +82,12 @@ function calculateSimilarityScore(caseRow: ComparableCase, newCase: NewCase): nu
   
   // Liability percentage proximity (4 points max) - use structured data
   const case_liab = caseRow.liab_pct ? parseFloat(caseRow.liab_pct) : 100;
-  const new_liab = newCase.liab_pct_num || (newCase.LiabPct ? parseFloat(newCase.LiabPct) : 100);
+  const new_liab =
+    typeof newCase.liab_pct_num === 'number'
+      ? newCase.liab_pct_num
+      : newCase.LiabPct
+        ? parseFloat(String(newCase.LiabPct).replace(/[^0-9.]/g, '')) || 100
+        : 100;
   if (case_liab && new_liab) {
     const liab_diff = Math.abs(case_liab - new_liab);
     score += Math.max(0, 4 - (liab_diff / 25));
