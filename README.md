@@ -115,3 +115,14 @@ The application now includes an advanced AI-first case evaluation system with:
 - **Transparent Deductions**: Shows exactly what factors reduced the evaluation and by how much
 
 To adjust deduction percentages or add new risk factors, edit the deduction engine in `src/valuation/deductionEngine.ts`.
+
+### Refreshing Case Data
+
+After importing new cases into the `cases_master` table, run the refresh script to normalize the data and create embeddings:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=<service_key> OPENAI_API_KEY=<openai_key> \
+  ts-node scripts/refreshCaseData.ts
+```
+
+This populates missing numeric fields and embeddings so the AI evaluators include your latest cases.

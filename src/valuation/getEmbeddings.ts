@@ -12,8 +12,11 @@ interface EmbeddingResponse {
  * Get text embedding from OpenAI
  */
 export async function getEmbedding(text: string): Promise<number[]> {
-  const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  
+  const openaiKey =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_OPENAI_API_KEY) ||
+    process.env.OPENAI_API_KEY ||
+    process.env.VITE_OPENAI_API_KEY;
+
   if (!openaiKey) {
     throw new Error('OpenAI API key not configured');
   }
