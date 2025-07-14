@@ -10,28 +10,52 @@ interface AccidentTypeStepProps {
 }
 
 const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
+  // Expanded auto accident categories
   const autoAccidentTypes = [
     "Rear-End Collision",
-    "T-Bone/Broadside", 
+    "T-Bone/Broadside",
     "Head-On Collision",
     "Sideswipe",
     "Multi-Vehicle Pileup",
     "Hit and Run",
     "Rollover",
+    "Drunk Driving/DUI",
+    "Left-Turn Collision",
+    "Merging/Blind Spot",
     "Pedestrian Strike",
-    "Bicycle vs Auto"
+    "Bicycle vs Auto",
+    "Commercial Truck/Big Rig",
+    "Bus Accident",
+    "Motorcycle Collision",
+    "Uber/Lyft/Rideshare",
+    "Single Vehicle Crash",
+    "Road Rage Incident"
   ];
 
+  // Expanded non-auto accident categories
   const nonAutoAccidentTypes = [
     "Dog Bite/Attack",
-    "Fall from Ladder", 
+    "Fall from Ladder",
     "Falling Object",
     "Slip on Wet Surface",
     "Trip on Uneven Surface",
     "Stairway Fall",
     "Escalator/Elevator",
     "Swimming Pool Incident",
-    "Construction Site Accident"
+    "Workplace Accident",
+    "Sports or Recreation Injury",
+    "School or Daycare Incident",
+    "Construction Site Accident",
+    "Boating Accident",
+    "Aviation Accident",
+    "Product Defect",
+    "Toxic Exposure",
+    "Medical Device Failure",
+    "Nursing Home Abuse",
+    "Assault/Battery",
+    "Negligent Security",
+    "Fire or Explosion",
+    "Chemical Spill"
   ];
 
   const isAutoCase = formData.caseType === 'auto-accident';

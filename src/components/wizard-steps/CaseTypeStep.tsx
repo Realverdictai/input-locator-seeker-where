@@ -10,15 +10,38 @@ interface CaseTypeStepProps {
 }
 
 const CaseTypeStep = ({ formData, setFormData }: CaseTypeStepProps) => {
+  // Expanded list of personal injury case categories
   const caseTypes = [
     "Auto Accident",
-    "Dog Bite", 
+    "Motorcycle Accident",
+    "Commercial Truck Accident",
+    "Bus Accident",
+    "Bicycle Accident",
+    "Pedestrian Accident",
+    "Uber/Lyft/Rideshare",
+    "Boating/Maritime Accident",
+    "Aviation Accident",
+    "Train/Railroad Accident",
+    "Workplace Accident",
+    "Toxic Exposure",
+    "School or Daycare Incident",
+    "Sports/Recreation Injury",
+    "Government Liability",
+    "Defamation/Libel",
+    "Assault/Sexual Abuse",
+    "Dog Bite",
     "Slip and Fall",
     "Trip and Fall",
     "Homeowner Premises",
+    "Premises Liability",
     "Construction Injury",
-    "Wrongful Death",
+    "Product Liability",
+    "Medical Malpractice",
+    "Nursing Home Neglect",
+    "Nursing Home Abuse",
     "Assault/Battery",
+    "Food Poisoning",
+    "Wrongful Death",
     "Other"
   ];
 
