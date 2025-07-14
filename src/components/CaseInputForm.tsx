@@ -13,6 +13,7 @@ import MedicalTreatmentStep from "./wizard-steps/MedicalTreatmentStep";
 import SpecialsEarningsStep from "./wizard-steps/SpecialsEarningsStep";
 import LegalInsuranceStep from "./wizard-steps/LegalInsuranceStep";
 import FinalReviewStep from "./wizard-steps/FinalReviewStep";
+import DocumentUploadStep from "./wizard-steps/DocumentUploadStep";
 
 interface CaseInputFormProps {
   onSubmit: (data: CaseData) => void;
@@ -65,17 +66,35 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   };
 
   const isFormValid = () => {
-    // Only require validation for final submission
-    const isValid = !!(formData.caseType && formData.injuryTypes && formData.injuryTypes.length > 0);
-    console.log("Form validation:", { 
+    // Allow evaluation if narrative text is provided or required fields are filled
+    const hasNarrative = !!(formData.narrative && formData.narrative.trim());
+    const basicValid = !!(
+      formData.caseType &&
+      formData.injuryTypes &&
+      formData.injuryTypes.length > 0
+    );
+    const isValid = hasNarrative || basicValid;
+    console.log("Form validation:", {
       caseType: formData.caseType,
       injuryTypes: formData.injuryTypes,
-      isValid 
+      hasNarrative,
+      isValid
     });
     return isValid;
   };
 
   const steps = [
+    {
+      title: "Upload Documents (Optional)",
+      description: "Upload letters or demands to auto-fill case info",
+      component: (
+        <DocumentUploadStep
+          formData={formData}
+          setFormData={setFormData}
+          onQuickEvaluate={handleComplete}
+        />
+      )
+    },
     {
       title: "Parties",
       description: "Enter the number of plaintiffs and defendants",
