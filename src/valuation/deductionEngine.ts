@@ -75,8 +75,8 @@ export function applyDeductions(
 
   // 6. Injury and accident type mismatch (15% deduction)
   const mismatch = checkInjuryAccidentMismatch(
-    caseData.accidentType || caseData.acc_type || '',
-    caseData.injuries || narrative
+    caseData.accidentType || '',
+    caseData.injuryType || narrative
   );
   deductions.push({
     name: 'Injury inconsistent with accident type',
@@ -233,7 +233,7 @@ function calculateEarlyResolutionDiscount(caseData: Partial<CaseData>, narrative
   let discount = 20; // Base 20% discount
   
   // Age factor - older plaintiffs get higher discount
-  const age = caseData.age || caseData.plaintiff_age || 0;
+  const age = caseData.plaintiffAge || 0;
   if (age > 65) {
     discount += 2; // +2% for elderly plaintiffs
   } else if (age > 50) {
@@ -249,8 +249,8 @@ function calculateEarlyResolutionDiscount(caseData: Partial<CaseData>, narrative
   }
   
   // Severity factor - higher severity reduces discount
-  const surgeryCount = caseData.surgeries || caseData.surgery_count || 0;
-  const injectionCount = caseData.injections || caseData.injection_count || 0;
+  const surgeryCount = caseData.surgeries || 0;
+  const injectionCount = caseData.injections || 0;
   
   if (surgeryCount >= 2 || injectionCount >= 4) {
     discount -= 2; // -2% for severe cases
@@ -265,7 +265,7 @@ function calculateEarlyResolutionDiscount(caseData: Partial<CaseData>, narrative
   }
   
   // Policy limits factor - high policy limits reduce discount
-  const policyLimits = caseData.policyLimits || caseData.policy_limits_num || 0;
+  const policyLimits = caseData.policyLimits || 0;
   if (policyLimits > 1000000) {
     discount -= 2; // -2% for high policy limits
   }
