@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { CaseData } from "@/types/verdict";
+import { UserType } from "@/types/auth";
 import FormWizard from "./FormWizard";
 import PartiesStep from "./wizard-steps/PartiesStep";
 import CaseTypeStep from "./wizard-steps/CaseTypeStep";
@@ -14,13 +15,15 @@ import SpecialsEarningsStep from "./wizard-steps/SpecialsEarningsStep";
 import LegalInsuranceStep from "./wizard-steps/LegalInsuranceStep";
 import FinalReviewStep from "./wizard-steps/FinalReviewStep";
 import DocumentUploadStep from "./wizard-steps/DocumentUploadStep";
+import SettlementStrategyStep from "./wizard-steps/SettlementStrategyStep";
 
 interface CaseInputFormProps {
   onSubmit: (data: CaseData) => void;
   isLoading: boolean;
+  userType: UserType;
 }
 
-const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
+const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) => {
   console.log("CaseInputForm rendering");
   
   const [formData, setFormData] = useState<Partial<CaseData>>({
@@ -43,11 +46,11 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     diagnosticTests: [],
     treatmentGap: false,
     narrative: undefined,
+    plaintiffBottomLine: undefined,
+    defenseAuthority: undefined,
+    defenseRangeLow: undefined,
+    defenseRangeHigh: undefined,
   });
-
-  const handleNarrativeUpdate = (text: string) => {
-    setFormData({ ...formData, narrative: text });
-  };
 
   const handleComplete = () => {
     console.log("Form completed with data:", formData);
@@ -99,6 +102,17 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       title: "Parties",
       description: "Enter the number of plaintiffs and defendants",
       component: <PartiesStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: "Settlement Position",
+      description: "Specify bottom line or authority information",
+      component: (
+        <SettlementStrategyStep
+          formData={formData}
+          setFormData={setFormData}
+          userType={userType}
+        />
+      )
     },
     {
       title: "Case Type",

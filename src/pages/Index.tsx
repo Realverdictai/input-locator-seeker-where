@@ -310,7 +310,11 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-h-[80vh] overflow-y-auto">
-                <CaseInputForm onSubmit={handleCaseSubmit} isLoading={isEvaluating} />
+                <CaseInputForm
+                  onSubmit={handleCaseSubmit}
+                  isLoading={isEvaluating}
+                  userType={userProfile.user_type}
+                />
                 {verdictEstimate && (
                   <Button 
                     onClick={handleReset} 

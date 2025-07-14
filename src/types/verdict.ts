@@ -66,6 +66,12 @@ export interface CaseData {
    * Narrative text extracted from uploaded documents
    */
   narrative?: string;
+
+  // Settlement positioning
+  plaintiffBottomLine?: number;
+  defenseAuthority?: number;
+  defenseRangeLow?: number;
+  defenseRangeHigh?: number;
 }
 
 export interface PolicyInfo {
