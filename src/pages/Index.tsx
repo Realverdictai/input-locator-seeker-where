@@ -7,7 +7,7 @@ import VerdictResults from "@/components/VerdictResults";
 import AuthForm from "@/components/AuthForm";
 import MediationDashboard from "@/components/MediationDashboard";
 import { CaseData, VerdictEstimate } from "@/types/verdict";
-import { evaluateCase } from "@/lib/verdictCalculator";
+import { calcEvaluatorAI } from "@/valuation/calcEvaluatorAI";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ const Index = () => {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [currentSessionCode, setCurrentSessionCode] = useState<string | null>(null);
   const [showEvaluation, setShowEvaluation] = useState(false);
+  const [narrativeText, setNarrativeText] = useState('');
   const { toast } = useToast();
 
   const handleAuthSuccess = () => {
@@ -44,13 +45,24 @@ const Index = () => {
     console.log("Case submitted:", data);
     setIsEvaluating(true);
     setCaseData(data);
-    
-    // Simulate evaluation processing time
+
     setTimeout(async () => {
       try {
-        const estimate = evaluateCase(data);
-        console.log("Evaluation complete:", estimate);
-        setVerdictEstimate(estimate);
+        const aiResult = await calcEvaluatorAI(data, narrativeText);
+        const evalNum = parseFloat(aiResult.evaluatorNet.replace(/[$,]/g, ''));
+        const converted: VerdictEstimate = {
+          lowVerdict: Math.round(evalNum * 0.9),
+          midVerdict: Math.round(evalNum),
+          highVerdict: Math.round(evalNum * 1.1),
+          settlementRangeLow: Math.round(evalNum * 0.8),
+          settlementRangeHigh: Math.round(evalNum * 1.2),
+          policyExceedanceChance: 0,
+          rationale: aiResult.rationale,
+          casesEvaluated: 1,
+          isFreeModel: false
+        };
+        console.log("Evaluation complete:", converted);
+        setVerdictEstimate(converted);
         
         // Save case evaluation to database
         if (user) {
@@ -67,7 +79,7 @@ const Index = () => {
 
           // If this is part of a mediation session, update the session
           if (currentSessionCode) {
-            await updateMediationSession(data, estimate);
+            await updateMediationSession(data, converted);
           }
         }
         
@@ -310,7 +322,12 @@ const Index = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="max-h-[80vh] overflow-y-auto">
-                <CaseInputForm onSubmit={handleCaseSubmit} isLoading={isEvaluating} />
+                <CaseInputForm
+                  onSubmit={handleCaseSubmit}
+                  isLoading={isEvaluating}
+                  allowDocumentUpload={userProfile.user_type === 'pi_lawyer' || userProfile.user_type === 'insurance_defense'}
+                  onNarrativeChange={setNarrativeText}
+                />
                 {verdictEstimate && (
                   <Button 
                     onClick={handleReset} 

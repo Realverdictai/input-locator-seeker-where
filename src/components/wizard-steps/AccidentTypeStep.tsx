@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CaseData } from "@/types/verdict";
+import { caseCategories } from "@/utils/caseCategories";
 
 interface AccidentTypeStepProps {
   formData: Partial<CaseData>;
@@ -10,32 +11,9 @@ interface AccidentTypeStepProps {
 }
 
 const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
-  const autoAccidentTypes = [
-    "Rear-End Collision",
-    "T-Bone/Broadside", 
-    "Head-On Collision",
-    "Sideswipe",
-    "Multi-Vehicle Pileup",
-    "Hit and Run",
-    "Rollover",
-    "Pedestrian Strike",
-    "Bicycle vs Auto"
-  ];
-
-  const nonAutoAccidentTypes = [
-    "Dog Bite/Attack",
-    "Fall from Ladder", 
-    "Falling Object",
-    "Slip on Wet Surface",
-    "Trip on Uneven Surface",
-    "Stairway Fall",
-    "Escalator/Elevator",
-    "Swimming Pool Incident",
-    "Construction Site Accident"
-  ];
-
+  const currentCategory = caseCategories.find(c => c.value === formData.caseType);
+  const accidentTypes = currentCategory ? currentCategory.subCategories : [];
   const isAutoCase = formData.caseType === 'auto-accident';
-  const accidentTypes = isAutoCase ? autoAccidentTypes : nonAutoAccidentTypes;
   
   // Auto-set rear-end for motor vehicle accidents if not already set
   useEffect(() => {
@@ -68,7 +46,10 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
           </SelectTrigger>
           <SelectContent className="bg-background border border-border shadow-md z-50">
             {accidentTypes.map(type => (
-              <SelectItem key={type} value={type.toLowerCase().replace(/[^a-z0-9]/g, '-')}>
+              <SelectItem
+                key={type}
+                value={type.toLowerCase().replace(/[^a-z0-9]/g, '-')}
+              >
                 {type}
               </SelectItem>
             ))}

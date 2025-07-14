@@ -13,13 +13,16 @@ import MedicalTreatmentStep from "./wizard-steps/MedicalTreatmentStep";
 import SpecialsEarningsStep from "./wizard-steps/SpecialsEarningsStep";
 import LegalInsuranceStep from "./wizard-steps/LegalInsuranceStep";
 import FinalReviewStep from "./wizard-steps/FinalReviewStep";
+import DocumentUploadStep from "./wizard-steps/DocumentUploadStep";
 
 interface CaseInputFormProps {
   onSubmit: (data: CaseData) => void;
   isLoading: boolean;
+  allowDocumentUpload?: boolean;
+  onNarrativeChange?: (text: string) => void;
 }
 
-const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
+const CaseInputForm = ({ onSubmit, isLoading, allowDocumentUpload = false, onNarrativeChange }: CaseInputFormProps) => {
   console.log("CaseInputForm rendering");
   
   const [formData, setFormData] = useState<Partial<CaseData>>({
@@ -42,6 +45,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     diagnosticTests: [],
     treatmentGap: false,
   });
+
+  const [narrativeText, setNarrativeText] = useState<string>('');
 
   const handleComplete = () => {
     console.log("Form completed with data:", formData);
@@ -71,6 +76,20 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
   };
 
   const steps = [
+    ...(allowDocumentUpload
+      ? [{
+          title: "Case Documents (Optional)",
+          description: "Upload pleadings or summaries to pre-fill details",
+          component: (
+            <DocumentUploadStep
+              narrativeText={narrativeText}
+              setNarrativeText={(text) => {
+                setNarrativeText(text);
+                onNarrativeChange && onNarrativeChange(text);
+              }}
+            />
+          )
+        }] : []),
     {
       title: "Parties",
       description: "Enter the number of plaintiffs and defendants",

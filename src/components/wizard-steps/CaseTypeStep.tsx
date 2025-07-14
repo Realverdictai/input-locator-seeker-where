@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { CaseData } from "@/types/verdict";
+import { caseCategories } from "@/utils/caseCategories";
 
 interface CaseTypeStepProps {
   formData: Partial<CaseData>;
@@ -10,17 +11,7 @@ interface CaseTypeStepProps {
 }
 
 const CaseTypeStep = ({ formData, setFormData }: CaseTypeStepProps) => {
-  const caseTypes = [
-    "Auto Accident",
-    "Dog Bite", 
-    "Slip and Fall",
-    "Trip and Fall",
-    "Homeowner Premises",
-    "Construction Injury",
-    "Wrongful Death",
-    "Assault/Battery",
-    "Other"
-  ];
+  const caseTypes = caseCategories.map(c => ({ label: c.label, value: c.value }));
 
   return (
     <div className="space-y-6">
@@ -34,9 +25,9 @@ const CaseTypeStep = ({ formData, setFormData }: CaseTypeStepProps) => {
             <SelectValue placeholder="Select case type" />
           </SelectTrigger>
           <SelectContent>
-            {caseTypes.map(type => (
-              <SelectItem key={type} value={type.toLowerCase().replace(/[^a-z0-9]/g, '-')}>
-                {type}
+            {caseTypes.map(ct => (
+              <SelectItem key={ct.value} value={ct.value}>
+                {ct.label}
               </SelectItem>
             ))}
           </SelectContent>
