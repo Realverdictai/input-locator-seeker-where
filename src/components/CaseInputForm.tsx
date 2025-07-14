@@ -41,7 +41,12 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     injuryTypes: [],
     diagnosticTests: [],
     treatmentGap: false,
+    narrative: undefined,
   });
+
+  const handleNarrativeUpdate = (text: string) => {
+    setFormData({ ...formData, narrative: text });
+  };
 
   const handleComplete = () => {
     console.log("Form completed with data:", formData);
