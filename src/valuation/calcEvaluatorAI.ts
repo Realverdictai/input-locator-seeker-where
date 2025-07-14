@@ -25,6 +25,12 @@ export interface AIEvaluationResult {
   method: 'ai' | 'traditional' | 'hybrid';
 }
 
+interface WeightsData {
+  defaultInjectionValue: number;
+  surgeryWeights: Record<string, number>;
+  tbiWeights: Record<string, number>;
+}
+
 /**
  * Calculate case evaluation using AI-first approach with smart deductions
  */
@@ -137,7 +143,7 @@ export async function calcEvaluatorAI(
 async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<number> {
   try {
     // Import weights dynamically
-    const weights = await import('../valuation/weights.json');
+    const weights = (await import('../valuation/weights.json')).default as WeightsData;
     let boost = 0;
     
     // Add injection value
