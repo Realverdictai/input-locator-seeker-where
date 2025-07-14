@@ -266,7 +266,8 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
     settlement: row.settlement || 0,
     venue: row.venue,
     dol: row.dol,
-    narrative: row.narrative
+    narrative: row.narrative,
+    damageScore: 0
   }, row.narrative);
 }
 

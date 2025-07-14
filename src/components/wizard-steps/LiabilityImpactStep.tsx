@@ -1,8 +1,11 @@
 
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { CaseData } from "@/types/verdict";
+import { analyzeDamageMedia } from "@/lib/damageAnalyzer";
 
 interface LiabilityImpactStepProps {
   formData: Partial<CaseData>;
@@ -11,6 +14,20 @@ interface LiabilityImpactStepProps {
 
 const LiabilityImpactStep = ({ formData, setFormData }: LiabilityImpactStepProps) => {
   const showImpact = formData.caseType !== 'dog-bite';
+  const [previews, setPreviews] = useState<string[]>(formData.damageMedia || []);
+
+  const handleMedia = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const fileArr = Array.from(files);
+    const urls: string[] = [];
+    for (const file of fileArr) {
+      urls.push(URL.createObjectURL(file));
+    }
+    setPreviews(urls);
+    const score = await analyzeDamageMedia(fileArr);
+    setFormData({ ...formData, damageMedia: urls, damageScore: score });
+  };
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -62,6 +79,21 @@ const LiabilityImpactStep = ({ formData, setFormData }: LiabilityImpactStepProps
             <span>1 (Minor)</span>
             <span>5 (Moderate)</span>
             <span>10 (Severe)</span>
+          </div>
+
+          <div className="space-y-2 pt-4">
+            <Label htmlFor="damageMedia">Upload Damage Photos or Videos</Label>
+            <Input id="damageMedia" type="file" multiple accept="image/*,video/*" onChange={handleMedia} />
+            {formData.damageScore !== undefined && (
+              <p className="text-sm text-gray-600">AI Damage Score: {formData.damageScore}</p>
+            )}
+            {previews.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                {previews.map((src, idx) => (
+                  <img key={idx} src={src} alt="damage" className="h-24 w-full object-cover rounded" />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

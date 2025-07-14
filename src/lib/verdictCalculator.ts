@@ -78,9 +78,11 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const treatmentDelayFactor = daysBetweenAccidentAndTreatment > 7 ? 
     Math.max(0.8, 1 - (daysBetweenAccidentAndTreatment / 365)) : 1.0;
   
-  // Impact severity factor
+  // Impact severity factor including vehicle damage assessment
   const impactSeverity = caseData.impactSeverity || 5;
-  const impactFactor = impactSeverity / 5; // Scale to 0.2-2.0
+  const damageScore = caseData.damageScore || 0;
+  const combinedImpact = Math.min(10, impactSeverity + damageScore / 2);
+  const impactFactor = combinedImpact / 5; // Scale to 0.2-2.0
   
   // Age factor
   const plaintiffAge = caseData.plaintiffAge || 35;
