@@ -63,6 +63,14 @@ export interface CaseData {
   priorConditions?: string;
   medicalRecordsAnalysis?: string;
   /**
+   * Uploaded damage photos or videos as data URLs
+   */
+  damageMedia?: string[];
+  /**
+   * AI-assessed vehicle damage score (0-10)
+   */
+  damageScore?: number;
+  /**
    * Narrative text extracted from uploaded documents
    */
   narrative?: string;

@@ -66,7 +66,8 @@ function featuresToArray(features: CaseFeatures): number[] {
     features.subsequentAccidentsFlag,
     features.preExistingConditionFlag,
     features.nonComplianceFlag,
-    features.conflictingMedicalOpinionsFlag
+    features.conflictingMedicalOpinionsFlag,
+    features.vehicleDamageScore / 10
   ];
 }
 

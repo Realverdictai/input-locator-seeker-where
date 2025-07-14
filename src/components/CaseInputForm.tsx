@@ -42,6 +42,8 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     injuryTypes: [],
     diagnosticTests: [],
     treatmentGap: false,
+    damageMedia: [],
+    damageScore: 0,
     narrative: undefined,
   });
 

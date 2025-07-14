@@ -45,6 +45,7 @@ export interface CaseFeatures {
   preExistingConditionFlag: number;
   nonComplianceFlag: number;
   conflictingMedicalOpinionsFlag: number;
+  vehicleDamageScore: number;
 }
 
 /**
@@ -113,6 +114,8 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
   const medTreatmentGapDays = extractTreatmentGaps(narrative);
   const totalTreatmentDuration = extractTreatmentDuration(narrative);
 
+  const vehicleDamageScore = caseData.damageScore || 0;
+
   return {
     howellSpecials: caseData.howell || caseData.howell_num || 0,
     surgeryCount: caseData.surgery_count || surgeryList.length || 0,
@@ -129,7 +132,8 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     subsequentAccidentsFlag,
     preExistingConditionFlag,
     nonComplianceFlag,
-    conflictingMedicalOpinionsFlag
+    conflictingMedicalOpinionsFlag,
+    vehicleDamageScore
   };
 }
 
@@ -192,6 +196,7 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `subsequent:${features.subsequentAccidentsFlag}`,
     `preexisting:${features.preExistingConditionFlag}`,
     `noncompliant:${features.nonComplianceFlag}`,
-    `conflicting:${features.conflictingMedicalOpinionsFlag}`
+    `conflicting:${features.conflictingMedicalOpinionsFlag}`,
+    `damage:${features.vehicleDamageScore}`
   ].join(' | ');
 }
