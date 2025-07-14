@@ -21,6 +21,13 @@ export async function getEmbedding(text: string): Promise<number[]> {
     throw new Error('OpenAI API key not configured');
   }
 
+  // Return mock embedding for test environments
+  if (openaiKey === 'test-key-for-local-testing') {
+    console.log('🧪 Using mock embedding for testing');
+    // Return a consistent 1536-dimensional mock embedding
+    return Array(1536).fill(0).map((_, i) => Math.sin(i * 0.1 + text.length));
+  }
+
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {

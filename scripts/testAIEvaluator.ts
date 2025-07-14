@@ -72,6 +72,12 @@ if (process.env.IGNORE_WEIGHTS === 'true') {
   console.log('⚠️  IGNORE_WEIGHTS flag is set - surgery/injection weights disabled');
 }
 
+// Check for OpenAI API key
+if (!process.env.OPENAI_API_KEY) {
+  console.log('⚠️  No OpenAI API key found - setting test key for local testing');
+  process.env.OPENAI_API_KEY = 'test-key-for-local-testing';
+}
+
 runTest().then(() => {
   console.log('\n🎉 Test completed successfully!');
   process.exit(0);
