@@ -51,7 +51,7 @@ export function calcMediator(evaluatorString: string, policyLimits?: number): Me
   });
 
   // Settlement range around proposal (±5%)
-  let rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
+  const rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
   let rangeHigh = Math.round(proposalAmount * 1.05 / 500) * 500;
   if (policyLimits && rangeHigh > policyLimits) {
     rangeHigh = policyLimits;

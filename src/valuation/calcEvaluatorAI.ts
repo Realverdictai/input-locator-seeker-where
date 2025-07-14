@@ -330,7 +330,7 @@ function calculateMediatorProposal(
     year: 'numeric'
   });
 
-  let rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
+  const rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
   let rangeHigh = Math.round(proposalAmount * 1.05 / 500) * 500;
   if (policyLimits > 0 && rangeHigh > policyLimits) {
     rangeHigh = policyLimits;

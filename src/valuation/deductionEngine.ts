@@ -18,9 +18,11 @@ export interface DeductionResult {
 /**
  * Apply smart deductions to base prediction
  */
+import { CaseData } from '@/types/verdict';
+
 export function applyDeductions(
-  basePrediction: number, 
-  caseData: any, 
+  basePrediction: number,
+  caseData: Partial<CaseData>,
   narrativeText?: string
 ): DeductionResult {
   const narrative = narrativeText || caseData.narrative || '';
@@ -227,7 +229,7 @@ function checkInjuryAccidentMismatch(accidentType: string, injuries: string): bo
 /**
  * Calculate early resolution discount (20-25% based on case factors)
  */
-function calculateEarlyResolutionDiscount(caseData: any, narrative: string): number {
+function calculateEarlyResolutionDiscount(caseData: Partial<CaseData>, narrative: string): number {
   let discount = 20; // Base 20% discount
   
   // Age factor - older plaintiffs get higher discount
