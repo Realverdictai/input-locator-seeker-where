@@ -84,3 +84,28 @@ export interface VerdictEstimate {
   casesEvaluated: number;
   isFreeModel: boolean;
 }
+
+export interface VerdictResult {
+  evaluator: string;
+  deductions: Array<{ name: string; pct: number }>;
+  evaluatorNet: string;
+  mediatorProposal: string;
+  expiresOn: string;
+  settlementRangeLow: string;
+  settlementRangeHigh: string;
+  confidence: number;
+  nearestCases: number[];
+  rationale: string;
+  isNovelCase?: boolean;
+  traditionalValuation?: {
+    estimatedValue: number;
+    method: string;
+    factors: string[];
+  };
+  method?: 'ai' | 'traditional' | 'hybrid';
+  manualOverride?: {
+    estimate: number;
+    rationale: string;
+    overriddenBy: string;
+  };
+}

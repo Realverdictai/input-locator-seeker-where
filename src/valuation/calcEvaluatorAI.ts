@@ -7,6 +7,7 @@ import { getEmbedding, serializeCaseForEmbedding } from './getEmbeddings';
 import { extractFeatures, serializeFeaturesForEmbedding, CaseFeatures } from './featureExtractor';
 import { fitRidgeRegression, RegressionResult } from './ridgeRegression';
 import { applyDeductions, DeductionResult } from './deductionEngine';
+import { calculateTraditionalValuation, TraditionalValuationResult } from './traditionalValuation';
 
 export interface AIEvaluationResult {
   evaluator: string;
@@ -19,6 +20,9 @@ export interface AIEvaluationResult {
   confidence: number;
   nearestCases: number[];
   rationale: string;
+  isNovelCase: boolean;
+  traditionalValuation?: TraditionalValuationResult;
+  method: 'ai' | 'traditional' | 'hybrid';
 }
 
 /**
@@ -54,7 +58,8 @@ export async function calcEvaluatorAI(
     const similarCases = await findSimilarCasesWithFeatures(embedding, targetFeatures, 25);
     
     if (similarCases.length === 0) {
-      throw new Error('No similar cases found in database');
+      console.warn('No similar cases found, using traditional valuation');
+      return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText);
     }
 
     console.log(`🔍 Found ${similarCases.length} similar cases`);
@@ -67,6 +72,15 @@ export async function calcEvaluatorAI(
       tbiSeverity: targetFeatures.tbiSeverity,
       surgeryCount: targetFeatures.surgeryCount
     });
+
+    // Check if this is a novel case (low confidence or few similar cases)
+    const isNovelCase = regressionResult.confidence < 70 || similarCases.length < 10;
+    let traditionalValuation: TraditionalValuationResult | undefined;
+    
+    if (isNovelCase) {
+      console.log('📋 Novel case detected, calculating traditional valuation for comparison');
+      traditionalValuation = calculateTraditionalValuation(newCase, narrativeText);
+    }
 
     // Step 4.5: Apply weights from weights.json (if not ignored)
     let weightedPrediction = regressionResult.prediction;
@@ -105,7 +119,10 @@ export async function calcEvaluatorAI(
       settlementRangeHigh: rangeHigh,
       confidence: regressionResult.confidence,
       nearestCases: regressionResult.nearestCaseIds.slice(0, 5), // Top 5 for display
-      rationale
+      rationale,
+      isNovelCase,
+      traditionalValuation,
+      method: isNovelCase ? 'hybrid' : 'ai'
     };
 
   } catch (error) {
@@ -278,19 +295,22 @@ async function fallbackEvaluation(
     policyLimits
   );
 
-  return {
-    evaluator: `$${weightedPrediction.toLocaleString()}`,
-    deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
-    evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
-    mediatorProposal: mediator,
-    expiresOn,
-    settlementRangeLow: rangeLow,
-    settlementRangeHigh: rangeHigh,
-    confidence: regressionResult.confidence,
-    nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
-    rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights)
-  };
-}
+    return {
+      evaluator: `$${weightedPrediction.toLocaleString()}`,
+      deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
+      evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
+      mediatorProposal: mediator,
+      expiresOn,
+      settlementRangeLow: rangeLow,
+      settlementRangeHigh: rangeHigh,
+      confidence: regressionResult.confidence,
+      nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
+      rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights),
+      isNovelCase: regressionResult.confidence < 70,
+      traditionalValuation: undefined,
+      method: 'ai'
+    };
+  }
 
 /**
  * Calculate mediator proposal
@@ -371,4 +391,42 @@ function generateRationale(
   }
 
   return parts.join(' ');
+}
+
+/**
+ * Create traditional evaluation when AI fails or has low confidence
+ */
+async function createTraditionalEvaluation(
+  newCase: any,
+  targetFeatures: CaseFeatures,
+  narrativeText?: string
+): Promise<AIEvaluationResult> {
+  console.log('📋 Creating traditional evaluation fallback...');
+  
+  const traditionalResult = calculateTraditionalValuation(newCase, narrativeText);
+  const deductionResult = applyDeductions(traditionalResult.estimatedValue, newCase, narrativeText);
+  
+  const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
+  const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
+    deductionResult.evaluatorAfterDeductions,
+    policyLimits
+  );
+
+  const rationale = `Traditional valuation method used due to limited historical data. ${traditionalResult.method} applied with factors: ${traditionalResult.factors.join(', ')}.`;
+
+  return {
+    evaluator: `$${traditionalResult.estimatedValue.toLocaleString()}`,
+    deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
+    evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
+    mediatorProposal: mediator,
+    expiresOn,
+    settlementRangeLow: rangeLow,
+    settlementRangeHigh: rangeHigh,
+    confidence: traditionalResult.confidence,
+    nearestCases: [],
+    rationale,
+    isNovelCase: true,
+    traditionalValuation: traditionalResult,
+    method: 'traditional'
+  };
 }
