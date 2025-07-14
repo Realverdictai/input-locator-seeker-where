@@ -14,6 +14,12 @@ export interface CaseData {
   surgeryType?: string;
   injectionType?: string;
   howellSpecials?: number;
+
+  // Vehicle details for auto cases
+  plaintiffVehicle?: string;
+  defendantVehicle?: string;
+  plaintiffVehicleSize?: string;
+  defendantVehicleSize?: string;
   
   // Existing fields
   injuryType: string;

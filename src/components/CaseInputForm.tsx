@@ -8,6 +8,7 @@ import DateOfLossStep from "./wizard-steps/DateOfLossStep";
 import InjuryTypeStep from "./wizard-steps/InjuryTypeStep";
 import VenueStep from "./wizard-steps/VenueStep";
 import AccidentTypeStep from "./wizard-steps/AccidentTypeStep";
+import VehicleInfoStep from "./wizard-steps/VehicleInfoStep";
 import LiabilityImpactStep from "./wizard-steps/LiabilityImpactStep";
 import MedicalTreatmentStep from "./wizard-steps/MedicalTreatmentStep";
 import SpecialsEarningsStep from "./wizard-steps/SpecialsEarningsStep";
@@ -43,6 +44,10 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
     diagnosticTests: [],
     treatmentGap: false,
     narrative: undefined,
+    plaintiffVehicle: '',
+    defendantVehicle: '',
+    plaintiffVehicleSize: '',
+    defendantVehicleSize: '',
   });
 
   const handleNarrativeUpdate = (text: string) => {
@@ -121,9 +126,14 @@ const CaseInputForm = ({ onSubmit, isLoading }: CaseInputFormProps) => {
       component: <VenueStep formData={formData} setFormData={setFormData} />
     },
     {
-      title: "Accident Type (Optional)", 
+      title: "Accident Type (Optional)",
       description: "Specify the type of accident that occurred",
       component: <AccidentTypeStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: "Vehicle Info",
+      description: "Provide make, model and size for each vehicle",
+      component: <VehicleInfoStep formData={formData} setFormData={setFormData} />
     },
     {
       title: "Liability & Impact",

@@ -78,9 +78,21 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const treatmentDelayFactor = daysBetweenAccidentAndTreatment > 7 ? 
     Math.max(0.8, 1 - (daysBetweenAccidentAndTreatment / 365)) : 1.0;
   
-  // Impact severity factor
+  // Impact severity factor adjusted for vehicle size difference
   const impactSeverity = caseData.impactSeverity || 5;
-  const impactFactor = impactSeverity / 5; // Scale to 0.2-2.0
+  const sizeMap: Record<string, number> = {
+    motorcycle: 1,
+    compact: 2,
+    sedan: 3,
+    suv: 4,
+    pickup: 5,
+    commercial: 6
+  };
+  const pSize = sizeMap[caseData.plaintiffVehicleSize || 'sedan'] || 3;
+  const dSize = sizeMap[caseData.defendantVehicleSize || 'sedan'] || 3;
+  const sizeDiff = dSize - pSize;
+  const vehicleSizeImpact = 1 + (sizeDiff * 0.05);
+  const impactFactor = (impactSeverity / 5) * vehicleSizeImpact;
   
   // Age factor
   const plaintiffAge = caseData.plaintiffAge || 35;
@@ -233,6 +245,16 @@ const generateEnhancedRationale = (caseData: CaseData, estimates: any): string =
   // Treatment gaps
   if (caseData.treatmentGaps > 30) {
     rationale += `Treatment gaps of ${caseData.treatmentGaps} days may impact credibility. `;
+  }
+
+  if (caseData.plaintiffVehicleSize && caseData.defendantVehicleSize) {
+    const sizeVals: Record<string, number> = { motorcycle:1, compact:2, sedan:3, suv:4, pickup:5, commercial:6 };
+    const diff = (sizeVals[caseData.defendantVehicleSize] || 3) - (sizeVals[caseData.plaintiffVehicleSize] || 3);
+    if (diff > 1) {
+      rationale += `The defendant's vehicle was considerably larger, amplifying the impact. `;
+    } else if (diff < -1) {
+      rationale += `The plaintiff's vehicle was larger than the defendant's, potentially reducing impact severity. `;
+    }
   }
 
   // Insurance analysis
