@@ -11,19 +11,22 @@ interface DateOfLossStepProps {
 const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
   // Check statute of limitations for auto accidents
   const checkStatuteOfLimitations = (dateOfLoss: string, caseType: string) => {
-    if (caseType !== "Auto Accident" || !dateOfLoss) return false;
-    
+    if (caseType !== "auto-accident" || !dateOfLoss) return false;
+
     const dolDate = new Date(dateOfLoss);
     const today = new Date();
     const covidTollDays = 178; // CA Emergency Rule: 4 Apr 2020 – 1 Oct 2020
     const twoYearsInMs = 2 * 365 * 24 * 60 * 60 * 1000;
     const covidTollMs = covidTollDays * 24 * 60 * 60 * 1000;
-    
+
     const timeDiff = today.getTime() - dolDate.getTime();
-    return timeDiff > (twoYearsInMs + covidTollMs);
+    return timeDiff > twoYearsInMs + covidTollMs;
   };
 
-  const isSOLExpired = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseType || '');
+  const isSOLExpired = checkStatuteOfLimitations(
+    formData.dateOfLoss || "",
+    formData.caseType || "",
+  );
 
   return (
     <div className="space-y-6">
@@ -32,11 +35,13 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
         <Input
           id="dateOfLoss"
           type="date"
-          value={formData.dateOfLoss || ''}
-          onChange={(e) => setFormData({...formData, dateOfLoss: e.target.value})}
+          value={formData.dateOfLoss || ""}
+          onChange={(e) =>
+            setFormData({ ...formData, dateOfLoss: e.target.value })
+          }
         />
       </div>
-      
+
       {isSOLExpired && (
         <Alert variant="destructive">
           <AlertDescription>
