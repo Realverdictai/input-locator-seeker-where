@@ -80,6 +80,12 @@ export interface CaseData {
   defenseAuthority?: number;
   defenseRangeLow?: number;
   defenseRangeHigh?: number;
+
+  // Vehicle information
+  plaintiffVehicle?: string;
+  defendantVehicle?: string;
+  plaintiffVehicleSize?: string;
+  defendantVehicleSize?: string;
 }
 
 export interface PolicyInfo {
