@@ -34,7 +34,7 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
+      setSessions((data || []) as MediationSession[]);
     } catch (error: any) {
       toast({
         title: "Error fetching sessions",
