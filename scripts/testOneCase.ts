@@ -85,4 +85,10 @@ async function testCaseEvaluation() {
 }
 
 // Run the test
-testCaseEvaluation();
+testCaseEvaluation()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch(() => {
+    process.exit(1);
+  });
