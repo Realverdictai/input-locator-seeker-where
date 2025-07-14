@@ -144,8 +144,21 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
   const totalInsurance = totalPolicyLimits + umUimCoverage;
 
   // Settlement range (typically 60-80% of verdict estimates)
-  const settlementRangeLow = lowVerdict * 0.6;
-  const settlementRangeHigh = midVerdict * 0.8;
+  let settlementRangeLow = lowVerdict * 0.6;
+  let settlementRangeHigh = midVerdict * 0.8;
+
+  if (caseData.plaintiffBottomLine) {
+    settlementRangeLow = Math.max(settlementRangeLow, caseData.plaintiffBottomLine);
+  }
+  if (caseData.defenseAuthority) {
+    settlementRangeHigh = Math.min(settlementRangeHigh, caseData.defenseAuthority);
+  }
+  if (caseData.defenseRangeLow) {
+    settlementRangeLow = Math.max(settlementRangeLow, caseData.defenseRangeLow);
+  }
+  if (caseData.defenseRangeHigh) {
+    settlementRangeHigh = Math.min(settlementRangeHigh, caseData.defenseRangeHigh);
+  }
 
   // Policy exceedance calculation
   const policyExceedanceChance = totalInsurance > 0 ? 
@@ -243,6 +256,13 @@ const generateEnhancedRationale = (caseData: CaseData, estimates: any): string =
     } else {
       rationale += `appears adequate for settlement range. `;
     }
+  }
+
+  if (caseData.plaintiffBottomLine) {
+    rationale += `Plaintiff bottom line of $${caseData.plaintiffBottomLine.toLocaleString()} considered. `;
+  }
+  if (caseData.defenseAuthority) {
+    rationale += `Defense authority set at $${caseData.defenseAuthority.toLocaleString()}. `;
   }
 
   rationale += `The evaluation reflects California jury tendencies and current legal precedents.`;
