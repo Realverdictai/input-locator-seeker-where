@@ -47,10 +47,16 @@ const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
           <SelectContent>
             <SelectItem value="soft-tissue">Soft Tissue</SelectItem>
             <SelectItem value="fracture">Fracture</SelectItem>
-            <SelectItem value="spinal-injury">Spinal Injury</SelectItem>
+            <SelectItem value="spinal-cord-injury">Spinal Cord Injury</SelectItem>
             <SelectItem value="traumatic-brain-injury">Traumatic Brain Injury</SelectItem>
+            <SelectItem value="internal-organ-damage">Internal Organ Damage</SelectItem>
+            <SelectItem value="vision-loss">Vision Loss</SelectItem>
+            <SelectItem value="hearing-loss">Hearing Loss</SelectItem>
+            <SelectItem value="scarring-disfigurement">Scarring/Disfigurement</SelectItem>
+            <SelectItem value="psychological-trauma">Psychological Trauma</SelectItem>
             <SelectItem value="burn">Burn Injury</SelectItem>
             <SelectItem value="amputation">Amputation</SelectItem>
+            <SelectItem value="crush-injury">Crush Injury</SelectItem>
             <SelectItem value="wrongful-death">Wrongful Death</SelectItem>
           </SelectContent>
         </Select>
@@ -84,20 +90,49 @@ const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
           <SelectTrigger>
             <SelectValue placeholder="Select accident type" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="rear-end">Rear-End Collision</SelectItem>
-            <SelectItem value="head-on">Head-On Collision</SelectItem>
-            <SelectItem value="broadside">Broadside/T-Bone</SelectItem>
-            <SelectItem value="sideswipe">Sideswipe</SelectItem>
-            <SelectItem value="rollover">Rollover</SelectItem>
-            <SelectItem value="pedestrian">Pedestrian Accident</SelectItem>
-            <SelectItem value="bicycle">Bicycle Accident</SelectItem>
-            <SelectItem value="motorcycle">Motorcycle Accident</SelectItem>
-            <SelectItem value="truck">Truck Accident</SelectItem>
-            <SelectItem value="multi-vehicle">Multi-Vehicle</SelectItem>
-            <SelectItem value="hit-and-run">Hit and Run</SelectItem>
-            <SelectItem value="parking-lot">Parking Lot Accident</SelectItem>
-          </SelectContent>
+        <SelectContent>
+          <SelectItem value="rear-end-collision">Rear-End Collision</SelectItem>
+          <SelectItem value="head-on-collision">Head-On Collision</SelectItem>
+          <SelectItem value="t-bone-broadside">Broadside/T-Bone</SelectItem>
+          <SelectItem value="sideswipe">Sideswipe</SelectItem>
+          <SelectItem value="multi-vehicle-pileup">Multi-Vehicle Pileup</SelectItem>
+          <SelectItem value="hit-and-run">Hit and Run</SelectItem>
+          <SelectItem value="rollover">Rollover</SelectItem>
+          <SelectItem value="drunk-driving-dui">Drunk Driving/DUI</SelectItem>
+          <SelectItem value="left-turn-collision">Left-Turn Collision</SelectItem>
+          <SelectItem value="merging-blind-spot">Merging/Blind Spot</SelectItem>
+          <SelectItem value="pedestrian-strike">Pedestrian Strike</SelectItem>
+          <SelectItem value="bicycle-vs-auto">Bicycle vs Auto</SelectItem>
+          <SelectItem value="commercial-truck-big-rig">Commercial Truck/Big Rig</SelectItem>
+          <SelectItem value="bus-accident">Bus Accident</SelectItem>
+          <SelectItem value="motorcycle-collision">Motorcycle Collision</SelectItem>
+          <SelectItem value="uber-lyft-rideshare">Uber/Lyft/Rideshare</SelectItem>
+          <SelectItem value="single-vehicle-crash">Single Vehicle Crash</SelectItem>
+          <SelectItem value="road-rage-incident">Road Rage Incident</SelectItem>
+          <SelectItem value="dog-bite-attack">Dog Bite/Attack</SelectItem>
+          <SelectItem value="fall-from-ladder">Fall from Ladder</SelectItem>
+          <SelectItem value="falling-object">Falling Object</SelectItem>
+          <SelectItem value="slip-on-wet-surface">Slip on Wet Surface</SelectItem>
+          <SelectItem value="trip-on-uneven-surface">Trip on Uneven Surface</SelectItem>
+          <SelectItem value="stairway-fall">Stairway Fall</SelectItem>
+          <SelectItem value="escalator-elevator">Escalator/Elevator</SelectItem>
+          <SelectItem value="swimming-pool-incident">Swimming Pool Incident</SelectItem>
+          <SelectItem value="workplace-accident">Workplace Accident</SelectItem>
+          <SelectItem value="sports-recreation-injury">Sports or Recreation Injury</SelectItem>
+          <SelectItem value="school-daycare-incident">School or Daycare Incident</SelectItem>
+          <SelectItem value="construction-site-accident">Construction Site Accident</SelectItem>
+          <SelectItem value="boating-accident">Boating Accident</SelectItem>
+          <SelectItem value="aviation-accident">Aviation Accident</SelectItem>
+          <SelectItem value="product-defect">Product Defect</SelectItem>
+          <SelectItem value="toxic-exposure">Toxic Exposure</SelectItem>
+          <SelectItem value="medical-device-failure">Medical Device Failure</SelectItem>
+          <SelectItem value="nursing-home-abuse">Nursing Home Abuse</SelectItem>
+          <SelectItem value="assault-battery">Assault/Battery</SelectItem>
+          <SelectItem value="negligent-security">Negligent Security</SelectItem>
+          <SelectItem value="fire-or-explosion">Fire or Explosion</SelectItem>
+          <SelectItem value="chemical-spill">Chemical Spill</SelectItem>
+          <SelectItem value="parking-lot-accident">Parking Lot Accident</SelectItem>
+        </SelectContent>
         </Select>
       </div>
 

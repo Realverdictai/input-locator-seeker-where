@@ -9,12 +9,30 @@ interface InjuryTypeStepProps {
 }
 
 const InjuryTypeStep = ({ formData, setFormData }: InjuryTypeStepProps) => {
+  // Expanded list of injury categories
   const injuryTypes = [
     "soft-tissue",
-    "fracture", 
+    "fracture",
+    "whiplash",
+    "concussion",
     "traumatic-brain-injury",
+    "spinal-cord-injury",
+    "herniated-disc",
+    "nerve-damage",
+    "paralysis",
+    "internal-organ-damage",
+    "vision-loss",
+    "hearing-loss",
+    "scarring-disfigurement",
+    "laceration",
+    "psychological-trauma",
+    "ptsd",
     "burn",
     "amputation",
+    "crush-injury",
+    "dental-injury",
+    "chronic-pain",
+    "infection",
     "wrongful-death",
     "other"
   ];
@@ -22,9 +40,26 @@ const InjuryTypeStep = ({ formData, setFormData }: InjuryTypeStepProps) => {
   const injuryLabels: Record<string, string> = {
     "soft-tissue": "Soft Tissue",
     "fracture": "Fracture",
+    "whiplash": "Whiplash",
+    "concussion": "Concussion",
     "traumatic-brain-injury": "Traumatic Brain Injury",
+    "spinal-cord-injury": "Spinal Cord Injury",
+    "herniated-disc": "Herniated Disc",
+    "nerve-damage": "Nerve Damage",
+    "paralysis": "Paralysis",
+    "internal-organ-damage": "Internal Organ Damage",
+    "vision-loss": "Vision Loss",
+    "hearing-loss": "Hearing Loss",
+    "scarring-disfigurement": "Scarring/Disfigurement",
+    "laceration": "Laceration",
+    "psychological-trauma": "Psychological Trauma",
+    "ptsd": "PTSD",
     "burn": "Burn Injury",
     "amputation": "Amputation",
+    "crush-injury": "Crush Injury",
+    "dental-injury": "Dental Injury",
+    "chronic-pain": "Chronic Pain",
+    "infection": "Infection",
     "wrongful-death": "Wrongful Death",
     "other": "Other"
   };

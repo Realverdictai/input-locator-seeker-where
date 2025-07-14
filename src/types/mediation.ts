@@ -1,6 +1,14 @@
 
 import { CaseData } from './verdict';
 
+export type MediationStatus =
+  | 'pending'
+  | 'in-progress'
+  | 'awaiting_evaluation'
+  | 'proposal_sent'
+  | 'completed'
+  | 'cancelled';
+
 export interface MediationSession {
   id: string;
   session_code: string;
@@ -9,7 +17,7 @@ export interface MediationSession {
   pi_evaluation_id?: string;
   insurance_evaluation_id?: string;
   mediation_proposal?: any;
-  status: string;
+  status: MediationStatus;
   created_at: string;
   updated_at: string;
 }
