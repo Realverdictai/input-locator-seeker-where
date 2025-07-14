@@ -14,6 +14,8 @@ export interface AIEvaluationResult {
   evaluatorNet: string;
   mediatorProposal: string;
   expiresOn: string;
+  settlementRangeLow: string;
+  settlementRangeHigh: string;
   confidence: number;
   nearestCases: number[];
   rationale: string;
@@ -80,7 +82,7 @@ export async function calcEvaluatorAI(
 
     // Step 6: Calculate mediator proposal
     const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
-    const { mediator, expiresOn } = calculateMediatorProposal(
+    const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
       deductionResult.evaluatorAfterDeductions,
       policyLimits
     );
@@ -99,6 +101,8 @@ export async function calcEvaluatorAI(
       evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
       mediatorProposal: mediator,
       expiresOn,
+      settlementRangeLow: rangeLow,
+      settlementRangeHigh: rangeHigh,
       confidence: regressionResult.confidence,
       nearestCases: regressionResult.nearestCaseIds.slice(0, 5), // Top 5 for display
       rationale
@@ -269,7 +273,7 @@ async function fallbackEvaluation(
   const deductionResult = applyDeductions(weightedPrediction, newCase, narrativeText);
   
   const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
-  const { mediator, expiresOn } = calculateMediatorProposal(
+  const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
     deductionResult.evaluatorAfterDeductions,
     policyLimits
   );
@@ -280,6 +284,8 @@ async function fallbackEvaluation(
     evaluatorNet: `$${deductionResult.evaluatorAfterDeductions.toLocaleString()}`,
     mediatorProposal: mediator,
     expiresOn,
+    settlementRangeLow: rangeLow,
+    settlementRangeHigh: rangeHigh,
     confidence: regressionResult.confidence,
     nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
     rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights)
@@ -292,7 +298,7 @@ async function fallbackEvaluation(
 function calculateMediatorProposal(
   evaluatorAfterDeductions: number,
   policyLimits: number
-): { mediator: string; expiresOn: string } {
+): { mediator: string; expiresOn: string; rangeLow: string; rangeHigh: string } {
   let proposalAmount: number;
   
   if (policyLimits > 0) {
@@ -323,10 +329,21 @@ function calculateMediatorProposal(
     day: 'numeric',
     year: 'numeric'
   });
-  
+
+  const rangeLow = Math.round(proposalAmount * 0.95 / 500) * 500;
+  let rangeHigh = Math.round(proposalAmount * 1.05 / 500) * 500;
+  if (policyLimits > 0 && rangeHigh > policyLimits) {
+    rangeHigh = policyLimits;
+  }
+
+  const rangeLowStr = `$${rangeLow.toLocaleString()}`;
+  const rangeHighStr = `$${rangeHigh.toLocaleString()}`;
+
   return {
     mediator: `$${proposalAmount.toLocaleString()}`,
-    expiresOn
+    expiresOn,
+    rangeLow: rangeLowStr,
+    rangeHigh: rangeHighStr
   };
 }
 

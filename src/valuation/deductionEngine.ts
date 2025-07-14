@@ -18,9 +18,11 @@ export interface DeductionResult {
 /**
  * Apply smart deductions to base prediction
  */
+import { CaseData } from '@/types/verdict';
+
 export function applyDeductions(
-  basePrediction: number, 
-  caseData: any, 
+  basePrediction: number,
+  caseData: Partial<CaseData>,
   narrativeText?: string
 ): DeductionResult {
   const narrative = narrativeText || caseData.narrative || '';
@@ -71,7 +73,19 @@ export function applyDeductions(
     reason: conflictingOpinions ? 'Medical experts disagree on diagnosis/causation' : undefined
   });
 
-  // 6. Early resolution discount (20-25% based on case factors)
+  // 6. Injury and accident type mismatch (15% deduction)
+  const mismatch = checkInjuryAccidentMismatch(
+    caseData.accidentType || caseData.acc_type || '',
+    caseData.injuries || narrative
+  );
+  deductions.push({
+    name: 'Injury inconsistent with accident type',
+    pct: mismatch ? -15 : 0,
+    triggered: mismatch,
+    reason: mismatch ? 'Injuries not typical for reported accident type' : undefined
+  });
+
+  // 7. Early resolution discount (20-25% based on case factors)
   const earlyResolutionDiscount = calculateEarlyResolutionDiscount(caseData, narrative);
   deductions.push({
     name: 'Early resolution discount',
@@ -185,14 +199,37 @@ function checkConflictingMedicalOpinions(narrative: string): boolean {
     /disputed.*causation/gi,
     /medical.*controversy/gi
   ];
-  
+
   return patterns.some(pattern => pattern.test(narrative));
+}
+
+/**
+ * Check if reported injuries are inconsistent with the accident type
+ */
+function checkInjuryAccidentMismatch(accidentType: string, injuries: string): boolean {
+  if (!accidentType || !injuries) return false;
+
+  const acc = accidentType.toLowerCase();
+  const inj = injuries.toLowerCase();
+
+  const patterns: Record<string, RegExp[]> = {
+    'dog bite': [/bite/, /laceration/, /puncture/, /scar/],
+    'slip': [/fracture/, /sprain/, /bruise/, /contusion/, /head/],
+    'trip': [/fracture/, /sprain/, /bruise/, /contusion/, /head/],
+    'auto': [/whiplash/, /collision/, /airbag/, /seatbelt/]
+  };
+
+  const key = Object.keys(patterns).find(k => acc.includes(k));
+  if (!key) return false;
+
+  const expected = patterns[key];
+  return !expected.some(p => p.test(inj));
 }
 
 /**
  * Calculate early resolution discount (20-25% based on case factors)
  */
-function calculateEarlyResolutionDiscount(caseData: any, narrative: string): number {
+function calculateEarlyResolutionDiscount(caseData: Partial<CaseData>, narrative: string): number {
   let discount = 20; // Base 20% discount
   
   // Age factor - older plaintiffs get higher discount

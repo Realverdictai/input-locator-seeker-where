@@ -38,6 +38,7 @@ export async function runTestHarness() {
     console.log('\n✅ Test Harness Complete');
     console.log(`Evaluator: ${evalRes.evaluator}`);
     console.log(`Mediator: ${medRes.mediator}`);
+    console.log(`Range: ${medRes.rangeLow} - ${medRes.rangeHigh}`);
     console.log(`Rationale: ${evalRes.rationale}`);
     console.log(`Source Cases: #${evalRes.sourceCases.join(', #')}`);
     console.log(`Expires: ${medRes.expiresOn}`);

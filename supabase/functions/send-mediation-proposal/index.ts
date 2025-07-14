@@ -134,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    let attachments = [];
+    const attachments = [];
     
     if (attachReport && caseData) {
       const htmlReport = generateHtmlReport({
