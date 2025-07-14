@@ -62,6 +62,10 @@ export interface CaseData {
   treatmentGaps?: number;
   priorConditions?: string;
   medicalRecordsAnalysis?: string;
+  /**
+   * Narrative text extracted from uploaded documents
+   */
+  narrative?: string;
 }
 
 export interface PolicyInfo {
