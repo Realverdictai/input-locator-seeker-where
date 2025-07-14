@@ -133,3 +133,8 @@ SUPABASE_SERVICE_ROLE_KEY=<service_key> OPENAI_API_KEY=<openai_key> \
 ```
 
 This populates missing numeric fields and embeddings so the AI evaluators include your latest cases.
+
+## Custom Welcome Emails
+
+New user sign-ups now trigger a "send-welcome-email" edge function. This function sends a brief welcome message from a no-reply address using Resend. The default Supabase confirmation email is still delivered for account verification, but users will also receive a branded welcome email.
+

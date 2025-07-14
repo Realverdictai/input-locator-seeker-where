@@ -75,6 +75,15 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
         }
       });
 
+      if (!error) {
+        // send custom welcome email
+        await supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: signUpData.email.trim(),
+          }
+        });
+      }
+
       if (error) {
         console.error('Signup error details:', error);
         throw error;
