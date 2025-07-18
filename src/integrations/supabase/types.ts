@@ -157,7 +157,7 @@ export type Database = {
             referencedColumns: ["id"]
           }
         ]
-      }
+      },
       uploaded_docs: {
         Row: {
           id: string;
