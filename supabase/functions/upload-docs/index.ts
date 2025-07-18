@@ -35,39 +35,89 @@ serve(async (req) => {
     const files = form.getAll("files") as File[];
 
     for (const file of files) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = new Uint8Array(arrayBuffer);
-      const path = `${caseSessionId}/${Date.now()}-${file.name}`;
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        const path = `${caseSessionId}/${Date.now()}-${file.name}`;
 
-      await supabase.storage
-        .from("case_uploads")
-        .upload(path, buffer, { contentType: file.type });
+        const uploadRes = await supabase.storage
+          .from("case_uploads")
+          .upload(path, buffer, { contentType: file.type });
 
-      const text = await extractText(buffer, file.type);
+        if (uploadRes.error) {
+          console.error("Storage upload error", uploadRes.error.message);
+          return new Response(
+            JSON.stringify({ error: "Failed to upload file" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
 
-      const embedRes = await fetch("https://api.openai.com/v1/embeddings", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openaiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "text-embedding-3-small",
-          input: text.slice(0, 8000),
-        }),
-      });
+        const text = await extractText(buffer, file.type);
 
-      const embedData = await embedRes.json();
-      const embedding = embedData.data[0].embedding as number[];
+        let embedding: number[] | null = null;
+        try {
+          const embedRes = await fetch("https://api.openai.com/v1/embeddings", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${openaiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "text-embedding-3-small",
+              input: text.slice(0, 8000),
+            }),
+          });
 
-      await supabase.from("uploaded_docs").insert({
-        case_session_id: caseSessionId,
-        file_name: file.name,
-        storage_path: path,
-        mime_type: file.type,
-        text_content: text.slice(0, 1000),
-        embedding,
-      });
+          if (!embedRes.ok) {
+            const errText = await embedRes.text();
+            console.error("OpenAI API error", errText);
+            return new Response(
+              JSON.stringify({ error: "OpenAI embedding request failed" }),
+              { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+
+          const embedData = await embedRes.json();
+          if (embedData?.data && Array.isArray(embedData.data) && embedData.data[0]?.embedding) {
+            embedding = embedData.data[0].embedding as number[];
+          } else {
+            console.error("Invalid OpenAI embedding response", embedData);
+            return new Response(
+              JSON.stringify({ error: "Invalid embedding response" }),
+              { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+        } catch (err) {
+          console.error("Error calling OpenAI API", err);
+          return new Response(
+            JSON.stringify({ error: "Error generating embeddings" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+
+        const { error } = await supabase.from("uploaded_docs").insert({
+          case_session_id: caseSessionId,
+          file_name: file.name,
+          storage_path: path,
+          mime_type: file.type,
+          text_content: text.slice(0, 1000),
+          embedding,
+        });
+
+        if (error) {
+          console.error("Database insert error", error.message);
+          return new Response(
+            JSON.stringify({ error: "Failed to save document" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      } catch (err) {
+        console.error("Error processing file", file.name, err);
+        return new Response(
+          JSON.stringify({ error: "Failed processing file" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), {

@@ -37,7 +37,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
+      };
       cases_master: {
         Row: {
           acc_type: string | null
@@ -148,7 +148,16 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "case_evaluations"
             referencedColumns: ["id"]
-      },
+          },
+          {
+            foreignKeyName: "mediation_sessions_pi_evaluation_id_fkey"
+            columns: ["pi_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "case_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       uploaded_docs: {
         Row: {
           id: string;
@@ -204,16 +213,7 @@ export type Database = {
           answer?: string | null;
           created_at?: string;
         };
-        Relationships: [];
-      };
-          {
-            foreignKeyName: "mediation_sessions_pi_evaluation_id_fkey"
-            columns: ["pi_evaluation_id"]
-            isOneToOne: false
-            referencedRelation: "case_evaluations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
