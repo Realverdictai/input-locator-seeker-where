@@ -134,6 +134,13 @@ SUPABASE_SERVICE_ROLE_KEY=<service_key> OPENAI_API_KEY=<openai_key> \
 
 This populates missing numeric fields and embeddings so the AI evaluators include your latest cases.
 
+## Multi-Doc AI & Clarify Loop
+1. Deploy the new edge functions in `supabase/functions`.
+2. Run the latest SQL migration to create `uploaded_docs` and policies.
+3. The Document Upload wizard step lets you drop PDFs or DOCX files which are sent to `/api/uploadDocs`.
+4. If "Ask any follow-up questions" is selected, the app calls `/api/getClarifyQuestion` until it returns `NO_MORE_QUESTIONS`. Answers are saved via `/api/clarifyAnswer`.
+5. `evaluateCase()` automatically uses the uploaded docs during valuation.
+
 ### Offline Mode
 
 If your environment doesn't have database access, set `OFFLINE_MODE=true` before running tests. This forces the evaluator to use the built-in traditional valuation logic.
