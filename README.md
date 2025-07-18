@@ -144,3 +144,7 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 ### Offline Mode
 
 If your environment doesn't have database access, set `OFFLINE_MODE=true` before running tests. This forces the evaluator to use the built-in traditional valuation logic.
+
+### Settlement Strategy Analysis
+
+AI evaluations compare your settlement expectations to the AI settlement range. Results include color-coded guidance on plaintiff and defense alignment plus recommendations.
