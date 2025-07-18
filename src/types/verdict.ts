@@ -74,6 +74,8 @@ export interface CaseData {
    * Narrative text extracted from uploaded documents
    */
   narrative?: string;
+  clarifyMode?: 'ask' | 'skip';
+  caseSessionId?: string;
 
   // Settlement positioning
   plaintiffBottomLine?: number;
