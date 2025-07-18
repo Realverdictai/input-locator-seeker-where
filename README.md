@@ -143,7 +143,7 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 
 ### Offline Mode
 
-If your environment doesn't have database access, set `OFFLINE_MODE=true` before running tests. This forces the evaluator to use the built-in traditional valuation logic.
+If your environment doesn't have database access, set the environment variable `OFFLINE_MODE=true` before running the evaluation script. This forces the evaluator to skip database lookups and rely entirely on the built-in traditional valuation logic.
 
 ### Settlement Strategy Analysis
 
