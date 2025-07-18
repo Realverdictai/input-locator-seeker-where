@@ -17,6 +17,7 @@ interface CaseInput {
   venue: string;
   surgery: string;
   injuries: string;
+  injuryTypes?: string[];
   liabPct: string;
   accType: string;
   polLim: string;
@@ -193,6 +194,15 @@ function getDataDrivenMatches(input: CaseInput, cases: DatabaseCase[]): Database
 
     // Injury pattern matching (high weight)
     if (input.injuries && dbCase.injuries) {
+      const inputTypes = (input.injuryTypes && input.injuryTypes.length > 0)
+        ? input.injuryTypes.map(i => i.toLowerCase())
+        : input.injuries.toLowerCase().split(/[,;]/).map(w => w.trim());
+      const dbTypes = dbCase.injuries.toLowerCase().split(/[,;]/).map(w => w.trim());
+
+      // Direct injury type matches
+      const directOverlap = inputTypes.filter(t => dbTypes.includes(t));
+      score += directOverlap.length * 200;
+
       const inputWords = input.injuries.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const dbWords = dbCase.injuries.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       
@@ -212,7 +222,7 @@ function getDataDrivenMatches(input: CaseInput, cases: DatabaseCase[]): Database
       
       // General injury overlap
       const overlap = inputWords.filter(w => dbWords.some(dw => dw.includes(w) || w.includes(dw)));
-      score += (overlap.length / Math.max(inputWords.length, 1)) * 50;
+      score += (overlap.length / Math.max(inputWords.length, 1)) * 75;
     }
 
     // Policy limit matching (moderate weight)

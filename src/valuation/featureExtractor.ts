@@ -28,6 +28,21 @@ const SURGERY_COMPLEXITY: { [key: string]: number } = {
   'default': 1.5
 };
 
+// Injury severity scores for weighting
+export const INJURY_SEVERITY_SCORES: Record<string, number> = {
+  'soft-tissue': 1,
+  'whiplash': 2,
+  'contusion': 2,
+  'strain-sprain': 2,
+  'herniated-disc': 4,
+  'bulging-disc': 3,
+  'fracture': 5,
+  'traumatic-brain-injury': 6,
+  'spinal-cord-injury': 7,
+  'amputation': 8,
+  'other': 3
+};
+
 export interface CaseFeatures {
   howellSpecials: number;
   surgeryCount: number;
@@ -46,10 +61,17 @@ export interface CaseFeatures {
   nonComplianceFlag: number;
   conflictingMedicalOpinionsFlag: number;
   vehicleDamageScore: number;
+  primaryInjuryType: string;
+  injuryTypeCount: number;
+  hasSoftTissue: number;
+  hasSpinalInjury: number;
+  hasBrainInjury: number;
+  hasFracture: number;
+  injurySeverityScore: number;
 }
 
 /**
- * Extract 16 features from case data
+ * Extract structured features from case data, including injury types
  */
 export function extractFeatures(caseData: any, narrativeText?: string): CaseFeatures {
   // Parse dates for vintage calculation
@@ -116,6 +138,35 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
 
   const vehicleDamageScore = caseData.damageScore || 0;
 
+  // ---- Injury type processing ----
+  let injuryTypes: string[] = [];
+  if (Array.isArray(caseData.injuryTypes)) {
+    injuryTypes = caseData.injuryTypes;
+  } else if (typeof caseData.injuryType === 'string') {
+    injuryTypes = [caseData.injuryType];
+  } else if (typeof caseData.injuries === 'string') {
+    injuryTypes = caseData.injuries.split(/[;,]/).map((i: string) => i.trim()).filter(Boolean);
+  }
+  injuryTypes = injuryTypes.map(i => i.toLowerCase());
+
+  let primaryInjuryType = '';
+  let injurySeverityScore = 0;
+  let highestScore = 0;
+  injuryTypes.forEach(type => {
+    const score = INJURY_SEVERITY_SCORES[type] ?? INJURY_SEVERITY_SCORES['other'];
+    injurySeverityScore += score;
+    if (score > highestScore) {
+      highestScore = score;
+      primaryInjuryType = type;
+    }
+  });
+
+  const hasSoftTissue = injuryTypes.some(t => ['soft-tissue','whiplash','contusion','strain-sprain'].includes(t)) ? 1 : 0;
+  const hasSpinalInjury = injuryTypes.some(t => ['herniated-disc','bulging-disc','spinal-cord-injury'].includes(t)) ? 1 : 0;
+  const hasBrainInjury = injuryTypes.includes('traumatic-brain-injury') ? 1 : 0;
+  const hasFracture = injuryTypes.includes('fracture') ? 1 : 0;
+
+
   return {
     howellSpecials: caseData.howell || caseData.howell_num || 0,
     surgeryCount: caseData.surgery_count || surgeryList.length || 0,
@@ -133,7 +184,14 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     preExistingConditionFlag,
     nonComplianceFlag,
     conflictingMedicalOpinionsFlag,
-    vehicleDamageScore
+    vehicleDamageScore,
+    primaryInjuryType,
+    injuryTypeCount: injuryTypes.length,
+    hasSoftTissue,
+    hasSpinalInjury,
+    hasBrainInjury,
+    hasFracture,
+    injurySeverityScore
   };
 }
 
@@ -197,6 +255,13 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `preexisting:${features.preExistingConditionFlag}`,
     `noncompliant:${features.nonComplianceFlag}`,
     `conflicting:${features.conflictingMedicalOpinionsFlag}`,
-    `damage:${features.vehicleDamageScore}`
+    `damage:${features.vehicleDamageScore}`,
+    `primary:${features.primaryInjuryType}`,
+    `injuryCount:${features.injuryTypeCount}`,
+    `soft:${features.hasSoftTissue}`,
+    `spinal:${features.hasSpinalInjury}`,
+    `brain:${features.hasBrainInjury}`,
+    `fracture:${features.hasFracture}`,
+    `severity:${features.injurySeverityScore}`
   ].join(' | ');
 }

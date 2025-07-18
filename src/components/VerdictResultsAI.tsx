@@ -174,6 +174,20 @@ export function VerdictResultsAI({ results, caseData }: VerdictResultsAIProps) {
             </Card>
           )}
 
+          {/* Injury Type Analysis */}
+          {results.injuryAnalysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Injury Type Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Primary Injury: <strong>{results.injuryAnalysis.primary}</strong></p>
+                <p>Categories: {results.injuryAnalysis.categories.join(', ')}</p>
+                <p>Severity Score: {results.injuryAnalysis.severityScore}</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Manual Override Details */}
           {results.manualOverride && (
             <Card className="bg-purple-50 border-purple-200">

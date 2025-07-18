@@ -122,6 +122,12 @@ export interface VerdictResult {
     method: string;
     factors: string[];
   };
+  injuryAnalysis?: {
+    primary: string;
+    count: number;
+    severityScore: number;
+    categories: string[];
+  };
   method?: 'ai' | 'traditional' | 'hybrid';
   manualOverride?: {
     estimate: number;

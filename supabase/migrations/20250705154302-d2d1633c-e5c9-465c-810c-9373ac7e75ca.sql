@@ -5,6 +5,10 @@ CREATE OR REPLACE FUNCTION public.hybrid_case_similarity(
   query_policy_bucket text DEFAULT 'low',
   query_tbi_level integer DEFAULT 0,
   query_has_surgery boolean DEFAULT false,
+  query_primary_injury text DEFAULT NULL,
+  query_has_spinal boolean DEFAULT false,
+  query_has_brain boolean DEFAULT false,
+  query_has_fracture boolean DEFAULT false,
   result_limit integer DEFAULT 25
 )
 RETURNS TABLE (
@@ -65,8 +69,18 @@ AS $$
       -- TBI level match (0.1 weight)
       0.1 * CASE WHEN query_tbi_level > 0 AND c.injuries ILIKE '%TBI%' THEN 1 ELSE 0 END +
       
-      -- Surgery match (0.1 weight)  
-      0.1 * CASE WHEN query_has_surgery AND c.surgery IS NOT NULL AND c.surgery != 'None' THEN 1 ELSE 0 END
+      -- Surgery match (0.1 weight)
+      0.1 * CASE WHEN query_has_surgery AND c.surgery IS NOT NULL AND c.surgery != 'None' THEN 1 ELSE 0 END +
+
+      -- Primary injury match (0.3 weight)
+      0.3 * CASE WHEN query_primary_injury IS NOT NULL AND c.injuries ILIKE '%' || query_primary_injury || '%' THEN 1 ELSE 0 END +
+
+      -- Injury category overlap (0.15 weight)
+      0.15 * CASE WHEN (
+        (query_has_spinal AND c.injuries ILIKE '%spinal%') OR
+        (query_has_brain AND c.injuries ILIKE '%brain%') OR
+        (query_has_fracture AND c.injuries ILIKE '%fracture%')
+      ) THEN 1 ELSE 0 END
     ) AS score
   FROM cases_master c
   WHERE c.embedding IS NOT NULL 
