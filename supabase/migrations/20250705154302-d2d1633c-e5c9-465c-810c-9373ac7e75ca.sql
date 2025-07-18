@@ -9,6 +9,8 @@ CREATE OR REPLACE FUNCTION public.hybrid_case_similarity(
   query_has_spinal boolean DEFAULT false,
   query_has_brain boolean DEFAULT false,
   query_has_fracture boolean DEFAULT false,
+  query_vehicle_size_diff numeric DEFAULT 0,
+  query_vehicle_risk numeric DEFAULT 1,
   result_limit integer DEFAULT 25
 )
 RETURNS TABLE (
@@ -80,7 +82,13 @@ AS $$
         (query_has_spinal AND c.injuries ILIKE '%spinal%') OR
         (query_has_brain AND c.injuries ILIKE '%brain%') OR
         (query_has_fracture AND c.injuries ILIKE '%fracture%')
-      ) THEN 1 ELSE 0 END
+      ) THEN 1 ELSE 0 END +
+
+      -- Vehicle size differential (0.05 weight)
+      0.05 * (1 - ABS(COALESCE(c.vehicle_size_diff,0) - query_vehicle_size_diff) / 10) +
+
+      -- Vehicle risk factor match (0.05 weight)
+      0.05 * (1 - ABS(COALESCE(c.vehicle_risk,1) - query_vehicle_risk))
     ) AS score
   FROM cases_master c
   WHERE c.embedding IS NOT NULL 

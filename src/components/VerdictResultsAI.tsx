@@ -188,6 +188,21 @@ export function VerdictResultsAI({ results, caseData }: VerdictResultsAIProps) {
             </Card>
           )}
 
+          {/* Vehicle Analysis */}
+          {results.vehicleAnalysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Vehicle Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>Size Differential: {results.vehicleAnalysis.sizeDifferential}</p>
+                <p>Risk Factor: {results.vehicleAnalysis.riskFactor}</p>
+                <p>Safety Score: {results.vehicleAnalysis.safetyScore}</p>
+                <p>Impact Pattern: {results.vehicleAnalysis.patternScore}</p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Manual Override Details */}
           {results.manualOverride && (
             <Card className="bg-purple-50 border-purple-200">

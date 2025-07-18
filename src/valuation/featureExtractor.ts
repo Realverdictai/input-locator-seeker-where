@@ -28,6 +28,37 @@ const SURGERY_COMPLEXITY: { [key: string]: number } = {
   'default': 1.5
 };
 
+// Vehicle size index for mismatch calculations
+const VEHICLE_SIZE_INDEX: Record<string, number> = {
+  pedestrian: 0,
+  bicycle: 1,
+  motorcycle: 2,
+  compact: 3,
+  midsize: 4,
+  fullsize: 5,
+  'suv-small': 6,
+  'suv-midsize': 7,
+  'suv-large': 8,
+  'truck-pickup': 9,
+  'truck-commercial': 10,
+  other: 5
+};
+
+// Risk multipliers for dangerous vehicle combinations
+const VEHICLE_RISK_FACTORS: Record<string, number> = {
+  'pedestrian_vs_vehicle': 1.8,
+  'bicycle_vs_vehicle': 1.6,
+  'motorcycle_vs_vehicle': 1.5,
+  'vehicle_vs_truck-commercial': 1.3,
+};
+
+const IMPACT_PATTERN_SCORES: Record<string, number> = {
+  'truck-commercial_vs_pedestrian': 2.0,
+  'truck-commercial_vs_compact': 1.4,
+  'truck-commercial_vs_motorcycle': 1.6,
+  'suv-large_vs_motorcycle': 1.5,
+};
+
 // Injury severity scores for weighting
 export const INJURY_SEVERITY_SCORES: Record<string, number> = {
   'soft-tissue': 1,
@@ -68,6 +99,10 @@ export interface CaseFeatures {
   hasBrainInjury: number;
   hasFracture: number;
   injurySeverityScore: number;
+  vehicleSizeDiff: number;
+  vehicleRiskFactor: number;
+  safetyRatingScore: number;
+  impactPatternScore: number;
 }
 
 /**
@@ -166,6 +201,22 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
   const hasBrainInjury = injuryTypes.includes('traumatic-brain-injury') ? 1 : 0;
   const hasFracture = injuryTypes.includes('fracture') ? 1 : 0;
 
+  // ---- Vehicle analysis ----
+  const pVehicle = (caseData.plaintiffVehicleSize || '').toLowerCase();
+  const dVehicle = (caseData.defendantVehicleSize || '').toLowerCase();
+  const pIndex = VEHICLE_SIZE_INDEX[pVehicle as keyof typeof VEHICLE_SIZE_INDEX] ?? 5;
+  const dIndex = VEHICLE_SIZE_INDEX[dVehicle as keyof typeof VEHICLE_SIZE_INDEX] ?? 5;
+  const vehicleSizeDiff = Math.abs(pIndex - dIndex);
+
+  const riskCombo = `${pVehicle}_vs_${dVehicle}`;
+  const reverseCombo = `${dVehicle}_vs_${pVehicle}`;
+  const vehicleRiskFactor = VEHICLE_RISK_FACTORS[riskCombo] ?? VEHICLE_RISK_FACTORS[reverseCombo] ?? 1;
+
+  const impactPatternScore = IMPACT_PATTERN_SCORES[riskCombo] ?? IMPACT_PATTERN_SCORES[reverseCombo] ?? 1;
+
+  const pSafety = parseFloat(caseData.plaintiffSafetyRating) || 3;
+  const dSafety = parseFloat(caseData.defendantSafetyRating) || 3;
+  const safetyRatingScore = 5 - ((pSafety + dSafety) / 2);
 
   return {
     howellSpecials: caseData.howell || caseData.howell_num || 0,
@@ -191,7 +242,11 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     hasSpinalInjury,
     hasBrainInjury,
     hasFracture,
-    injurySeverityScore
+    injurySeverityScore,
+    vehicleSizeDiff,
+    vehicleRiskFactor,
+    safetyRatingScore,
+    impactPatternScore
   };
 }
 
@@ -262,6 +317,10 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `spinal:${features.hasSpinalInjury}`,
     `brain:${features.hasBrainInjury}`,
     `fracture:${features.hasFracture}`,
-    `severity:${features.injurySeverityScore}`
+    `severity:${features.injurySeverityScore}`,
+    `sizeDiff:${features.vehicleSizeDiff}`,
+    `risk:${features.vehicleRiskFactor}`,
+    `safety:${features.safetyRatingScore}`,
+    `impact:${features.impactPatternScore}`
   ].join(' | ');
 }

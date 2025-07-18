@@ -12,5 +12,12 @@
     "Mild": 15000,
     "Moderate": 50000,
     "Severe": 120000
+  },
+  "vehiclePairWeights": {
+    "truck-commercial:compact": 30000,
+    "truck-commercial:motorcycle": 50000,
+    "truck-commercial:pedestrian": 60000,
+    "motorcycle:vehicle": 20000,
+    "pedestrian:vehicle": 25000
   }
 }

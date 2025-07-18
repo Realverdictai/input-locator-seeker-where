@@ -130,6 +130,12 @@ export interface VerdictResult {
     severityScore: number;
     categories: string[];
   };
+  vehicleAnalysis?: {
+    sizeDifferential: number;
+    riskFactor: number;
+    safetyScore: number;
+    patternScore: number;
+  };
   method?: 'ai' | 'traditional' | 'hybrid';
   manualOverride?: {
     estimate: number;

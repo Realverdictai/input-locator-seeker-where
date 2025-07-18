@@ -29,6 +29,12 @@ export interface AIEvaluationResult {
     severityScore: number;
     categories: string[];
   };
+  vehicleAnalysis: {
+    sizeDifferential: number;
+    riskFactor: number;
+    safetyScore: number;
+    patternScore: number;
+  };
   method: 'ai' | 'traditional' | 'hybrid';
 }
 
@@ -36,6 +42,7 @@ interface WeightsData {
   defaultInjectionValue: number;
   surgeryWeights: Record<string, number>;
   tbiWeights: Record<string, number>;
+  vehiclePairWeights?: Record<string, number>;
 }
 
 /**
@@ -134,6 +141,12 @@ export async function calcEvaluatorAI(
       severityScore: targetFeatures.injurySeverityScore,
       categories: injuryCategories
     };
+    const vehicleAnalysis = {
+      sizeDifferential: targetFeatures.vehicleSizeDiff,
+      riskFactor: targetFeatures.vehicleRiskFactor,
+      safetyScore: targetFeatures.safetyRatingScore,
+      patternScore: targetFeatures.impactPatternScore
+    };
 
     return {
       evaluator: `$${weightedPrediction.toLocaleString()}`,
@@ -149,6 +162,7 @@ export async function calcEvaluatorAI(
       isNovelCase,
       traditionalValuation,
       injuryAnalysis,
+      vehicleAnalysis,
       method: isNovelCase ? 'hybrid' : 'ai'
     };
 
@@ -209,6 +223,15 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
       boost += injuryBoost;
       console.log(`🩻 Injury boost (${features.primaryInjuryType}): $${injuryBoost.toLocaleString()}`);
     }
+
+    // Vehicle pair weights
+    if (weights.vehiclePairWeights) {
+      const pairKey = `${newCase.plaintiffVehicleSize || ''}:${newCase.defendantVehicleSize || ''}`;
+      if (weights.vehiclePairWeights[pairKey]) {
+        boost += weights.vehiclePairWeights[pairKey];
+        console.log(`🚗 Vehicle pair boost (${pairKey}): $${weights.vehiclePairWeights[pairKey].toLocaleString()}`);
+      }
+    }
     
     return boost;
   } catch (error) {
@@ -238,6 +261,8 @@ async function findSimilarCasesWithFeatures(
     query_has_spinal: targetFeatures.hasSpinalInjury > 0,
     query_has_brain: targetFeatures.hasBrainInjury > 0,
     query_has_fracture: targetFeatures.hasFracture > 0,
+    query_vehicle_size_diff: targetFeatures.vehicleSizeDiff,
+    query_vehicle_risk: targetFeatures.vehicleRiskFactor,
     result_limit: limit
   });
 
@@ -264,6 +289,12 @@ async function findSimilarCasesWithFeatures(
       (features.hasSoftTissue && targetFeatures.hasSoftTissue)
     ) {
       score *= 1.15;
+    }
+    if (features.vehicleSizeDiff === targetFeatures.vehicleSizeDiff) {
+      score *= 1.1;
+    }
+    if (features.vehicleRiskFactor === targetFeatures.vehicleRiskFactor) {
+      score *= 1.05;
     }
     return {
       features,
@@ -322,7 +353,11 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
     venue: row.venue,
     dol: row.dol,
     narrative: row.narrative,
-    damageScore: 0
+    damageScore: 0,
+    plaintiffVehicleSize: structuredData.plaintiffVehicleSize || '',
+    defendantVehicleSize: structuredData.defendantVehicleSize || '',
+    plaintiffSafetyRating: structuredData.plaintiffSafetyRating || 3,
+    defendantSafetyRating: structuredData.defendantSafetyRating || 3
   }, row.narrative);
 }
 
@@ -380,6 +415,12 @@ async function fallbackEvaluation(
         count: targetFeatures.injuryTypeCount,
         severityScore: targetFeatures.injurySeverityScore,
         categories: injuryCategories
+      },
+      vehicleAnalysis: {
+        sizeDifferential: targetFeatures.vehicleSizeDiff,
+        riskFactor: targetFeatures.vehicleRiskFactor,
+        safetyScore: targetFeatures.safetyRatingScore,
+        patternScore: targetFeatures.impactPatternScore
       },
       method: 'ai'
     };
@@ -466,6 +507,7 @@ function generateRationale(
 
   if (features) {
     parts.push(`Primary injury type '${features.primaryInjuryType}' and severity score ${features.injurySeverityScore} influenced the valuation.`);
+    parts.push(`Vehicle size differential ${features.vehicleSizeDiff} and risk factor ${features.vehicleRiskFactor} were considered.`);
   }
 
   return parts.join(' ');

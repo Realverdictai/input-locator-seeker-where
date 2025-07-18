@@ -35,6 +35,8 @@ const handler = async (req: Request): Promise<Response> => {
     const policyBucket = policyLimits > 500000 ? 'high' : policyLimits > 100000 ? 'mid' : 'low';
     const tbiLevel = newCase.tbiLevel || 0;
     const hasSurgery = !!(newCase.Surgery && newCase.Surgery !== 'None');
+    const vehicleSizeDiff = newCase.vehicleSizeDiff || 0;
+    const vehicleRisk = newCase.vehicleRiskFactor || 1;
 
     // Hybrid similarity search query
     const { data, error } = await supabase.rpc('hybrid_case_similarity', {
@@ -43,6 +45,8 @@ const handler = async (req: Request): Promise<Response> => {
       query_policy_bucket: policyBucket,
       query_tbi_level: tbiLevel,
       query_has_surgery: hasSurgery,
+      query_vehicle_size_diff: vehicleSizeDiff,
+      query_vehicle_risk: vehicleRisk,
       result_limit: limit
     });
 
