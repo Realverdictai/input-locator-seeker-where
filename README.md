@@ -133,3 +133,7 @@ SUPABASE_SERVICE_ROLE_KEY=<service_key> OPENAI_API_KEY=<openai_key> \
 ```
 
 This populates missing numeric fields and embeddings so the AI evaluators include your latest cases.
+
+### Offline Mode
+
+If your environment doesn't have database access, set `OFFLINE_MODE=true` before running tests. This forces the evaluator to use the built-in traditional valuation logic.

@@ -3,13 +3,18 @@ interface MediatorResult {
   expiresOn: string;
   rangeLow: string;
   rangeHigh: string;
+  timingRecommendation?: string;
 }
 
 /**
  * Calculate Mediator's Proposal based on Evaluator Number and Policy Limits
  * Updated for AI-first system compatibility
  */
-export function calcMediator(evaluatorString: string, policyLimits?: number): MediatorResult {
+export function calcMediator(
+  evaluatorString: string,
+  policyLimits?: number,
+  strategy?: { defenseAuthority?: number; defenseRangeLow?: number; defenseRangeHigh?: number }
+): MediatorResult {
   // Parse evaluator amount (handle both string and number formats)
   const evaluatorAmount = typeof evaluatorString === 'string' 
     ? parseFloat(evaluatorString.replace(/[$,]/g, '')) || 0
@@ -31,13 +36,16 @@ export function calcMediator(evaluatorString: string, policyLimits?: number): Me
     // No policy limits known, apply 95% discount
     proposalAmount = evaluatorAmount * 0.95;
   }
-  
+
   // Round to nearest $500
   proposalAmount = Math.round(proposalAmount / 500) * 500;
-  
-  // Ensure we don't exceed policy limits
+
+  // Ensure we don't exceed policy limits or defense authority
   if (policyLimits && proposalAmount > policyLimits) {
     proposalAmount = policyLimits;
+  }
+  if (strategy?.defenseAuthority && proposalAmount > strategy.defenseAuthority) {
+    proposalAmount = strategy.defenseAuthority;
   }
   
   // Calculate expiration date (7 days from now)
@@ -56,14 +64,29 @@ export function calcMediator(evaluatorString: string, policyLimits?: number): Me
   if (policyLimits && rangeHigh > policyLimits) {
     rangeHigh = policyLimits;
   }
+  if (strategy?.defenseAuthority && rangeHigh > strategy.defenseAuthority) {
+    rangeHigh = strategy.defenseAuthority;
+  }
 
   const rangeLowStr = `$${rangeLow.toLocaleString()}`;
   const rangeHighStr = `$${rangeHigh.toLocaleString()}`;
+
+  let timingRecommendation: string | undefined;
+  if (strategy?.defenseAuthority) {
+    if (strategy.defenseAuthority >= evaluatorAmount) {
+      timingRecommendation = 'Authority matches evaluation – settle promptly.';
+    } else if (strategy.defenseAuthority >= proposalAmount) {
+      timingRecommendation = 'Authority slightly low – consider phased offers.';
+    } else {
+      timingRecommendation = 'Authority well below estimate – delay until higher authority obtained.';
+    }
+  }
 
   return {
     mediator: `$${proposalAmount.toLocaleString()}`,
     expiresOn,
     rangeLow: rangeLowStr,
-    rangeHigh: rangeHighStr
+    rangeHigh: rangeHighStr,
+    timingRecommendation
   };
 }

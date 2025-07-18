@@ -129,6 +129,32 @@ export function VerdictResultsAI({ results, caseData }: VerdictResultsAIProps) {
             </CardContent>
           </Card>
 
+          {/* Settlement Strategy Analysis */}
+          {results.strategyAssessment && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Settlement Strategy Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {caseData.plaintiffBottomLine && (
+                    <div className={`p-3 rounded ${results.strategyAssessment.plaintiffAlignment === 'green' ? 'bg-green-50' : results.strategyAssessment.plaintiffAlignment === 'yellow' ? 'bg-yellow-50' : 'bg-red-50'} border`}>
+                      <p className="font-medium">Plaintiff Bottom Line: {formatCurrency(caseData.plaintiffBottomLine)}</p>
+                      <p className="text-sm">AI Range vs Bottom Line: {results.strategyAssessment.plaintiffDiffPct?.toFixed(1)}%</p>
+                    </div>
+                  )}
+                  {(caseData.defenseAuthority || caseData.defenseRangeHigh) && (
+                    <div className={`p-3 rounded ${results.strategyAssessment.defenseAlignment === 'green' ? 'bg-green-50' : results.strategyAssessment.defenseAlignment === 'yellow' ? 'bg-yellow-50' : 'bg-red-50'} border`}>
+                      <p className="font-medium">Defense Authority/Range: {caseData.defenseAuthority ? formatCurrency(caseData.defenseAuthority) : `${formatCurrency(caseData.defenseRangeLow || 0)} - ${formatCurrency(caseData.defenseRangeHigh || 0)}`}</p>
+                      <p className="text-sm">AI Range Gap: {results.strategyAssessment.defenseDiffPct?.toFixed(1)}%</p>
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-700">{results.strategyAssessment.recommendation}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Traditional Valuation Comparison */}
           {results.traditionalValuation && (
             <Card className="bg-blue-50 border-blue-200">

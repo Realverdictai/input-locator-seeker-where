@@ -8,6 +8,7 @@ import { extractFeatures, serializeFeaturesForEmbedding, CaseFeatures } from './
 import { fitRidgeRegression, RegressionResult } from './ridgeRegression';
 import { applyDeductions, DeductionResult } from './deductionEngine';
 import { calculateTraditionalValuation, TraditionalValuationResult } from './traditionalValuation';
+import { StrategyAssessment } from '@/types/verdict';
 
 export interface AIEvaluationResult {
   evaluator: string;
@@ -23,6 +24,18 @@ export interface AIEvaluationResult {
   isNovelCase: boolean;
   traditionalValuation?: TraditionalValuationResult;
   method: 'ai' | 'traditional' | 'hybrid';
+  strategyAssessment?: StrategyAssessment;
+}
+
+interface SettlementStrategy {
+  plaintiffBottomLine?: number;
+  defenseAuthority?: number;
+  defenseRangeLow?: number;
+  defenseRangeHigh?: number;
+}
+
+interface StrategyAssessmentInternal extends StrategyAssessment {
+  alignmentBonus: number;
 }
 
 interface WeightsData {
@@ -36,7 +49,8 @@ interface WeightsData {
  */
 export async function calcEvaluatorAI(
   newCase: any,
-  narrativeText?: string
+  narrativeText?: string,
+  strategy?: SettlementStrategy
 ): Promise<AIEvaluationResult> {
   try {
     console.log('🤖 Starting AI-first case evaluation...');
@@ -45,8 +59,13 @@ export async function calcEvaluatorAI(
     const ignoreWeights = process.env.IGNORE_WEIGHTS === 'true';
     
     // Step 1: Extract enhanced features (16 features)
-    const targetFeatures = extractFeatures(newCase, narrativeText);
-    console.log('📊 Extracted 16 features:', targetFeatures);
+  const targetFeatures = extractFeatures(newCase, narrativeText);
+  console.log('📊 Extracted 16 features:', targetFeatures);
+
+  if (process.env.OFFLINE_MODE === 'true') {
+    console.warn('⚠️  OFFLINE_MODE enabled - using traditional valuation only');
+    return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText, strategy);
+  }
 
     // Step 2: Get embedding for similarity search
     const featureString = serializeFeaturesForEmbedding(targetFeatures);
@@ -57,7 +76,7 @@ export async function calcEvaluatorAI(
     } catch (embeddingError) {
       console.warn('⚠️ Embedding failed, using fallback similarity:', embeddingError);
       // Fallback to database-only approach
-      return await fallbackEvaluation(newCase, targetFeatures, narrativeText);
+      return await fallbackEvaluation(newCase, targetFeatures, narrativeText, strategy);
     }
 
     // Step 3: Find top-K (25) similar cases using hybrid search
@@ -65,7 +84,7 @@ export async function calcEvaluatorAI(
     
     if (similarCases.length === 0) {
       console.warn('No similar cases found, using traditional valuation');
-      return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText);
+      return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText, strategy);
     }
 
     console.log(`🔍 Found ${similarCases.length} similar cases`);
@@ -104,8 +123,17 @@ export async function calcEvaluatorAI(
     const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
     const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
       deductionResult.evaluatorAfterDeductions,
-      policyLimits
+      policyLimits,
+      strategy
     );
+
+    const aiLowNum = parseFloat(rangeLow.replace(/[$,]/g, '')) || 0;
+    const aiHighNum = parseFloat(rangeHigh.replace(/[$,]/g, '')) || 0;
+    const strategyAssessment = assessStrategy(aiLowNum, aiHighNum, strategy);
+    let adjustedConfidence = regressionResult.confidence;
+    if (strategyAssessment) {
+      adjustedConfidence = Math.max(0, Math.min(100, adjustedConfidence + strategyAssessment.alignmentBonus));
+    }
 
     // Step 7: Generate rationale
     const rationale = generateRationale(
@@ -123,12 +151,19 @@ export async function calcEvaluatorAI(
       expiresOn,
       settlementRangeLow: rangeLow,
       settlementRangeHigh: rangeHigh,
-      confidence: regressionResult.confidence,
+      confidence: adjustedConfidence,
       nearestCases: regressionResult.nearestCaseIds.slice(0, 5), // Top 5 for display
       rationale,
       isNovelCase,
       traditionalValuation,
-      method: isNovelCase ? 'hybrid' : 'ai'
+      method: isNovelCase ? 'hybrid' : 'ai',
+      strategyAssessment: strategyAssessment && {
+        plaintiffDiffPct: strategyAssessment.plaintiffDiffPct,
+        defenseDiffPct: strategyAssessment.defenseDiffPct,
+        plaintiffAlignment: strategyAssessment.plaintiffAlignment,
+        defenseAlignment: strategyAssessment.defenseAlignment,
+        recommendation: strategyAssessment.recommendation
+      }
     };
 
   } catch (error) {
@@ -277,7 +312,8 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
 async function fallbackEvaluation(
   newCase: any,
   targetFeatures: CaseFeatures,
-  narrativeText?: string
+  narrativeText?: string,
+  strategy?: SettlementStrategy
 ): Promise<AIEvaluationResult> {
   console.log('🔄 Using fallback evaluation method...');
   
@@ -299,8 +335,17 @@ async function fallbackEvaluation(
   const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
   const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
     deductionResult.evaluatorAfterDeductions,
-    policyLimits
+    policyLimits,
+    strategy
   );
+
+  const aiLowNum = parseFloat(rangeLow.replace(/[$,]/g, '')) || 0;
+  const aiHighNum = parseFloat(rangeHigh.replace(/[$,]/g, '')) || 0;
+  const strategyAssessment = assessStrategy(aiLowNum, aiHighNum, strategy);
+  let adjustedConfidence = regressionResult.confidence;
+  if (strategyAssessment) {
+    adjustedConfidence = Math.max(0, Math.min(100, adjustedConfidence + strategyAssessment.alignmentBonus));
+  }
 
     return {
       evaluator: `$${weightedPrediction.toLocaleString()}`,
@@ -310,12 +355,19 @@ async function fallbackEvaluation(
       expiresOn,
       settlementRangeLow: rangeLow,
       settlementRangeHigh: rangeHigh,
-      confidence: regressionResult.confidence,
+      confidence: adjustedConfidence,
       nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
       rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights),
       isNovelCase: regressionResult.confidence < 70,
       traditionalValuation: undefined,
-      method: 'ai'
+      method: 'ai',
+      strategyAssessment: strategyAssessment && {
+        plaintiffDiffPct: strategyAssessment.plaintiffDiffPct,
+        defenseDiffPct: strategyAssessment.defenseDiffPct,
+        plaintiffAlignment: strategyAssessment.plaintiffAlignment,
+        defenseAlignment: strategyAssessment.defenseAlignment,
+        recommendation: strategyAssessment.recommendation
+      }
     };
   }
 
@@ -324,7 +376,8 @@ async function fallbackEvaluation(
  */
 function calculateMediatorProposal(
   evaluatorAfterDeductions: number,
-  policyLimits: number
+  policyLimits: number,
+  strategy?: SettlementStrategy
 ): { mediator: string; expiresOn: string; rangeLow: string; rangeHigh: string } {
   let proposalAmount: number;
   
@@ -346,6 +399,9 @@ function calculateMediatorProposal(
   if (policyLimits > 0 && proposalAmount > policyLimits) {
     proposalAmount = policyLimits;
   }
+  if (strategy?.defenseAuthority && proposalAmount > strategy.defenseAuthority) {
+    proposalAmount = strategy.defenseAuthority;
+  }
   
   // Calculate expiration (7 days from now)
   const expirationDate = new Date();
@@ -361,6 +417,9 @@ function calculateMediatorProposal(
   let rangeHigh = Math.round(proposalAmount * 1.05 / 500) * 500;
   if (policyLimits > 0 && rangeHigh > policyLimits) {
     rangeHigh = policyLimits;
+  }
+  if (strategy?.defenseAuthority && rangeHigh > strategy.defenseAuthority) {
+    rangeHigh = strategy.defenseAuthority;
   }
 
   const rangeLowStr = `$${rangeLow.toLocaleString()}`;
@@ -401,12 +460,79 @@ function generateRationale(
 }
 
 /**
+ * Assess settlement strategy versus AI range
+ */
+function assessStrategy(aiLow: number, aiHigh: number, strategy?: SettlementStrategy): StrategyAssessmentInternal | undefined {
+  if (!strategy) return undefined;
+
+  let plaintiffDiffPct: number | undefined;
+  let defenseDiffPct: number | undefined;
+  let plaintiffAlignment: 'green' | 'yellow' | 'red' = 'green';
+  let defenseAlignment: 'green' | 'yellow' | 'red' = 'green';
+  let alignmentBonus = 0;
+
+  if (strategy.plaintiffBottomLine !== undefined) {
+    plaintiffDiffPct = ((strategy.plaintiffBottomLine - aiHigh) / aiHigh) * 100;
+    if (strategy.plaintiffBottomLine <= aiHigh) {
+      plaintiffAlignment = 'green';
+    } else if (strategy.plaintiffBottomLine <= aiHigh * 1.2) {
+      plaintiffAlignment = 'yellow';
+    } else {
+      plaintiffAlignment = 'red';
+    }
+  }
+
+  const defenseTarget = strategy.defenseAuthority ?? strategy.defenseRangeHigh;
+  if (defenseTarget !== undefined) {
+    defenseDiffPct = ((aiLow - defenseTarget) / aiLow) * 100;
+    if (defenseTarget >= aiLow) {
+      defenseAlignment = 'green';
+    } else if ((strategy.defenseRangeHigh ?? defenseTarget) >= aiLow) {
+      defenseAlignment = 'yellow';
+    } else {
+      defenseAlignment = 'red';
+    }
+  }
+
+  if (plaintiffAlignment === 'green' && defenseAlignment === 'green') {
+    alignmentBonus = 10;
+  } else if (plaintiffAlignment === 'red' || defenseAlignment === 'red') {
+    alignmentBonus = -10;
+  }
+
+  const recommendationParts: string[] = [];
+  if (plaintiffAlignment === 'red') {
+    recommendationParts.push('Plaintiff expectations exceed likely range.');
+  } else if (plaintiffAlignment === 'yellow') {
+    recommendationParts.push('Plaintiff bottom line slightly high.');
+  }
+
+  if (defenseAlignment === 'red') {
+    recommendationParts.push('Defense authority below expected value.');
+  } else if (defenseAlignment === 'yellow') {
+    recommendationParts.push('Defense range may be too low.');
+  }
+
+  const recommendation = recommendationParts.length > 0 ? recommendationParts.join(' ') : 'Strategy aligns with AI analysis.';
+
+  return {
+    plaintiffDiffPct,
+    defenseDiffPct,
+    plaintiffAlignment,
+    defenseAlignment,
+    recommendation,
+    alignmentBonus
+  };
+}
+
+/**
  * Create traditional evaluation when AI fails or has low confidence
  */
 async function createTraditionalEvaluation(
   newCase: any,
   targetFeatures: CaseFeatures,
-  narrativeText?: string
+  narrativeText?: string,
+  strategy?: SettlementStrategy
 ): Promise<AIEvaluationResult> {
   console.log('📋 Creating traditional evaluation fallback...');
   
@@ -416,8 +542,17 @@ async function createTraditionalEvaluation(
   const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
   const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
     deductionResult.evaluatorAfterDeductions,
-    policyLimits
+    policyLimits,
+    strategy
   );
+
+  const aiLowNum = parseFloat(rangeLow.replace(/[$,]/g, '')) || 0;
+  const aiHighNum = parseFloat(rangeHigh.replace(/[$,]/g, '')) || 0;
+  const strategyAssessment = assessStrategy(aiLowNum, aiHighNum, strategy);
+  let adjustedConfidence = traditionalResult.confidence;
+  if (strategyAssessment) {
+    adjustedConfidence = Math.max(0, Math.min(100, adjustedConfidence + strategyAssessment.alignmentBonus));
+  }
 
   const rationale = `Traditional valuation method used due to limited historical data. ${traditionalResult.method} applied with factors: ${traditionalResult.factors.join(', ')}.`;
 
@@ -429,11 +564,18 @@ async function createTraditionalEvaluation(
     expiresOn,
     settlementRangeLow: rangeLow,
     settlementRangeHigh: rangeHigh,
-    confidence: traditionalResult.confidence,
+    confidence: adjustedConfidence,
     nearestCases: [],
     rationale,
     isNovelCase: true,
     traditionalValuation: traditionalResult,
-    method: 'traditional'
+    method: 'traditional',
+    strategyAssessment: strategyAssessment && {
+      plaintiffDiffPct: strategyAssessment.plaintiffDiffPct,
+      defenseDiffPct: strategyAssessment.defenseDiffPct,
+      plaintiffAlignment: strategyAssessment.plaintiffAlignment,
+      defenseAlignment: strategyAssessment.defenseAlignment,
+      recommendation: strategyAssessment.recommendation
+    }
   };
 }

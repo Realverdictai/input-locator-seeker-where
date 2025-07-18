@@ -128,4 +128,13 @@ export interface VerdictResult {
     rationale: string;
     overriddenBy: string;
   };
+  strategyAssessment?: StrategyAssessment;
+}
+
+export interface StrategyAssessment {
+  plaintiffDiffPct?: number;
+  defenseDiffPct?: number;
+  plaintiffAlignment: 'green' | 'yellow' | 'red';
+  defenseAlignment: 'green' | 'yellow' | 'red';
+  recommendation: string;
 }

@@ -4,6 +4,9 @@
 
 import { calcEvaluatorAI } from '../src/valuation/calcEvaluatorAI';
 
+// Force offline mode for local testing environments without database access
+process.env.OFFLINE_MODE = 'true';
+
 const testCase = {
   Venue: 'Los Angeles',
   Surgery: 'None',
@@ -43,7 +46,12 @@ async function runTest() {
     console.log(testNarrative.trim());
     
     console.log('\n🚀 Running AI Evaluation...');
-    const result = await calcEvaluatorAI(testCase, testNarrative);
+    const result = await calcEvaluatorAI(testCase, testNarrative, {
+      plaintiffBottomLine: 250000,
+      defenseAuthority: 200000,
+      defenseRangeLow: 150000,
+      defenseRangeHigh: 200000
+    });
     
     console.log('\n✅ AI Evaluation Result:');
     console.log('========================');

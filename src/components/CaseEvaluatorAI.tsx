@@ -26,7 +26,12 @@ export function CaseEvaluatorAI({ caseData }: CaseEvaluatorAIProps) {
     setResults(null);
 
     try {
-      const evaluation = await calcEvaluatorAI(caseData, caseData.narrative);
+      const evaluation = await calcEvaluatorAI(caseData, caseData.narrative, {
+        plaintiffBottomLine: caseData.plaintiffBottomLine,
+        defenseAuthority: caseData.defenseAuthority,
+        defenseRangeLow: caseData.defenseRangeLow,
+        defenseRangeHigh: caseData.defenseRangeHigh
+      });
       setResults(evaluation);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Evaluation failed');
