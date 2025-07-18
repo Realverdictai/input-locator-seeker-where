@@ -13,7 +13,7 @@ interface LiabilityImpactStepProps {
 }
 
 const LiabilityImpactStep = ({ formData, setFormData }: LiabilityImpactStepProps) => {
-  const showImpact = formData.caseType !== 'dog-bite';
+  const showImpact = formData.caseCategory !== 'dog-bite';
   const [previews, setPreviews] = useState<string[]>(formData.damageMedia || []);
 
   const handleMedia = async (e: React.ChangeEvent<HTMLInputElement>) => {

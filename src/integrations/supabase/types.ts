@@ -148,7 +148,16 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "case_evaluations"
             referencedColumns: ["id"]
-      },
+          },
+          {
+            foreignKeyName: "mediation_sessions_pi_evaluation_id_fkey"
+            columns: ["pi_evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "case_evaluations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       uploaded_docs: {
         Row: {
           id: string;
@@ -206,15 +215,6 @@ export type Database = {
         };
         Relationships: [];
       };
-          {
-            foreignKeyName: "mediation_sessions_pi_evaluation_id_fkey"
-            columns: ["pi_evaluation_id"]
-            isOneToOne: false
-            referencedRelation: "case_evaluations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           bar_number: string | null
