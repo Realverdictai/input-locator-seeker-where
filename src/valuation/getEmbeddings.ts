@@ -52,9 +52,17 @@ export async function getEmbedding(text: string): Promise<number[]> {
  * Serialize case data into embedding text
  */
 export function serializeCaseForEmbedding(caseData: any): string {
+  const injuryList = Array.isArray(caseData.injuryTypes)
+    ? caseData.injuryTypes.join(', ')
+    : (caseData.injuryType || caseData.injuries || caseData.Injuries || '');
+  const primaryInjury = Array.isArray(caseData.injuryTypes)
+    ? caseData.injuryTypes[0]
+    : (caseData.injuryType || '');
+
   const parts = [
     caseData.case_type || caseData.CaseType || '',
-    caseData.injuries || caseData.Injuries || '',
+    `Primary injury: ${primaryInjury}`,
+    `Injury categories: ${injuryList}`,
     caseData.surgery || caseData.Surgery || '',
     caseData.inject || caseData.Inject || '',
     caseData.pol_lim || caseData.policyLimits || caseData.PolicyLimits || '',
