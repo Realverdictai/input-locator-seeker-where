@@ -189,7 +189,7 @@ export type Database = {
           embedding?: number[] | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: []
       };
       clarify_answers: {
         Row: {
@@ -213,7 +213,7 @@ export type Database = {
           answer?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: []
       }
       profiles: {
         Row: {
