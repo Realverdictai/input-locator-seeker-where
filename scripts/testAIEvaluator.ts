@@ -47,10 +47,10 @@ async function runTest() {
     
     console.log('\n🚀 Running AI Evaluation...');
     const result = await calcEvaluatorAI(testCase, testNarrative, {
-      plaintiffBottomLine: 250000,
-      defenseAuthority: 200000,
-      defenseRangeLow: 150000,
-      defenseRangeHigh: 200000
+      plaintiffBottomLine: 450000,
+      defenseAuthority: 300000,
+      defenseRangeLow: 250000,
+      defenseRangeHigh: 325000
     });
     
     console.log('\n✅ AI Evaluation Result:');
