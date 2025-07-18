@@ -1,5 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Static multipliers for injury types and categories
+export const INJURY_TYPE_MULTIPLIERS: Record<string, number> = {
+  'soft-tissue': 1.0,
+  'whiplash': 1.2,
+  'herniated-disc': 1.8,
+  'fracture': 2.0,
+  'traumatic-brain-injury': 2.5,
+  'spinal-cord-injury': 3.0,
+  'amputation': 4.0
+};
+
+export const INJURY_CATEGORY_WEIGHTS: Record<string, number> = {
+  spinal: 1.5,
+  neurological: 2.0,
+  orthopedic: 1.3,
+  soft_tissue: 1.0
+};
+
 interface CaseRow {
   case_id: number;
   surgery: string | null;

@@ -4,6 +4,7 @@ interface EnhancedCaseInput {
   venue: string;
   surgery: string;
   injuries: string;
+  injuryTypes?: string[];
   liabPct: string;
   accType: string;
   polLim: string;
@@ -37,7 +38,10 @@ interface EnhancedSettlementResult {
 export async function getEnhancedSettlement(caseInput: EnhancedCaseInput): Promise<EnhancedSettlementResult> {
   try {
     const { data, error } = await supabase.functions.invoke('enhanced-case-matching', {
-      body: caseInput
+      body: {
+        ...caseInput,
+        injuries: caseInput.injuryTypes ? caseInput.injuryTypes.join(', ') : caseInput.injuries
+      }
     });
 
     if (error) {

@@ -9,6 +9,7 @@ import { fitRidgeRegression, RegressionResult } from './ridgeRegression';
 import { applyDeductions, DeductionResult } from './deductionEngine';
 import { calculateTraditionalValuation, TraditionalValuationResult } from './traditionalValuation';
 import { StrategyAssessment } from '@/types/verdict';
+import { INJURY_TYPE_MULTIPLIERS, INJURY_CATEGORY_WEIGHTS } from './weights';
 
 export interface AIEvaluationResult {
   evaluator: string;
@@ -23,6 +24,12 @@ export interface AIEvaluationResult {
   rationale: string;
   isNovelCase: boolean;
   traditionalValuation?: TraditionalValuationResult;
+  injuryAnalysis: {
+    primary: string;
+    count: number;
+    severityScore: number;
+    categories: string[];
+  };
   method: 'ai' | 'traditional' | 'hybrid';
   strategyAssessment?: StrategyAssessment;
 }
@@ -58,14 +65,20 @@ export async function calcEvaluatorAI(
     // Check if weights should be ignored
     const ignoreWeights = process.env.IGNORE_WEIGHTS === 'true';
     
-    // Step 1: Extract enhanced features (16 features)
-  const targetFeatures = extractFeatures(newCase, narrativeText);
-  console.log('📊 Extracted 16 features:', targetFeatures);
+    // Step 1: Extract enhanced features including injuries
+    const targetFeatures = extractFeatures(newCase, narrativeText);
+    console.log('📊 Extracted features:', targetFeatures);
 
-  if (process.env.OFFLINE_MODE === 'true') {
-    console.warn('⚠️  OFFLINE_MODE enabled - using traditional valuation only');
-    return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText, strategy);
-  }
+    const injuryCategories: string[] = [];
+    if (targetFeatures.hasSoftTissue) injuryCategories.push('soft_tissue');
+    if (targetFeatures.hasSpinalInjury) injuryCategories.push('spinal');
+    if (targetFeatures.hasBrainInjury) injuryCategories.push('neurological');
+    if (targetFeatures.hasFracture) injuryCategories.push('orthopedic');
+
+    if (process.env.OFFLINE_MODE === 'true') {
+      console.warn('⚠️  OFFLINE_MODE enabled - using traditional valuation only');
+      return await createTraditionalEvaluation(newCase, targetFeatures, narrativeText, strategy);
+    }
 
     // Step 2: Get embedding for similarity search
     const featureString = serializeFeaturesForEmbedding(targetFeatures);
@@ -140,8 +153,15 @@ export async function calcEvaluatorAI(
       regressionResult,
       deductionResult,
       similarCases.length,
-      ignoreWeights
+      ignoreWeights,
+      targetFeatures
     );
+    const injuryAnalysis = {
+      primary: targetFeatures.primaryInjuryType,
+      count: targetFeatures.injuryTypeCount,
+      severityScore: targetFeatures.injurySeverityScore,
+      categories: injuryCategories
+    };
 
     return {
       evaluator: `$${weightedPrediction.toLocaleString()}`,
@@ -156,6 +176,7 @@ export async function calcEvaluatorAI(
       rationale,
       isNovelCase,
       traditionalValuation,
+      injuryAnalysis,
       method: isNovelCase ? 'hybrid' : 'ai',
       strategyAssessment: strategyAssessment && {
         plaintiffDiffPct: strategyAssessment.plaintiffDiffPct,
@@ -201,7 +222,7 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
     const surgeryCount = features.surgeryCount || newCase.surgeries || 0;
     const surgeryType = newCase.surgeryType || newCase.Surgery || '';
     if (surgeryCount > 0 && surgeryType) {
-      const surgeryKey = Object.keys(weights.surgeryWeights).find(key => 
+      const surgeryKey = Object.keys(weights.surgeryWeights).find(key =>
         surgeryType.toLowerCase().includes(key.toLowerCase())
       );
       if (surgeryKey) {
@@ -209,6 +230,19 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
         boost += surgeryBoost;
         console.log(`🔧 Surgery boost (${surgeryKey}): ${surgeryCount} × $${weights.surgeryWeights[surgeryKey].toLocaleString()} = $${surgeryBoost.toLocaleString()}`);
       }
+    }
+
+    // Injury severity multipliers
+    if (features.injurySeverityScore > 0) {
+      let injuryBoost = features.injurySeverityScore * 10000;
+      const primaryMult = INJURY_TYPE_MULTIPLIERS[features.primaryInjuryType] || 1;
+      injuryBoost *= primaryMult;
+      if (features.hasSpinalInjury) injuryBoost *= INJURY_CATEGORY_WEIGHTS.spinal;
+      if (features.hasBrainInjury) injuryBoost *= INJURY_CATEGORY_WEIGHTS.neurological;
+      if (features.hasFracture) injuryBoost *= INJURY_CATEGORY_WEIGHTS.orthopedic;
+      if (features.hasSoftTissue) injuryBoost *= INJURY_CATEGORY_WEIGHTS.soft_tissue;
+      boost += injuryBoost;
+      console.log(`🩻 Injury boost (${features.primaryInjuryType}): $${injuryBoost.toLocaleString()}`);
     }
     
     return boost;
@@ -235,6 +269,10 @@ async function findSimilarCasesWithFeatures(
     query_policy_bucket: targetFeatures.policyLimitRatio > 0.5 ? 'high' : 'low',
     query_tbi_level: targetFeatures.tbiSeverity,
     query_has_surgery: targetFeatures.surgeryCount > 0,
+    query_primary_injury: targetFeatures.primaryInjuryType,
+    query_has_spinal: targetFeatures.hasSpinalInjury > 0,
+    query_has_brain: targetFeatures.hasBrainInjury > 0,
+    query_has_fracture: targetFeatures.hasFracture > 0,
     result_limit: limit
   });
 
@@ -248,12 +286,29 @@ async function findSimilarCasesWithFeatures(
     return await fallbackSimilarCases(targetFeatures, limit);
   }
 
-  // Convert to format expected by regression
-  return data.map((row: any) => ({
-    features: extractFeaturesFromDbRow(row),
-    settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
-    case_id: row.case_id
-  })).filter(caseItem => caseItem.settlement > 0);
+  // Convert to format expected by regression and apply injury weighting
+  const mapped = data.map((row: any) => {
+    const features = extractFeaturesFromDbRow(row);
+    let score = row.score || 0;
+    if (features.primaryInjuryType === targetFeatures.primaryInjuryType) {
+      score *= 1.3;
+    } else if (
+      (features.hasSpinalInjury && targetFeatures.hasSpinalInjury) ||
+      (features.hasBrainInjury && targetFeatures.hasBrainInjury) ||
+      (features.hasFracture && targetFeatures.hasFracture) ||
+      (features.hasSoftTissue && targetFeatures.hasSoftTissue)
+    ) {
+      score *= 1.15;
+    }
+    return {
+      features,
+      settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
+      case_id: row.case_id,
+      score
+    };
+  }).filter(caseItem => caseItem.settlement > 0);
+
+  return mapped.sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 
 /**
@@ -338,6 +393,11 @@ async function fallbackEvaluation(
     policyLimits,
     strategy
   );
+  const injuryCategories: string[] = [];
+  if (targetFeatures.hasSoftTissue) injuryCategories.push('soft_tissue');
+  if (targetFeatures.hasSpinalInjury) injuryCategories.push('spinal');
+  if (targetFeatures.hasBrainInjury) injuryCategories.push('neurological');
+  if (targetFeatures.hasFracture) injuryCategories.push('orthopedic');
 
   const aiLowNum = parseFloat(rangeLow.replace(/[$,]/g, '')) || 0;
   const aiHighNum = parseFloat(rangeHigh.replace(/[$,]/g, '')) || 0;
@@ -357,9 +417,15 @@ async function fallbackEvaluation(
       settlementRangeHigh: rangeHigh,
       confidence: adjustedConfidence,
       nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
-      rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights),
+      rationale: generateRationale(regressionResult, deductionResult, similarCases.length, ignoreWeights, targetFeatures),
       isNovelCase: regressionResult.confidence < 70,
       traditionalValuation: undefined,
+      injuryAnalysis: {
+        primary: targetFeatures.primaryInjuryType,
+        count: targetFeatures.injuryTypeCount,
+        severityScore: targetFeatures.injurySeverityScore,
+        categories: injuryCategories
+      },
       method: 'ai',
       strategyAssessment: strategyAssessment && {
         plaintiffDiffPct: strategyAssessment.plaintiffDiffPct,
@@ -440,10 +506,11 @@ function generateRationale(
   regressionResult: RegressionResult,
   deductionResult: DeductionResult,
   caseCount: number,
-  ignoreWeights: boolean
+  ignoreWeights: boolean,
+  features?: CaseFeatures
 ): string {
   const parts = [
-    `AI analysis of ${caseCount} similar cases using 16-factor regression model.`,
+    `AI analysis of ${caseCount} similar cases using 22-factor regression model.`,
     `Base prediction: $${regressionResult.prediction.toLocaleString()} (${regressionResult.confidence}% confidence).`
   ];
 
@@ -454,6 +521,10 @@ function generateRationale(
 
   if (ignoreWeights) {
     parts.push('Surgery/injection weights disabled for testing.');
+  }
+
+  if (features) {
+    parts.push(`Primary injury type '${features.primaryInjuryType}' and severity score ${features.injurySeverityScore} influenced the valuation.`);
   }
 
   return parts.join(' ');
