@@ -75,7 +75,7 @@ export function applyDeductions(
 
   // 6. Injury and accident type mismatch (15% deduction)
   const mismatch = checkInjuryAccidentMismatch(
-    caseData.accidentType || '',
+    caseData.accidentSubType || '',
     caseData.injuryType || narrative
   );
   deductions.push({
@@ -206,10 +206,10 @@ function checkConflictingMedicalOpinions(narrative: string): boolean {
 /**
  * Check if reported injuries are inconsistent with the accident type
  */
-function checkInjuryAccidentMismatch(accidentType: string, injuries: string): boolean {
-  if (!accidentType || !injuries) return false;
+function checkInjuryAccidentMismatch(accidentSubType: string, injuries: string): boolean {
+  if (!accidentSubType || !injuries) return false;
 
-  const acc = accidentType.toLowerCase();
+  const acc = accidentSubType.toLowerCase();
   const inj = injuries.toLowerCase();
 
   const patterns: Record<string, RegExp[]> = {
