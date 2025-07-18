@@ -11,7 +11,7 @@ interface DateOfLossStepProps {
 
 const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
   // Enhanced statute of limitations checker
-  const checkStatuteOfLimitations = (dateOfLoss: string, caseType: string) => {
+  const checkStatuteOfLimitations = (dateOfLoss: string, caseTypes: string[] = []) => {
     // Return early if no date or unsupported case type
     if (!dateOfLoss) return { expired: false, message: "" };
     
@@ -36,35 +36,17 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
     let solDays = 730; // Default 2 years for most cases
     let solDescription = "2 years";
     
-    switch (caseType?.toLowerCase()) {
-      case "auto-accident":
-      case "motorcycle-accident":
-      case "bicycle-accident":
-      case "pedestrian-accident":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      case "medical-malpractice":
-        solDays = 365; // 1 year in CA
-        solDescription = "1 year";
-        break;
-      case "product-liability":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      case "premises-liability":
-      case "slip-and-fall":
-      case "trip-and-fall":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      case "wrongful-death":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      default:
-        solDays = 730; // Default 2 years
-        solDescription = "2 years";
+    const hasType = (type: string) => caseTypes.includes(type);
+
+    if (hasType('medical-malpractice')) {
+      solDays = 365;
+      solDescription = '1 year';
+    } else if (hasType('product-liability') || hasType('premises-liability') || hasType('wrongful-death') || hasType('motor-vehicle-accident') || hasType('personal-injury-general')) {
+      solDays = 730;
+      solDescription = '2 years';
+    } else {
+      solDays = 730;
+      solDescription = '2 years';
     }
     
     // Add COVID toll period for cases that were affected
@@ -90,7 +72,7 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
     return { expired: false, message: "" };
   };
 
-  const solCheck = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseType || '');
+  const solCheck = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseType || []);
   const hasWarning = solCheck.expired || solCheck.message.includes("expires in");
   const hasError = solCheck.expired || solCheck.message.includes("future") || solCheck.message.includes("Invalid");
 

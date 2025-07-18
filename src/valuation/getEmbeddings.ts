@@ -53,7 +53,7 @@ export async function getEmbedding(text: string): Promise<number[]> {
  */
 export function serializeCaseForEmbedding(caseData: any): string {
   const parts = [
-    caseData.case_type || caseData.CaseType || '',
+    Array.isArray(caseData.caseType) ? caseData.caseType.join(',') : (caseData.case_type || caseData.CaseType || ''),
     caseData.injuries || caseData.Injuries || '',
     caseData.surgery || caseData.Surgery || '',
     caseData.inject || caseData.Inject || '',

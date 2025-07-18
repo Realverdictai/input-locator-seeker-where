@@ -44,7 +44,7 @@ function generateHtmlReport(data: {
       <body>
         <h1>MEDIATOR'S CASE EVALUATION REPORT</h1>
         <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-        <p><strong>Case Type:</strong> ${data.caseData?.caseType || 'Personal Injury'}</p>
+        <p><strong>Case Type:</strong> ${Array.isArray(data.caseData?.caseType) ? data.caseData.caseType.join(', ') : (data.caseData?.caseType || 'Personal Injury')}</p>
         <p><strong>Venue:</strong> ${data.caseData?.venue || 'Not specified'}</p>
         
         <div class="summary">

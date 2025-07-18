@@ -43,6 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
       query_policy_bucket: policyBucket,
       query_tbi_level: tbiLevel,
       query_has_surgery: hasSurgery,
+      query_case_type: Array.isArray(newCase.caseType) ? newCase.caseType[0] : newCase.caseType || null,
       result_limit: limit
     });
 

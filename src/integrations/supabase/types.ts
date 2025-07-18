@@ -302,6 +302,7 @@ export type Database = {
           query_policy_bucket?: string
           query_tbi_level?: number
           query_has_surgery?: boolean
+          query_case_type?: string
           result_limit?: number
         }
         Returns: {
@@ -314,6 +315,7 @@ export type Database = {
           venue: string
           liab_pct: string
           acc_type: string
+          case_type: string
           narrative: string
           score: number
         }[]

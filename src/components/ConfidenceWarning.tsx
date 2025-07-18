@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 interface ConfidenceWarningProps {
   confidence: number;
   isNovelCase?: boolean;
-  caseType?: string;
+  caseType?: string[];
 }
 
 export function ConfidenceWarning({ confidence, isNovelCase, caseType }: ConfidenceWarningProps) {
@@ -48,7 +48,7 @@ export function ConfidenceWarning({ confidence, isNovelCase, caseType }: Confide
               <span className="font-medium text-sm">Novel Case Detected</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Case type: <span className="font-medium">{caseType}</span> has limited matches in our database.
+              Case type: <span className="font-medium">{caseType?.join(', ')}</span> has limited matches in our database.
               Consider using manual override or consulting with colleagues.
             </p>
           </div>

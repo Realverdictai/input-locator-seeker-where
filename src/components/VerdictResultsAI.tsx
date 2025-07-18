@@ -65,6 +65,9 @@ export function VerdictResultsAI({ results, caseData }: VerdictResultsAIProps) {
           <CardDescription>
             AI-powered analysis using {results.nearestCases.length > 0 ? `${results.nearestCases.length} similar cases` : 'traditional methods'}
           </CardDescription>
+          {caseData.caseType && (
+            <p className="text-sm text-muted-foreground">Case Type Considered: {caseData.caseType.join(', ')}</p>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Primary Evaluation */}

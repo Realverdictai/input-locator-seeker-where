@@ -58,7 +58,7 @@ const AccidentTypeStep = ({ formData, setFormData }: AccidentTypeStepProps) => {
     "Chemical Spill"
   ];
 
-  const isAutoCase = formData.caseType === 'auto-accident';
+  const isAutoCase = formData.caseType?.includes('motor-vehicle-accident');
   const accidentTypes = isAutoCase ? autoAccidentTypes : nonAutoAccidentTypes;
   
   // Auto-set rear-end for motor vehicle accidents if not already set

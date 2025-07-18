@@ -46,6 +46,7 @@ export interface CaseFeatures {
   nonComplianceFlag: number;
   conflictingMedicalOpinionsFlag: number;
   vehicleDamageScore: number;
+  caseType: string[];
 }
 
 /**
@@ -133,7 +134,8 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     preExistingConditionFlag,
     nonComplianceFlag,
     conflictingMedicalOpinionsFlag,
-    vehicleDamageScore
+    vehicleDamageScore,
+    caseType: caseData.caseType || []
   };
 }
 
@@ -197,6 +199,7 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `preexisting:${features.preExistingConditionFlag}`,
     `noncompliant:${features.nonComplianceFlag}`,
     `conflicting:${features.conflictingMedicalOpinionsFlag}`,
-    `damage:${features.vehicleDamageScore}`
+    `damage:${features.vehicleDamageScore}`,
+    `case:${features.caseType.join(',')}`
   ].join(' | ');
 }

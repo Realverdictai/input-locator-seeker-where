@@ -61,7 +61,7 @@ export async function calcEvaluatorAI(
     }
 
     // Step 3: Find top-K (25) similar cases using hybrid search
-    const similarCases = await findSimilarCasesWithFeatures(embedding, targetFeatures, 25);
+    const similarCases = await findSimilarCasesWithFeatures(embedding, targetFeatures, newCase.caseType || [], 25);
     
     if (similarCases.length === 0) {
       console.warn('No similar cases found, using traditional valuation');
@@ -189,6 +189,7 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
 async function findSimilarCasesWithFeatures(
   embedding: number[],
   targetFeatures: CaseFeatures,
+  caseTypes: string[],
   limit: number = 25
 ): Promise<Array<{ features: CaseFeatures; settlement: number; case_id: number }>> {
   // Use hybrid similarity search
@@ -200,6 +201,7 @@ async function findSimilarCasesWithFeatures(
     query_policy_bucket: targetFeatures.policyLimitRatio > 0.5 ? 'high' : 'low',
     query_tbi_level: targetFeatures.tbiSeverity,
     query_has_surgery: targetFeatures.surgeryCount > 0,
+    query_case_type: caseTypes[0] || null,
     result_limit: limit
   });
 
@@ -210,7 +212,7 @@ async function findSimilarCasesWithFeatures(
 
   if (!data || data.length === 0) {
     console.warn('No cases returned from hybrid search, trying fallback...');
-    return await fallbackSimilarCases(targetFeatures, limit);
+    return await fallbackSimilarCases(targetFeatures, caseTypes, limit);
   }
 
   // Convert to format expected by regression
@@ -226,15 +228,21 @@ async function findSimilarCasesWithFeatures(
  */
 async function fallbackSimilarCases(
   targetFeatures: CaseFeatures,
+  caseTypes: string[],
   limit: number
 ): Promise<Array<{ features: CaseFeatures; settlement: number; case_id: number }>> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('v_case_flat')
     .select('*')
     .not('settlement', 'is', null)
     .gt('settlement', 0)
-    .eq('is_outlier', false) // Exclude outliers
-    .limit(limit * 2); // Get more for filtering
+    .eq('is_outlier', false);
+
+  if (caseTypes[0]) {
+    query = query.eq('case_type', caseTypes[0]);
+  }
+
+  const { data, error } = await query.limit(limit * 2);
 
   if (error) throw error;
 
@@ -267,7 +275,8 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
     venue: row.venue,
     dol: row.dol,
     narrative: row.narrative,
-    damageScore: 0
+    damageScore: 0,
+    caseType: [row.case_type]
   }, row.narrative);
 }
 
@@ -283,7 +292,7 @@ async function fallbackEvaluation(
   
   const ignoreWeights = process.env.IGNORE_WEIGHTS === 'true';
   
-  const similarCases = await fallbackSimilarCases(targetFeatures, 25);
+  const similarCases = await fallbackSimilarCases(targetFeatures, newCase.caseType || [], 25);
   const regressionResult = fitRidgeRegression(targetFeatures, similarCases, 0.8);
   
   // Apply weights boost (same as main path)

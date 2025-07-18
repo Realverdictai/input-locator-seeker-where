@@ -1,6 +1,6 @@
 export interface CaseData {
   // New wizard fields
-  caseType?: string;
+  caseType?: string[];
   otherCaseType?: string;
   injuryTypes?: string[];
   otherInjuryType?: string;
@@ -86,6 +86,18 @@ export interface CaseData {
   defendantVehicle?: string;
   plaintiffVehicleSize?: string;
   defendantVehicleSize?: string;
+
+  // Product liability details
+  productName?: string;
+  defectDescription?: string;
+
+  // Medical malpractice details
+  providerName?: string;
+  malpracticeDetails?: string;
+
+  // Premises liability details
+  premisesLocation?: string;
+  hazardDescription?: string;
 }
 
 export interface PolicyInfo {

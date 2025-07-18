@@ -30,7 +30,7 @@ const FinalReviewStep = ({ formData, setFormData }: FinalReviewStepProps) => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <strong>Case Type:</strong> {formData.caseType || 'Not specified'}
+              <strong>Case Type:</strong> {formData.caseType?.join(', ') || 'Not specified'}
             </div>
             <div>
               <strong>Date of Loss:</strong> {formData.dateOfLoss || 'Not specified'}

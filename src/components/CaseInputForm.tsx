@@ -15,6 +15,9 @@ import MedicalTreatmentStep from "./wizard-steps/MedicalTreatmentStep";
 import SpecialsEarningsStep from "./wizard-steps/SpecialsEarningsStep";
 import LegalInsuranceStep from "./wizard-steps/LegalInsuranceStep";
 import FinalReviewStep from "./wizard-steps/FinalReviewStep";
+import ProductLiabilityStep from "./wizard-steps/ProductLiabilityStep";
+import MedicalMalpracticeStep from "./wizard-steps/MedicalMalpracticeStep";
+import PremisesLiabilityStep from "./wizard-steps/PremisesLiabilityStep";
 import DocumentUploadStep from "./wizard-steps/DocumentUploadStep";
 import SettlementStrategyStep from "./wizard-steps/SettlementStrategyStep";
 
@@ -79,7 +82,7 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
     // Allow evaluation if narrative text is provided or required fields are filled
     const hasNarrative = !!(formData.narrative && formData.narrative.trim());
     const basicValid = !!(
-      formData.caseType &&
+      formData.caseType && formData.caseType.length > 0 &&
       formData.injuryTypes &&
       formData.injuryTypes.length > 0
     );
@@ -92,6 +95,11 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
     });
     return isValid;
   };
+
+  const isMotorVehicle = formData.caseType?.includes('motor-vehicle-accident');
+  const isProduct = formData.caseType?.includes('product-liability');
+  const isMedical = formData.caseType?.includes('medical-malpractice');
+  const isPremises = formData.caseType?.includes('premises-liability');
 
   const steps = [
     {
@@ -152,6 +160,21 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       component: <VehicleInfoStep formData={formData} setFormData={setFormData} />
     },
     {
+      title: "Product Details",
+      description: "Information about the defective product",
+      component: <ProductLiabilityStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: "Medical Malpractice Details",
+      description: "Provider information and alleged negligence",
+      component: <MedicalMalpracticeStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: "Premises Details",
+      description: "Location and hazard description",
+      component: <PremisesLiabilityStep formData={formData} setFormData={setFormData} />
+    },
+    {
       title: "Liability & Impact",
       description: "Define liability and impact severity details",
       component: <LiabilityImpactStep formData={formData} setFormData={setFormData} />
@@ -178,9 +201,18 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
     }
   ];
 
+  const filteredSteps = steps.filter(step => {
+    if (step.title === 'Vehicle Info') return isMotorVehicle;
+    if (step.title === 'Product Details') return isProduct;
+    if (step.title === 'Medical Malpractice Details') return isMedical;
+    if (step.title === 'Premises Details') return isPremises;
+    if (step.title === 'Accident Type (Optional)') return isMotorVehicle || isPremises;
+    return true;
+  });
+
   return (
-    <FormWizard 
-      steps={steps}
+    <FormWizard
+      steps={filteredSteps}
       onComplete={handleComplete}
       isLoading={isLoading}
       canProceed={isFormValid()}
