@@ -3,7 +3,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import { getEmbedding, serializeCaseForEmbedding } from './getEmbeddings';
+import { getEmbedding } from './getEmbeddings';
 import { extractFeatures, serializeFeaturesForEmbedding, CaseFeatures } from './featureExtractor';
 import { fitRidgeRegression, RegressionResult } from './ridgeRegression';
 import { applyDeductions, DeductionResult } from './deductionEngine';
