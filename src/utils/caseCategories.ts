@@ -8,3 +8,4 @@ export const caseCategories = [
   { value: 'personal-injury-general', label: 'Personal Injury (General)' },
   { value: 'other', label: 'Other' }
 ];
+
