@@ -215,12 +215,22 @@ async function findSimilarCasesWithFeatures(
     return await fallbackSimilarCases(targetFeatures, caseTypes, limit);
   }
 
-  // Convert to format expected by regression
-  return data.map((row: any) => ({
-    features: extractFeaturesFromDbRow(row),
-    settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
-    case_id: row.case_id
-  })).filter(caseItem => caseItem.settlement > 0);
+  // Convert to format expected by regression and apply case type weighting
+  const mapped = data.map((row: any) => {
+    const features = extractFeaturesFromDbRow(row);
+    let score = row.score || 0;
+    if (caseTypes.includes(row.case_type)) {
+      score *= 1.4;
+    }
+    return {
+      features,
+      settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
+      case_id: row.case_id,
+      score
+    };
+  }).filter(caseItem => caseItem.settlement > 0);
+
+  return mapped.sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 
 /**
@@ -238,8 +248,10 @@ async function fallbackSimilarCases(
     .gt('settlement', 0)
     .eq('is_outlier', false);
 
-  if (caseTypes[0]) {
+  if (caseTypes.length === 1) {
     query = query.eq('case_type', caseTypes[0]);
+  } else if (caseTypes.length > 1) {
+    query = query.in('case_type', caseTypes);
   }
 
   const { data, error } = await query.limit(limit * 2);
