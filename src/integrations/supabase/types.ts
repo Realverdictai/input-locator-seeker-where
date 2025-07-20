@@ -303,6 +303,10 @@ export type Database = {
           query_tbi_level?: number
           query_has_surgery?: boolean
           query_case_type?: string
+          query_primary_injury?: string
+          query_has_spinal?: boolean
+          query_has_brain?: boolean
+          query_has_fracture?: boolean
           result_limit?: number
         }
         Returns: {

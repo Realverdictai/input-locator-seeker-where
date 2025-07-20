@@ -35,6 +35,15 @@ const handler = async (req: Request): Promise<Response> => {
     const policyBucket = policyLimits > 500000 ? 'high' : policyLimits > 100000 ? 'mid' : 'low';
     const tbiLevel = newCase.tbiLevel || 0;
     const hasSurgery = !!(newCase.Surgery && newCase.Surgery !== 'None');
+    const injuryTypes = newCase.injuryTypes && newCase.injuryTypes.length > 0
+      ? newCase.injuryTypes
+      : newCase.injuryType
+      ? [newCase.injuryType]
+      : [];
+    const primaryInjury = injuryTypes[0] || null;
+    const hasSpinal = injuryTypes.some((i: string) => i.toLowerCase().includes('spinal'));
+    const hasBrain = injuryTypes.some((i: string) => /brain|tbi/i.test(i));
+    const hasFracture = injuryTypes.some((i: string) => /fracture|broken/i.test(i));
 
     // Hybrid similarity search query
     const { data, error } = await supabase.rpc('hybrid_case_similarity', {
@@ -44,6 +53,10 @@ const handler = async (req: Request): Promise<Response> => {
       query_tbi_level: tbiLevel,
       query_has_surgery: hasSurgery,
       query_case_type: Array.isArray(newCase.caseType) ? newCase.caseType[0] : newCase.caseType || null,
+      query_primary_injury: primaryInjury,
+      query_has_spinal: hasSpinal,
+      query_has_brain: hasBrain,
+      query_has_fracture: hasFracture,
       result_limit: limit
     });
 

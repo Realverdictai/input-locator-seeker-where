@@ -47,6 +47,12 @@ export interface CaseFeatures {
   conflictingMedicalOpinionsFlag: number;
   vehicleDamageScore: number;
   caseType: string[];
+  primaryInjuryType: string;
+  injuryTypeCount: number;
+  hasSpinalInjury: number;
+  hasBrainInjury: number;
+  hasFracture: number;
+  hasSoftTissue: number;
 }
 
 /**
@@ -117,6 +123,20 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
 
   const vehicleDamageScore = caseData.damageScore || 0;
 
+  const injuryArray: string[] =
+    caseData.injuryTypes && caseData.injuryTypes.length > 0
+      ? caseData.injuryTypes
+      : caseData.injuryType
+      ? [caseData.injuryType]
+      : [];
+  const normalizedInjuries = injuryArray.map(i => i.toLowerCase());
+  const primaryInjuryType = normalizedInjuries[0] || 'soft-tissue';
+  const injuryTypeCount = injuryArray.length;
+  const hasSpinalInjury = normalizedInjuries.some(i => i.includes('spinal')) ? 1 : 0;
+  const hasBrainInjury = normalizedInjuries.some(i => i.includes('brain') || i.includes('tbi')) ? 1 : 0;
+  const hasFracture = normalizedInjuries.some(i => i.includes('fracture') || i.includes('broken')) ? 1 : 0;
+  const hasSoftTissue = normalizedInjuries.some(i => i.includes('soft')) ? 1 : 0;
+
   return {
     howellSpecials: caseData.howell || caseData.howell_num || 0,
     surgeryCount: caseData.surgery_count || surgeryList.length || 0,
@@ -135,7 +155,13 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     nonComplianceFlag,
     conflictingMedicalOpinionsFlag,
     vehicleDamageScore,
-    caseType: caseData.caseType || []
+    caseType: caseData.caseType || [],
+    primaryInjuryType,
+    injuryTypeCount,
+    hasSpinalInjury,
+    hasBrainInjury,
+    hasFracture,
+    hasSoftTissue
   };
 }
 
@@ -200,6 +226,10 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `noncompliant:${features.nonComplianceFlag}`,
     `conflicting:${features.conflictingMedicalOpinionsFlag}`,
     `damage:${features.vehicleDamageScore}`,
-    `case:${features.caseType.join(',')}`
+    `case:${features.caseType.join(',')}`,
+    `injury:${features.primaryInjuryType}`,
+    `spinal:${features.hasSpinalInjury}`,
+    `brain:${features.hasBrainInjury}`,
+    `fracture:${features.hasFracture}`
   ].join(' | ');
 }

@@ -202,6 +202,10 @@ async function findSimilarCasesWithFeatures(
     query_tbi_level: targetFeatures.tbiSeverity,
     query_has_surgery: targetFeatures.surgeryCount > 0,
     query_case_type: caseTypes[0] || null,
+    query_primary_injury: targetFeatures.primaryInjuryType,
+    query_has_spinal: targetFeatures.hasSpinalInjury > 0,
+    query_has_brain: targetFeatures.hasBrainInjury > 0,
+    query_has_fracture: targetFeatures.hasFracture > 0,
     result_limit: limit
   });
 
@@ -288,7 +292,8 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
     dol: row.dol,
     narrative: row.narrative,
     damageScore: 0,
-    caseType: [row.case_type]
+    caseType: [row.case_type],
+    injuryTypes: row.injuries ? row.injuries.split(/[,;]/).map((s: string) => s.trim()) : []
   }, row.narrative);
 }
 
