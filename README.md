@@ -34,6 +34,7 @@ npm i
 
 # If you see lint failures, ensure dev dependencies are installed:
 npm install
+# In particular, a missing `@eslint/js` package indicates dev dependencies need to be reinstalled
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
