@@ -1,7 +1,8 @@
 export interface CaseData {
   // New wizard fields
-  caseType?: string;
-  otherCaseType?: string;
+  caseCategory?: string;
+  accidentSubType?: string;
+  combinedCaseType?: string;
   injuryTypes?: string[];
   otherInjuryType?: string;
   otherInjuryText?: string;
@@ -51,7 +52,6 @@ export interface CaseData {
   multipleDefendants?: boolean;
   defendantPolicies?: PolicyInfo[];
   umUimCoverage?: number;
-  accidentType?: string;
   impactSeverity?: number;
   annualIncome?: number;
   futureSurgeryRecommended?: boolean;

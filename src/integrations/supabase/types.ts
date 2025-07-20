@@ -189,8 +189,8 @@ export type Database = {
           embedding?: number[] | null;
           created_at?: string;
         };
-        Relationships: [];
-      };
+        Relationships: []
+      }
       clarify_answers: {
         Row: {
           id: string;
