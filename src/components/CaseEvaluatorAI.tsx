@@ -115,10 +115,10 @@ export function CaseEvaluatorAI({ caseData }: CaseEvaluatorAIProps) {
       {results && (
         <div className="space-y-6">
           {/* Confidence Warning */}
-          <ConfidenceWarning 
+          <ConfidenceWarning
             confidence={results.confidence}
             isNovelCase={results.isNovelCase}
-            caseType={caseData.caseType}
+            caseType={caseData.combinedCaseType}
           />
           
           {/* Manual Override */}

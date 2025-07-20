@@ -152,3 +152,5 @@ AI evaluations compare your settlement expectations to the AI settlement range. 
 
 Use this analysis to refine your negotiation strategy.
 
+## New Case Category Step
+This version merges case type and accident type into a single hierarchical selection used for AI analysis.

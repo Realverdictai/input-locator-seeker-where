@@ -12,5 +12,18 @@
     "Mild": 15000,
     "Moderate": 50000,
     "Severe": 120000
+  },
+  "caseCategoryMultipliers": {
+    "Personal Injury": 1.0,
+    "Workers Compensation": 0.85,
+    "Medical Malpractice": 1.4,
+    "Product Liability": 1.2,
+    "Premises Liability": 0.9
+  },
+  "accidentComplexityScores": {
+    "Motor Vehicle": 1.0,
+    "Slip and Fall": 0.8,
+    "Medical Malpractice - Surgical Error": 2.0,
+    "Product Liability - Pharmaceutical": 1.8
   }
 }

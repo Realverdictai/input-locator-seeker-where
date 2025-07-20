@@ -200,6 +200,27 @@ export function VerdictResultsAI({ results, caseData }: VerdictResultsAIProps) {
             </Card>
           )}
 
+          {/* Case Category Analysis */}
+          {caseData.caseCategory && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Case Category Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p>
+                  Selected Category: <strong>{caseData.caseCategory}</strong>
+                </p>
+                <p>
+                  Accident Type: <strong>{caseData.accidentSubType}</strong>
+                </p>
+                {results.rationale && (
+                  <p className="text-muted-foreground">
+                    {"Case category weighting applied in valuation."}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
           {/* Injury Type Analysis */}
           {results.injuryAnalysis && (
             <Card>
