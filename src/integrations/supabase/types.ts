@@ -155,7 +155,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "case_evaluations"
             referencedColumns: ["id"]
-          }
+          },
         ]
       },
       uploaded_docs: {
