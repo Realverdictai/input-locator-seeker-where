@@ -151,3 +151,4 @@ AI evaluations compare your settlement expectations to the AI settlement range. 
 
 Use this analysis to refine your negotiation strategy.
 
+
