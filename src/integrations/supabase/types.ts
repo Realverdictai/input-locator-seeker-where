@@ -37,7 +37,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
+      };
       cases_master: {
         Row: {
           acc_type: string | null
