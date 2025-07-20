@@ -190,7 +190,7 @@ export type Database = {
           created_at?: string;
         };
         Relationships: []
-      };
+      }
       clarify_answers: {
         Row: {
           id: string;
@@ -214,7 +214,7 @@ export type Database = {
           created_at?: string;
         };
         Relationships: []
-      };
+      }
       profiles: {
         Row: {
           bar_number: string | null
