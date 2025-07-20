@@ -53,6 +53,7 @@ export interface CaseFeatures {
   hasBrainInjury: number;
   hasFracture: number;
   hasSoftTissue: number;
+  injurySeverityScore: number;
 }
 
 /**
@@ -123,19 +124,37 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
 
   const vehicleDamageScore = caseData.damageScore || 0;
 
-  const injuryArray: string[] =
-    caseData.injuryTypes && caseData.injuryTypes.length > 0
-      ? caseData.injuryTypes
-      : caseData.injuryType
-      ? [caseData.injuryType]
-      : [];
-  const normalizedInjuries = injuryArray.map(i => i.toLowerCase());
-  const primaryInjuryType = normalizedInjuries[0] || 'soft-tissue';
-  const injuryTypeCount = injuryArray.length;
-  const hasSpinalInjury = normalizedInjuries.some(i => i.includes('spinal')) ? 1 : 0;
-  const hasBrainInjury = normalizedInjuries.some(i => i.includes('brain') || i.includes('tbi')) ? 1 : 0;
-  const hasFracture = normalizedInjuries.some(i => i.includes('fracture') || i.includes('broken')) ? 1 : 0;
-  const hasSoftTissue = normalizedInjuries.some(i => i.includes('soft')) ? 1 : 0;
+  // ---- Injury type processing ----
+  let injuryTypes: string[] = [];
+  if (Array.isArray(caseData.injuryTypes)) {
+    injuryTypes = caseData.injuryTypes;
+  } else if (typeof caseData.injuryType === 'string') {
+    injuryTypes = [caseData.injuryType];
+  } else if (typeof caseData.injuries === 'string') {
+    injuryTypes = caseData.injuries
+      .split(/[;,]/)
+      .map((i: string) => i.trim())
+      .filter(Boolean);
+  }
+  injuryTypes = injuryTypes.map(i => i.toLowerCase());
+
+  let primaryInjuryType = '';
+  let injurySeverityScore = 0;
+  let highestScore = 0;
+  injuryTypes.forEach(type => {
+    const score = INJURY_SEVERITY_SCORES[type] ?? INJURY_SEVERITY_SCORES['other'];
+    injurySeverityScore += score;
+    if (score > highestScore) {
+      highestScore = score;
+      primaryInjuryType = type;
+    }
+  });
+
+  const hasSoftTissue = injuryTypes.some(t => ['soft-tissue', 'whiplash', 'contusion', 'strain-sprain'].includes(t)) ? 1 : 0;
+  const hasSpinalInjury = injuryTypes.some(t => ['herniated-disc', 'bulging-disc', 'spinal-cord-injury'].includes(t)) ? 1 : 0;
+  const hasBrainInjury = injuryTypes.includes('traumatic-brain-injury') ? 1 : 0;
+  const hasFracture = injuryTypes.includes('fracture') ? 1 : 0;
+  const injuryTypeCount = injuryTypes.length;
 
   return {
     howellSpecials: caseData.howell || caseData.howell_num || 0,
@@ -161,7 +180,8 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     hasSpinalInjury,
     hasBrainInjury,
     hasFracture,
-    hasSoftTissue
+    hasSoftTissue,
+    injurySeverityScore
   };
 }
 
@@ -228,8 +248,11 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `damage:${features.vehicleDamageScore}`,
     `case:${features.caseType.join(',')}`,
     `injury:${features.primaryInjuryType}`,
+    `injuryCount:${features.injuryTypeCount}`,
+    `soft:${features.hasSoftTissue}`,
     `spinal:${features.hasSpinalInjury}`,
     `brain:${features.hasBrainInjury}`,
-    `fracture:${features.hasFracture}`
+    `fracture:${features.hasFracture}`,
+    `severity:${features.injurySeverityScore}`
   ].join(' | ');
 }

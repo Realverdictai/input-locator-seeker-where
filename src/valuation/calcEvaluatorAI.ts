@@ -219,12 +219,22 @@ async function findSimilarCasesWithFeatures(
     return await fallbackSimilarCases(targetFeatures, caseTypes, limit);
   }
 
-  // Convert to format expected by regression and apply case type weighting
+  // Convert to format expected by regression and apply weighting
   const mapped = data.map((row: any) => {
     const features = extractFeaturesFromDbRow(row);
     let score = row.score || 0;
     if (caseTypes.includes(row.case_type)) {
       score *= 1.4;
+    }
+    if (features.primaryInjuryType === targetFeatures.primaryInjuryType) {
+      score *= 1.3;
+    } else if (
+      (features.hasSpinalInjury && targetFeatures.hasSpinalInjury) ||
+      (features.hasBrainInjury && targetFeatures.hasBrainInjury) ||
+      (features.hasFracture && targetFeatures.hasFracture) ||
+      (features.hasSoftTissue && targetFeatures.hasSoftTissue)
+    ) {
+      score *= 1.15;
     }
     return {
       features,
