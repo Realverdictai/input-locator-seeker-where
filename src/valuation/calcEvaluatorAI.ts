@@ -178,7 +178,9 @@ export async function calcEvaluatorAI(
 async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<number> {
   try {
     // Import weights dynamically
-    const weights = (await import('../valuation/weights.json')).default as WeightsData;
+    const weights = (await import('../valuation/weights.json')).default as WeightsData & {
+      caseCategoryMultipliers?: Record<string, number>;
+    };
     let boost = 0;
     
     // Add injection value
@@ -232,6 +234,13 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
         console.log(`🚗 Vehicle pair boost (${pairKey}): $${weights.vehiclePairWeights[pairKey].toLocaleString()}`);
       }
     }
+
+    // Case category multiplier
+    if (weights.caseCategoryMultipliers && features.caseMainCategory) {
+      const mult = weights.caseCategoryMultipliers[features.caseMainCategory] || 1;
+      boost *= mult;
+      console.log(`📂 Category multiplier (${features.caseMainCategory}): ×${mult}`);
+    }
     
     return boost;
   } catch (error) {
@@ -263,6 +272,8 @@ async function findSimilarCasesWithFeatures(
     query_has_fracture: targetFeatures.hasFracture > 0,
     query_vehicle_size_diff: targetFeatures.vehicleSizeDiff,
     query_vehicle_risk: targetFeatures.vehicleRiskFactor,
+    query_case_category: targetFeatures.caseMainCategory,
+    query_accident_sub_type: targetFeatures.accidentSubType,
     result_limit: limit
   });
 
@@ -296,6 +307,9 @@ async function findSimilarCasesWithFeatures(
     if (features.vehicleRiskFactor === targetFeatures.vehicleRiskFactor) {
       score *= 1.05;
     }
+    if (features.caseMainCategory === targetFeatures.caseMainCategory) {
+      score *= 1.25;
+    }
     return {
       features,
       settlement: parseFloat(row.settle?.replace(/[$,]/g, '') || '0') || 0,
@@ -320,6 +334,8 @@ async function fallbackSimilarCases(
     .not('settlement', 'is', null)
     .gt('settlement', 0)
     .eq('is_outlier', false) // Exclude outliers
+    .eq('case_type', targetFeatures.caseMainCategory)
+    .eq('acc_type', targetFeatures.accidentSubType)
     .limit(limit * 2); // Get more for filtering
 
   if (error) throw error;
@@ -357,7 +373,9 @@ function extractFeaturesFromDbRow(row: any): CaseFeatures {
     plaintiffVehicleSize: structuredData.plaintiffVehicleSize || '',
     defendantVehicleSize: structuredData.defendantVehicleSize || '',
     plaintiffSafetyRating: structuredData.plaintiffSafetyRating || 3,
-    defendantSafetyRating: structuredData.defendantSafetyRating || 3
+    defendantSafetyRating: structuredData.defendantSafetyRating || 3,
+    caseCategory: row.case_type || '',
+    accidentSubType: row.acc_type || ''
   }, row.narrative);
 }
 

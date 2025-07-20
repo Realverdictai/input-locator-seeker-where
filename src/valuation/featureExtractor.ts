@@ -103,6 +103,10 @@ export interface CaseFeatures {
   vehicleRiskFactor: number;
   safetyRatingScore: number;
   impactPatternScore: number;
+  caseMainCategory: string;
+  accidentSubType: string;
+  caseTypeComplexity: number;
+  caseCategoryMultiplier: number;
 }
 
 /**
@@ -246,7 +250,11 @@ export function extractFeatures(caseData: any, narrativeText?: string): CaseFeat
     vehicleSizeDiff,
     vehicleRiskFactor,
     safetyRatingScore,
-    impactPatternScore
+    impactPatternScore,
+    caseMainCategory: caseData.caseCategory || '',
+    accidentSubType: caseData.accidentSubType || '',
+    caseTypeComplexity: getCaseComplexity(caseData.caseCategory),
+    caseCategoryMultiplier: getCategoryMultiplier(caseData.caseCategory)
   };
 }
 
@@ -321,6 +329,34 @@ export function serializeFeaturesForEmbedding(features: CaseFeatures): string {
     `sizeDiff:${features.vehicleSizeDiff}`,
     `risk:${features.vehicleRiskFactor}`,
     `safety:${features.safetyRatingScore}`,
-    `impact:${features.impactPatternScore}`
+    `impact:${features.impactPatternScore}`,
+    `category:${features.caseMainCategory}`,
+    `subtype:${features.accidentSubType}`,
+    `complexity:${features.caseTypeComplexity}`,
+    `catmult:${features.caseCategoryMultiplier}`
   ].join(' | ');
+}
+
+function getCaseComplexity(category?: string): number {
+  switch (category) {
+    case 'medical-malpractice':
+      return 3;
+    case 'product-liability':
+      return 2.5;
+    case 'workers-compensation':
+      return 1.5;
+    default:
+      return 1;
+  }
+}
+
+function getCategoryMultiplier(category?: string): number {
+  const multipliers: Record<string, number> = {
+    'personal-injury': 1.0,
+    'workers-compensation': 0.85,
+    'medical-malpractice': 1.4,
+    'product-liability': 1.2,
+    'premises-liability': 0.9
+  };
+  return multipliers[category || ''] || 1.0;
 }

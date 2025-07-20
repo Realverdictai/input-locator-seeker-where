@@ -37,6 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
     const hasSurgery = !!(newCase.Surgery && newCase.Surgery !== 'None');
     const vehicleSizeDiff = newCase.vehicleSizeDiff || 0;
     const vehicleRisk = newCase.vehicleRiskFactor || 1;
+    const caseCategory = newCase.caseCategory || '';
+    const accidentSubType = newCase.accidentSubType || '';
 
     // Hybrid similarity search query
     const { data, error } = await supabase.rpc('hybrid_case_similarity', {
@@ -47,6 +49,8 @@ const handler = async (req: Request): Promise<Response> => {
       query_has_surgery: hasSurgery,
       query_vehicle_size_diff: vehicleSizeDiff,
       query_vehicle_risk: vehicleRisk,
+      query_case_category: caseCategory,
+      query_accident_sub_type: accidentSubType,
       result_limit: limit
     });
 

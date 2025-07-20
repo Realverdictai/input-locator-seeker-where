@@ -4,11 +4,10 @@ import { CaseData } from "@/types/verdict";
 import { UserType } from "@/types/auth";
 import FormWizard from "./FormWizard";
 import PartiesStep from "./wizard-steps/PartiesStep";
-import CaseTypeStep from "./wizard-steps/CaseTypeStep";
+import CaseAndAccidentTypeStep from "./wizard-steps/CaseAndAccidentTypeStep";
 import DateOfLossStep from "./wizard-steps/DateOfLossStep";
 import InjuryTypeStep from "./wizard-steps/InjuryTypeStep";
 import VenueStep from "./wizard-steps/VenueStep";
-import AccidentTypeStep from "./wizard-steps/AccidentTypeStep";
 import VehicleInfoStep from "./wizard-steps/VehicleInfoStep";
 import LiabilityImpactStep from "./wizard-steps/LiabilityImpactStep";
 import MedicalTreatmentStep from "./wizard-steps/MedicalTreatmentStep";
@@ -79,13 +78,15 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
     // Allow evaluation if narrative text is provided or required fields are filled
     const hasNarrative = !!(formData.narrative && formData.narrative.trim());
     const basicValid = !!(
-      formData.caseType &&
+      formData.caseCategory &&
+      formData.accidentSubType &&
       formData.injuryTypes &&
       formData.injuryTypes.length > 0
     );
     const isValid = hasNarrative || basicValid;
     console.log("Form validation:", {
-      caseType: formData.caseType,
+      caseCategory: formData.caseCategory,
+      accidentSubType: formData.accidentSubType,
       injuryTypes: formData.injuryTypes,
       hasNarrative,
       isValid
@@ -122,9 +123,9 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       )
     },
     {
-      title: "Case Type",
-      description: "Select the type of case you're evaluating",
-      component: <CaseTypeStep formData={formData} setFormData={setFormData} />
+      title: "Case Category",
+      description: "Choose case category and specific accident type",
+      component: <CaseAndAccidentTypeStep formData={formData} setFormData={setFormData} />
     },
     {
       title: "Date of Loss",
@@ -140,11 +141,6 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       title: "Venue (Optional)",
       description: "Choose the county where the case will be filed",
       component: <VenueStep formData={formData} setFormData={setFormData} />
-    },
-    {
-      title: "Accident Type (Optional)",
-      description: "Specify the type of accident that occurred",
-      component: <AccidentTypeStep formData={formData} setFormData={setFormData} />
     },
     {
       title: "Vehicle Info",

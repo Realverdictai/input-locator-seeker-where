@@ -90,7 +90,7 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
     return { expired: false, message: "" };
   };
 
-  const solCheck = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseType || '');
+  const solCheck = checkStatuteOfLimitations(formData.dateOfLoss || '', formData.caseCategory || '');
   const hasWarning = solCheck.expired || solCheck.message.includes("expires in");
   const hasError = solCheck.expired || solCheck.message.includes("future") || solCheck.message.includes("Invalid");
 

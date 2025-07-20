@@ -30,7 +30,7 @@ const FinalReviewStep = ({ formData, setFormData }: FinalReviewStepProps) => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <strong>Case Type:</strong> {formData.caseType || 'Not specified'}
+              <strong>Case Category:</strong> {formData.caseCategory || 'Not specified'}
             </div>
             <div>
               <strong>Date of Loss:</strong> {formData.dateOfLoss || 'Not specified'}
@@ -39,7 +39,7 @@ const FinalReviewStep = ({ formData, setFormData }: FinalReviewStepProps) => {
               <strong>Venue:</strong> {formData.venue || 'Not specified'}
             </div>
             <div>
-              <strong>Accident Type:</strong> {formData.accidentType || 'Not specified'}
+              <strong>Accident Type:</strong> {formData.accidentSubType || 'Not specified'}
             </div>
             <div>
               <strong>Injury Types:</strong> {formatArray(formData.injuryTypes)}
