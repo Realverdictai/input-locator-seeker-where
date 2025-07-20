@@ -150,7 +150,7 @@ If your environment doesn't have database access, set the environment variable `
 
 AI evaluations compare your settlement expectations to the AI settlement range. Results include color-coded guidance on plaintiff and defense alignment plus recommendations.
 
-Use this analysis to refine your negotiation strategy.
+Use this analysis to refine your negotiation strategy. The AI confidence score may adjust slightly based on alignment.
 
 ## New Case Category Step
 This version merges case type and accident type into a single hierarchical selection used for AI analysis.
