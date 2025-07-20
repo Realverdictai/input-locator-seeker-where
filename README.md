@@ -140,6 +140,7 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 3. The Document Upload wizard step lets you drop PDFs or DOCX files which are sent to `/api/uploadDocs`.
 4. If "Ask any follow-up questions" is selected, the app calls `/api/getClarifyQuestion` until it returns `NO_MORE_QUESTIONS`. Answers are saved via `/api/clarifyAnswer`.
 5. `evaluateCase()` automatically uses the uploaded docs during valuation.
+These clarifications are incorporated into the evaluation for better accuracy.
 
 ### Offline Mode
 
