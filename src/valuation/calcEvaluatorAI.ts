@@ -219,7 +219,7 @@ async function findSimilarCasesWithFeatures(
     return await fallbackSimilarCases(targetFeatures, caseTypes, limit);
   }
 
-  // Convert to format expected by regression and apply weighting
+  // Convert to format expected by regression and apply case type and injury weighting
   const mapped = data.map((row: any) => {
     const features = extractFeaturesFromDbRow(row);
     let score = row.score || 0;
