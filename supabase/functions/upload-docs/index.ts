@@ -93,9 +93,15 @@ serve(async (req) => {
 
           if (!embedRes.ok) {
             const errText = await embedRes.text();
-            console.error("OpenAI API error", errText);
+            console.error("OpenAI API error details:", {
+              status: embedRes.status,
+              statusText: embedRes.statusText,
+              response: errText,
+              hasApiKey: !!openaiKey,
+              keyPrefix: openaiKey ? openaiKey.substring(0, 10) + '...' : 'no key'
+            });
             return new Response(
-              JSON.stringify({ error: "OpenAI embedding request failed" }),
+              JSON.stringify({ error: `OpenAI embedding request failed: ${embedRes.status} ${embedRes.statusText} - ${errText}` }),
               { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
             );
           }

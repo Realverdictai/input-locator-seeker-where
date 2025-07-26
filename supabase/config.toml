@@ -1,1 +1,4 @@
 project_id = "hueccsiuyxjqupxkfhkl"
+
+[functions.upload-docs]
+verify_jwt = false
