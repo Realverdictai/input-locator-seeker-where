@@ -188,6 +188,39 @@ export type Database = {
         }
         Relationships: []
       }
+      uploaded_docs: {
+        Row: {
+          case_session_id: string
+          created_at: string
+          embedding: string | null
+          file_name: string
+          id: string
+          mime_type: string
+          storage_path: string
+          text_content: string | null
+        }
+        Insert: {
+          case_session_id: string
+          created_at?: string
+          embedding?: string | null
+          file_name: string
+          id?: string
+          mime_type: string
+          storage_path: string
+          text_content?: string | null
+        }
+        Update: {
+          case_session_id?: string
+          created_at?: string
+          embedding?: string | null
+          file_name?: string
+          id?: string
+          mime_type?: string
+          storage_path?: string
+          text_content?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_case_flat: {
@@ -337,6 +370,18 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: string
+      }
+      match_uploaded_docs: {
+        Args: {
+          query_embedding: string
+          match_count?: number
+          p_session?: string
+        }
+        Returns: {
+          file_name: string
+          snippet: string
+          similarity: number
+        }[]
       }
       sparsevec_out: {
         Args: { "": unknown }
