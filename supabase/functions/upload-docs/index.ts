@@ -129,8 +129,8 @@ serve(async (req) => {
           file_name: file.name,
           storage_path: path,
           mime_type: file.type,
-          text_content: text.slice(0, 1000),
-          embedding,
+          text_content: text.slice(0, 1000).replace(/[\u0000-\u001F\u007F-\u009F]/g, ""), // Remove control characters
+          embedding: `[${embedding.join(',')}]`, // Convert array to string representation
         });
 
         if (error) {
