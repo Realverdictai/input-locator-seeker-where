@@ -37,7 +37,7 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      };
+      }
       cases_master: {
         Row: {
           acc_type: string | null
@@ -157,63 +157,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      uploaded_docs: {
-        Row: {
-          id: string;
-          case_session_id: string;
-          file_name: string;
-          storage_path: string;
-          mime_type: string;
-          text_content: string | null;
-          embedding: number[] | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          case_session_id: string;
-          file_name: string;
-          storage_path: string;
-          mime_type: string;
-          text_content?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          case_session_id?: string;
-          file_name?: string;
-          storage_path?: string;
-          mime_type?: string;
-          text_content?: string | null;
-          embedding?: number[] | null;
-          created_at?: string;
-        };
-        Relationships: []
-      }
-      clarify_answers: {
-        Row: {
-          id: string;
-          case_session_id: string;
-          question: string | null;
-          answer: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          case_session_id: string;
-          question?: string | null;
-          answer?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          case_session_id?: string;
-          question?: string | null;
-          answer?: string | null;
-          created_at?: string;
-        };
-        Relationships: []
       }
       profiles: {
         Row: {
@@ -372,19 +315,7 @@ export type Database = {
           liab_pct: string
           acc_type: string
           narrative: string
-        score: number
-      }[]
-      }
-      match_uploaded_docs: {
-        Args: {
-          query_embedding: number[]
-          match_count?: number
-          p_session: string
-        }
-        Returns: {
-          file_name: string
-          snippet: string
-          similarity: number
+          score: number
         }[]
       }
       ivfflat_bit_support: {
