@@ -39,7 +39,7 @@ export const evaluateCase = (caseData: CaseData): VerdictEstimate => {
 
   const baseMultiplier = injuryMultipliers[caseData.injuryType as keyof typeof injuryMultipliers] || injuryMultipliers['soft-tissue'];
   const venueMultiplier = venueMultipliers[caseData.venue as keyof typeof venueMultipliers] || 1.0;
-  const accidentMultiplier = accidentTypeMultipliers[caseData.accidentType as keyof typeof accidentTypeMultipliers] || 1.0;
+  const accidentMultiplier = accidentTypeMultipliers[caseData.accidentSubType as keyof typeof accidentTypeMultipliers] || 1.0;
 
   // Calculate adjusted medical specials after Howell/Hanif deductions
   const medicalSpecials = caseData.medicalSpecials || 0;

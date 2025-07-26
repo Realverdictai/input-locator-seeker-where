@@ -4,7 +4,7 @@ import { getEmbedding } from '@/valuation/getEmbeddings';
 export async function queryDocs(caseSessionId: string, question: string) {
   const embedding = await getEmbedding(question);
   const { data, error } = await supabase.rpc('match_uploaded_docs', {
-    query_embedding: embedding,
+    query_embedding: JSON.stringify(embedding),
     match_count: 4,
     p_session: caseSessionId
   });

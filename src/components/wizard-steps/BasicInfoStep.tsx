@@ -82,10 +82,10 @@ const BasicInfoStep = ({ formData, setFormData }: BasicInfoStepProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="accidentType">Accident Type</Label>
+        <Label htmlFor="accidentSubType">Accident Type</Label>
         <Select 
-          value={formData.accidentType || ''} 
-          onValueChange={(value) => setFormData({...formData, accidentType: value})}
+          value={formData.accidentSubType || ''} 
+          onValueChange={(value) => setFormData({...formData, accidentSubType: value})}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select accident type" />

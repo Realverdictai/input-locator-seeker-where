@@ -243,12 +243,6 @@ async function findSimilarCasesWithFeatures(
     query_policy_bucket: targetFeatures.policyLimitRatio > 0.5 ? 'high' : 'low',
     query_tbi_level: targetFeatures.tbiSeverity,
     query_has_surgery: targetFeatures.surgeryCount > 0,
-    query_primary_injury: targetFeatures.primaryInjuryType,
-    query_has_spinal: targetFeatures.hasSpinalInjury > 0,
-    query_has_brain: targetFeatures.hasBrainInjury > 0,
-    query_has_fracture: targetFeatures.hasFracture > 0,
-    query_case_category: targetFeatures.caseMainCategory,
-    query_accident_sub_type: targetFeatures.accidentSubType,
     result_limit: limit
   });
 
@@ -510,6 +504,12 @@ async function createTraditionalEvaluation(
 
   const rationale = `Traditional valuation method used due to limited historical data. ${traditionalResult.method} applied with factors: ${traditionalResult.factors.join(', ')}.`;
 
+  const injuryCategories: string[] = [];
+  if (targetFeatures.hasSoftTissue) injuryCategories.push('soft_tissue');
+  if (targetFeatures.hasSpinalInjury) injuryCategories.push('spinal');
+  if (targetFeatures.hasBrainInjury) injuryCategories.push('neurological');
+  if (targetFeatures.hasFracture) injuryCategories.push('orthopedic');
+
   return {
     evaluator: `$${traditionalResult.estimatedValue.toLocaleString()}`,
     deductions: deductionResult.deductions.map(d => ({ name: d.name, pct: d.pct })),
@@ -523,6 +523,12 @@ async function createTraditionalEvaluation(
     rationale,
     isNovelCase: true,
     traditionalValuation: traditionalResult,
+    injuryAnalysis: {
+      primary: targetFeatures.primaryInjuryType,
+      count: targetFeatures.injuryTypeCount,
+      severityScore: targetFeatures.injurySeverityScore,
+      categories: injuryCategories
+    },
     method: 'traditional'
   };
 }
