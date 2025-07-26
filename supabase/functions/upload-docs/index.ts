@@ -24,15 +24,38 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log("upload-docs function called");
+
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const openaiKey = Deno.env.get("OPENAI_API_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    
+    console.log("Environment variables check:", {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey,
+      hasOpenaiKey: !!openaiKey
+    });
+
+    if (!supabaseUrl || !supabaseKey || !openaiKey) {
+      console.error("Missing required environment variables");
+      return new Response(
+        JSON.stringify({ error: "Missing required environment variables" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const form = await req.formData();
     const caseSessionId = form.get("caseSessionId")?.toString() ?? "";
     const files = form.getAll("files") as File[];
+    
+    console.log("Processing upload:", {
+      caseSessionId,
+      fileCount: files.length,
+      fileNames: files.map(f => f.name)
+    });
 
     for (const file of files) {
       try {
