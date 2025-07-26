@@ -104,6 +104,30 @@ export type Database = {
         }
         Relationships: []
       }
+      clarify_answers: {
+        Row: {
+          answer: string
+          case_session_id: string
+          created_at: string
+          id: string
+          question: string
+        }
+        Insert: {
+          answer: string
+          case_session_id: string
+          created_at?: string
+          id?: string
+          question: string
+        }
+        Update: {
+          answer?: string
+          case_session_id?: string
+          created_at?: string
+          id?: string
+          question?: string
+        }
+        Relationships: []
+      }
       mediation_sessions: {
         Row: {
           created_at: string
