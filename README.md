@@ -142,4 +142,15 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 5. `evaluateCase()` automatically uses the uploaded docs during valuation.
 
 ## New Case Category Step
-This version merges case type and accident type into a single hierarchical selection used for AI analysis.
+This version merges case type and accident sub-type into a single hierarchical
+selection used for AI analysis. The categories were restructured to eliminate
+overlap:
+
+- **Personal Injury** – Motor Vehicle, Dog Bite, Assault/Battery
+- **Workers Compensation** – Industrial Accident, Repetitive Stress,
+  Chemical Exposure
+- **Medical Malpractice** – Surgical Error, Misdiagnosis, Birth Injury,
+  Medication Error
+- **Product Liability** – Defective Auto Part, Pharmaceutical, Consumer Product
+- **Premises Liability** – Slip/Trip & Fall, Negligent Security,
+  Dangerous Condition
