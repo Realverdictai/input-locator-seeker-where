@@ -14,7 +14,6 @@ interface CaseAndAccidentTypeStepProps {
   setFormData: (data: Partial<CaseData>) => void;
 }
 
-
 const CaseAndAccidentTypeStep = ({ formData, setFormData }: CaseAndAccidentTypeStepProps) => {
   const handleCategoryChange = (value: string) => {
     setFormData({
