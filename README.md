@@ -144,7 +144,7 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 ## New Case Category Step
 This version merges case type and accident sub-type into a single hierarchical
 selection used for AI analysis. The categories are defined in
-`src/utils/caseCategories.ts` and organized to avoid overlap:
+`src/utils/caseCategories.ts` and organized to eliminate overlap:
 
 - **Motor Vehicle / Transportation** – Auto Accident, Motorcycle Accident, Commercial Truck Accident,
   Bicycle Accident, Pedestrian Accident, Rideshare Accident, Boating/Maritime Accident,
