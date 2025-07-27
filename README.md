@@ -143,14 +143,20 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 
 ## New Case Category Step
 This version merges case type and accident sub-type into a single hierarchical
-selection used for AI analysis. The categories were restructured to eliminate
-overlap:
+selection used for AI analysis. Each major area contains a comprehensive list of
+sub‑types with no overlap:
 
-- **Personal Injury** – Motor Vehicle, Dog Bite, Assault/Battery
-- **Workers Compensation** – Industrial Accident, Repetitive Stress,
-  Chemical Exposure
+- **Personal Injury** – Auto Accident, Motorcycle Accident, Commercial Truck Accident,
+  Bicycle Accident, Pedestrian Accident, Rideshare Accident, Boating/Maritime Accident,
+  Aviation Accident, Train/Railroad Accident, Dog Bite, Assault/Battery,
+  Sports/Recreation Injury, School or Daycare Incident, Government Liability,
+  Defamation/Libel, Wrongful Death, Other
+- **Workers Compensation** – Workplace Accident, Construction Accident,
+  Repetitive Stress, Chemical Exposure
 - **Medical Malpractice** – Surgical Error, Misdiagnosis, Birth Injury,
-  Medication Error
-- **Product Liability** – Defective Auto Part, Pharmaceutical, Consumer Product
-- **Premises Liability** – Slip/Trip & Fall, Negligent Security,
-  Dangerous Condition
+  Medication Error, Anesthesia Error, Nursing Home Neglect, Nursing Home Abuse,
+  Hospital Negligence
+- **Product Liability** – Defective Auto Part, Consumer Product, Pharmaceutical,
+  Defective Medical Device, Toxic Exposure, Food Poisoning
+- **Premises Liability** – Slip and Fall, Trip and Fall, Dangerous Condition,
+  Negligent Security, Homeowner Premises
