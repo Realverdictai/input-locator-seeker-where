@@ -141,8 +141,8 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 4. If "Ask any follow-up questions" is selected, the app calls `/api/getClarifyQuestion` until it returns `NO_MORE_QUESTIONS`. Answers are saved via `/api/clarifyAnswer`.
 5. `evaluateCase()` automatically uses the uploaded docs during valuation.
 
-## New Case Category Step
-selection used for AI analysis. The categories are defined in
+## Case Category Step
+The user's selection is used for AI analysis. The categories are defined in
 `src/utils/caseCategories.ts` with these unified groups:
 
 - **Personal Injury** – Motor Vehicle, Dog Bite, Assault/Battery
