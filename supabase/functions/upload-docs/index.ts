@@ -129,7 +129,11 @@ serve(async (req) => {
           file_name: file.name,
           storage_path: path,
           mime_type: file.type,
-          text_content: text.slice(0, 1000).replace(/[\u0000-\u001F\u007F-\u009F]/g, ""), // Remove control characters
+          // Remove control characters from the extracted text
+          text_content: text
+            .slice(0, 1000)
+            // eslint-disable-next-line no-control-regex
+            .replace(/[\x00-\x1F\x7F-\x9F]/g, ""),
           embedding, // Keep as array for vector operations
         });
 

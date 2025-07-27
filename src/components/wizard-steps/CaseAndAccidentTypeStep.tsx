@@ -12,9 +12,8 @@ const hierarchy: Record<string, { label: string; sub: { value: string; label: st
     label: "Personal Injury",
     sub: [
       { value: "motor-vehicle", label: "Motor Vehicle" },
-      { value: "slip-fall", label: "Slip & Fall" },
       { value: "dog-bite", label: "Dog Bite" },
-      { value: "premises-liability", label: "Premises Liability" }
+      { value: "assault-battery", label: "Assault/Battery" }
     ]
   },
   "workers-compensation": {
@@ -30,22 +29,24 @@ const hierarchy: Record<string, { label: string; sub: { value: string; label: st
     sub: [
       { value: "surgical-error", label: "Surgical Error" },
       { value: "misdiagnosis", label: "Misdiagnosis" },
-      { value: "birth-injury", label: "Birth Injury" }
+      { value: "birth-injury", label: "Birth Injury" },
+      { value: "medication-error", label: "Medication Error" }
     ]
   },
   "product-liability": {
     label: "Product Liability",
     sub: [
-      { value: "defective-auto-parts", label: "Defective Auto Parts" },
+      { value: "defective-auto-part", label: "Defective Auto Part" },
       { value: "pharmaceutical", label: "Pharmaceutical" },
-      { value: "consumer-products", label: "Consumer Products" }
+      { value: "consumer-product", label: "Consumer Product" }
     ]
   },
   "premises-liability": {
     label: "Premises Liability",
     sub: [
-      { value: "trip-fall", label: "Trip & Fall" },
-      { value: "negligent-security", label: "Negligent Security" }
+      { value: "slip-trip-fall", label: "Slip/Trip & Fall" },
+      { value: "negligent-security", label: "Negligent Security" },
+      { value: "dangerous-condition", label: "Dangerous Condition" }
     ]
   }
 };
