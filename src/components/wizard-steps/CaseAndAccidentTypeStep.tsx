@@ -8,8 +8,8 @@ interface CaseAndAccidentTypeStepProps {
 }
 
 const hierarchy: Record<string, { label: string; sub: { value: string; label: string }[] }> = {
-  "personal-injury": {
-    label: "Personal Injury",
+  "motor-vehicle": {
+    label: "Motor Vehicle / Transportation",
     sub: [
       { value: "auto-accident", label: "Auto Accident" },
       { value: "motorcycle-accident", label: "Motorcycle Accident" },
@@ -19,15 +19,48 @@ const hierarchy: Record<string, { label: string; sub: { value: string; label: st
       { value: "rideshare-accident", label: "Rideshare Accident" },
       { value: "boating-accident", label: "Boating/Maritime Accident" },
       { value: "aviation-accident", label: "Aviation Accident" },
-      { value: "train-accident", label: "Train/Railroad Accident" },
-      { value: "dog-bite", label: "Dog Bite" },
-      { value: "assault-battery", label: "Assault/Battery" },
-      { value: "sports-injury", label: "Sports/Recreation Injury" },
-      { value: "school-daycare", label: "School or Daycare Incident" },
-      { value: "government-liability", label: "Government Liability" },
-      { value: "defamation-libel", label: "Defamation/Libel" },
-      { value: "wrongful-death", label: "Wrongful Death" },
-      { value: "other-personal", label: "Other" }
+      { value: "train-accident", label: "Train/Railroad Accident" }
+    ]
+  },
+  "premises-liability": {
+    label: "Premises Liability",
+    sub: [
+      { value: "slip-fall", label: "Slip and Fall" },
+      { value: "trip-fall", label: "Trip and Fall" },
+      { value: "dangerous-condition", label: "Dangerous Condition" },
+      { value: "negligent-security", label: "Negligent Security" },
+      { value: "swimming-pool", label: "Swimming Pool Accident" },
+      { value: "homeowner-premises", label: "Homeowner Premises" }
+    ]
+  },
+  "medical-malpractice": {
+    label: "Medical Malpractice",
+    sub: [
+      { value: "surgical-error", label: "Surgical Error" },
+      { value: "misdiagnosis", label: "Misdiagnosis" },
+      { value: "birth-injury", label: "Birth Injury" },
+      { value: "medication-error", label: "Medication Error" },
+      { value: "anesthesia-error", label: "Anesthesia Error" },
+      { value: "hospital-negligence", label: "Hospital Negligence" },
+      { value: "informed-consent", label: "Lack of Informed Consent" }
+    ]
+  },
+  "nursing-home": {
+    label: "Nursing Home",
+    sub: [
+      { value: "nursing-home-neglect", label: "Nursing Home Neglect" },
+      { value: "nursing-home-abuse", label: "Nursing Home Abuse" }
+    ]
+  },
+  "product-liability": {
+    label: "Product Liability",
+    sub: [
+      { value: "defective-auto-part", label: "Defective Auto Part" },
+      { value: "consumer-product", label: "Consumer Product" },
+      { value: "medical-device", label: "Defective Medical Device" },
+      { value: "pharmaceutical", label: "Pharmaceutical" },
+      { value: "toxic-exposure", label: "Toxic Exposure" },
+      { value: "food-poisoning", label: "Food Poisoning" }
     ]
   },
   "workers-compensation": {
@@ -39,38 +72,22 @@ const hierarchy: Record<string, { label: string; sub: { value: string; label: st
       { value: "chemical-exposure", label: "Chemical Exposure" }
     ]
   },
-  "medical-malpractice": {
-    label: "Medical Malpractice",
+  "intentional-tort": {
+    label: "Intentional Tort",
     sub: [
-      { value: "surgical-error", label: "Surgical Error" },
-      { value: "misdiagnosis", label: "Misdiagnosis" },
-      { value: "birth-injury", label: "Birth Injury" },
-      { value: "medication-error", label: "Medication Error" },
-      { value: "anesthesia-error", label: "Anesthesia Error" },
-      { value: "nursing-home-neglect", label: "Nursing Home Neglect" },
-      { value: "nursing-home-abuse", label: "Nursing Home Abuse" },
-      { value: "hospital-negligence", label: "Hospital Negligence" }
+      { value: "assault-battery", label: "Assault/Battery" },
+      { value: "defamation-libel", label: "Defamation/Libel" }
     ]
   },
-  "product-liability": {
-    label: "Product Liability",
+  "other-personal-injury": {
+    label: "Other Personal Injury",
     sub: [
-      { value: "defective-auto-part", label: "Defective Auto Part" },
-      { value: "consumer-product", label: "Consumer Product" },
-      { value: "pharmaceutical", label: "Pharmaceutical" },
-      { value: "medical-device", label: "Defective Medical Device" },
-      { value: "toxic-exposure", label: "Toxic Exposure" },
-      { value: "food-poisoning", label: "Food Poisoning" }
-    ]
-  },
-  "premises-liability": {
-    label: "Premises Liability",
-    sub: [
-      { value: "slip-fall", label: "Slip and Fall" },
-      { value: "trip-fall", label: "Trip and Fall" },
-      { value: "dangerous-condition", label: "Dangerous Condition" },
-      { value: "negligent-security", label: "Negligent Security" },
-      { value: "homeowner-premises", label: "Homeowner Premises" }
+      { value: "dog-bite", label: "Dog Bite" },
+      { value: "sports-injury", label: "Sports/Recreation Injury" },
+      { value: "school-daycare", label: "School or Daycare Incident" },
+      { value: "government-liability", label: "Government Liability" },
+      { value: "wrongful-death", label: "Wrongful Death" },
+      { value: "other", label: "Other" }
     ]
   }
 };

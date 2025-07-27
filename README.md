@@ -143,20 +143,20 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 
 ## New Case Category Step
 This version merges case type and accident sub-type into a single hierarchical
-selection used for AI analysis. Each major area contains a comprehensive list of
-sub‑types with no overlap:
+selection used for AI analysis. The categories are organized to avoid overlap:
 
-- **Personal Injury** – Auto Accident, Motorcycle Accident, Commercial Truck Accident,
+- **Motor Vehicle / Transportation** – Auto Accident, Motorcycle Accident, Commercial Truck Accident,
   Bicycle Accident, Pedestrian Accident, Rideshare Accident, Boating/Maritime Accident,
-  Aviation Accident, Train/Railroad Accident, Dog Bite, Assault/Battery,
-  Sports/Recreation Injury, School or Daycare Incident, Government Liability,
-  Defamation/Libel, Wrongful Death, Other
+  Aviation Accident, Train/Railroad Accident
+- **Premises Liability** – Slip and Fall, Trip and Fall, Dangerous Condition,
+  Negligent Security, Swimming Pool Accident, Homeowner Premises
+- **Medical Malpractice** – Surgical Error, Misdiagnosis, Birth Injury,
+  Medication Error, Anesthesia Error, Hospital Negligence, Lack of Informed Consent
+- **Nursing Home** – Nursing Home Neglect, Nursing Home Abuse
+- **Product Liability** – Defective Auto Part, Consumer Product, Defective Medical Device,
+  Pharmaceutical, Toxic Exposure, Food Poisoning
 - **Workers Compensation** – Workplace Accident, Construction Accident,
   Repetitive Stress, Chemical Exposure
-- **Medical Malpractice** – Surgical Error, Misdiagnosis, Birth Injury,
-  Medication Error, Anesthesia Error, Nursing Home Neglect, Nursing Home Abuse,
-  Hospital Negligence
-- **Product Liability** – Defective Auto Part, Consumer Product, Pharmaceutical,
-  Defective Medical Device, Toxic Exposure, Food Poisoning
-- **Premises Liability** – Slip and Fall, Trip and Fall, Dangerous Condition,
-  Negligent Security, Homeowner Premises
+- **Intentional Tort** – Assault/Battery, Defamation/Libel
+- **Other Personal Injury** – Dog Bite, Sports/Recreation Injury, School or Daycare Incident,
+  Government Liability, Wrongful Death, Other
