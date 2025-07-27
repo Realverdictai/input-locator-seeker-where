@@ -142,7 +142,6 @@ This populates missing numeric fields and embeddings so the AI evaluators includ
 5. `evaluateCase()` automatically uses the uploaded docs during valuation.
 
 ## New Case Category Step
-This version merges case type and accident sub-type into a single hierarchical
 selection used for AI analysis. The categories are defined in
 `src/utils/caseCategories.ts` and organized to eliminate overlap:
 
