@@ -37,30 +37,9 @@ const DateOfLossStep = ({ formData, setFormData }: DateOfLossStepProps) => {
     let solDescription = "2 years";
     
     switch (caseType?.toLowerCase()) {
-      case "auto-accident":
-      case "motorcycle-accident":
-      case "bicycle-accident":
-      case "pedestrian-accident":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
       case "medical-malpractice":
         solDays = 365; // 1 year in CA
         solDescription = "1 year";
-        break;
-      case "product-liability":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      case "premises-liability":
-      case "slip-and-fall":
-      case "trip-and-fall":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
-        break;
-      case "wrongful-death":
-        solDays = 730; // 2 years
-        solDescription = "2 years";
         break;
       default:
         solDays = 730; // Default 2 years
