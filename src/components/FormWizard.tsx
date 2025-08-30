@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight, SkipForward } from "lucide-react";
+import AIMediator from "./AIMediator";
+import { UserType } from "@/types/auth";
+import { CaseData } from "@/types/verdict";
 
 interface FormWizardProps {
   steps: {
@@ -14,9 +17,11 @@ interface FormWizardProps {
   onComplete: () => void;
   isLoading?: boolean;
   canProceed?: boolean;
+  userType?: UserType;
+  formData?: Partial<CaseData>;
 }
 
-const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true }: FormWizardProps) => {
+const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true, userType, formData }: FormWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleNext = () => {
@@ -62,6 +67,15 @@ const FormWizard = ({ steps, onComplete, isLoading = false, canProceed = true }:
           <p className="text-gray-600">{steps[currentStep].description}</p>
         </CardHeader>
         <CardContent className="space-y-6">
+          {userType && formData && (
+            <AIMediator
+              stepTitle={steps[currentStep].title}
+              stepNumber={currentStep + 1}
+              totalSteps={steps.length}
+              userType={userType}
+              formData={formData}
+            />
+          )}
           {steps[currentStep].component}
           
           <div className="flex justify-between pt-6 border-t">

@@ -180,6 +180,8 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       onComplete={handleComplete}
       isLoading={isLoading}
       canProceed={isFormValid()}
+      userType={userType}
+      formData={formData}
     />
   );
 };
