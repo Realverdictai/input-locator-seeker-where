@@ -36,12 +36,19 @@ Current context:
 - User type: ${userType}
 - Form data: ${JSON.stringify(parsedFormData, null, 2)}
 
-Provide specific, actionable advice for this step that:
-1. Acknowledges the user's perspective (plaintiff/defense/insurance)
-2. Offers practical guidance for completing this step effectively
-3. Connects this step to overall settlement strategy
-4. Uses encouraging, professional tone
-5. Keeps response to 2-3 sentences maximum
+Provide specific, actionable advice ONLY for this current step "${stepTitle}". Do not reference liability percentages, fault, or comparative negligence unless this step specifically deals with liability questions. Focus on:
+1. Acknowledging the user's perspective (plaintiff/defense/insurance)
+2. Offering practical guidance for completing THIS SPECIFIC step effectively
+3. Connecting this step to overall settlement strategy
+4. Using encouraging, professional tone
+5. Keeping response to 2-3 sentences maximum
+
+Key step guidance:
+- "Settlement Position": Focus on strategy, bottom lines, authority limits
+- "Parties": Focus on complexity of multiple parties
+- "Case Category": Focus on case type selection
+- "Liability & Impact": NOW you can discuss liability percentages and fault
+- Other steps: Focus on their specific content
 
 Remember: You're guiding them toward settlement, not litigation.`;
 
