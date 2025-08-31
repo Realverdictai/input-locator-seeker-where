@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Sparkles, Scale } from "lucide-react";
+import { MessageCircle, Sparkles, UserCircle, Glasses } from "lucide-react";
 import { UserType } from "@/types/auth";
 import { CaseData } from "@/types/verdict";
 import { supabase } from "@/integrations/supabase/client";
@@ -134,8 +134,11 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
         <div className="flex items-start gap-4">
           {/* Animated Attorney Avatar */}
           <div className="relative flex-shrink-0">
-            <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-white text-2xl font-bold shadow-lg transition-all duration-300 ${isAnimating ? 'animate-pulse scale-110' : ''}`}>
-              <Scale className="w-8 h-8" />
+            <div className={`w-16 h-16 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white shadow-lg transition-all duration-300 ${isAnimating ? 'animate-pulse scale-110' : ''}`}>
+              <div className="relative">
+                <UserCircle className="w-10 h-10" />
+                <Glasses className="w-6 h-6 absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-amber-300" />
+              </div>
             </div>
             {isAnimating && (
               <div className="absolute -top-1 -right-1">
@@ -175,8 +178,8 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
 
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2 text-sm text-amber-700">
-                <Scale className="w-4 h-4" />
-                <span>Settlement mediation specialist</span>
+                <UserCircle className="w-4 h-4" />
+                <span>Retired Attorney & Settlement Specialist</span>
               </div>
               
               <Button
