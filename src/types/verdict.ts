@@ -10,6 +10,8 @@ export interface CaseData {
   treatmentGap?: boolean;
   numberOfPlaintiffs?: number;
   numberOfDefendants?: number;
+  plaintiffNames?: string[];
+  defendantNames?: string[];
   umbrellaCoverage?: string;
   tbiSeverity?: string;
   surgeryType?: string;
