@@ -86,7 +86,7 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
           <div className="flex-1 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-amber-900 text-lg">
-                Judge Harrison - AI Settlement Mediator
+                Judge Iskander - AI Settlement Mediator
               </h3>
               <Button
                 variant="ghost"
@@ -102,7 +102,7 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
               {isLoading ? (
                 <div className="flex items-center gap-2 text-amber-700">
                   <MessageCircle className="w-5 h-5 animate-pulse" />
-                  <span className="italic">Judge Harrison is reviewing this step...</span>
+                  <span className="italic">Judge Iskander is reviewing this step...</span>
                 </div>
               ) : (
                 <p className="text-amber-900 leading-relaxed">
@@ -114,7 +114,7 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-2 text-sm text-amber-700">
                 <Scale className="w-4 h-4" />
-                <span>30+ years mediating {userType.replace('_', ' ')} cases</span>
+                <span>Settlement mediation specialist</span>
               </div>
               
               <Button
