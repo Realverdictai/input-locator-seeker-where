@@ -90,8 +90,10 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
   };
 
   useEffect(() => {
-    // Auto-generate advice when component mounts or step changes
-    getMediatorAdvice();
+    // When step changes, always start with waiting message
+    setAdvice(getWaitingMessage());
+    // Reset previous form data to ensure fresh analysis
+    previousFormDataRef.current = "";
   }, [stepTitle, stepNumber]);
 
   // Watch for form data changes and provide real-time commentary

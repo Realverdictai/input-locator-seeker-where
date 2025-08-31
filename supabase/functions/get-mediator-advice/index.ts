@@ -128,33 +128,33 @@ Remember: You're guiding them toward thorough case preparation. Settlement discu
 function getWaitingAdvice(stepTitle: string, userType: string): string {
   const waitingMessages: Record<string, Record<string, string>> = {
     "Upload Documents": {
-      plaintiff_lawyer: "I'm ready to review your document strategy once you begin uploading. Please start with your medical records and key evidence.",
-      defense_lawyer: "Waiting for document uploads to analyze potential case weaknesses and discovery opportunities.",
-      insurance_company: "Ready to assess documentation quality for reserve setting once you begin the upload process."
+      plaintiff_lawyer: "Waiting for you to begin uploading documents. I'll analyze your document strategy once you start.",
+      defense_lawyer: "Waiting for document uploads. I'll assess potential case weaknesses and discovery opportunities.",
+      insurance_company: "Waiting for document uploads. I'll evaluate documentation quality for reserve setting."
     },
     "Parties": {
-      plaintiff_lawyer: "Please begin entering plaintiff and defendant information. I'll focus on party complexity and representation issues as you proceed.",
-      defense_lawyer: "Start by identifying all parties. I'll analyze multi-party dynamics and coordination opportunities.",
-      insurance_company: "Waiting for party information to assess coverage implications and potential contribution issues."
+      plaintiff_lawyer: "Waiting for party information. I'll analyze party complexity and representation issues once you enter details.",
+      defense_lawyer: "Waiting for party identification. I'll review multi-party dynamics and coordination opportunities.",
+      insurance_company: "Waiting for party details. I'll assess coverage implications and potential contribution issues."
     },
     "Settlement Position": {
-      plaintiff_lawyer: "Ready to review your settlement strategy once you enter your authority limits and objectives.",
-      defense_lawyer: "Please input your settlement parameters. I'll provide guidance on negotiation positioning.",
-      insurance_company: "Waiting for settlement authority information to advise on reserve adequacy and bad faith considerations."
+      plaintiff_lawyer: "Waiting for settlement parameters. I'll review your strategy once you enter authority limits.",
+      defense_lawyer: "Waiting for settlement information. I'll provide guidance on negotiation positioning.",
+      insurance_company: "Waiting for settlement authority details. I'll advise on reserve adequacy and bad faith considerations."
     },
     "Case Category": {
-      plaintiff_lawyer: "Please select your case type and theory. I'll provide strategic guidance based on your categorization.",
-      defense_lawyer: "Start by identifying the case category. I'll analyze defense strategies specific to that case type.",
-      insurance_company: "Waiting for case type selection to provide historical settlement data and coverage analysis."
+      plaintiff_lawyer: "Waiting for case type selection. I'll provide strategic guidance based on your categorization.",
+      defense_lawyer: "Waiting for case category identification. I'll analyze defense strategies for that case type.",
+      insurance_company: "Waiting for case type selection. I'll provide historical settlement data and coverage analysis."
     },
     "Liability & Impact": {
-      plaintiff_lawyer: "Ready to analyze liability factors once you begin entering fault assessments and impact details.",
-      defense_lawyer: "Please start with liability analysis. I'll identify comparative fault opportunities and mitigation strategies.",
-      insurance_company: "Waiting for liability information to assess exposure percentages and settlement recommendations."
+      plaintiff_lawyer: "Waiting for liability information. I'll analyze fault factors once you begin entering assessments.",
+      defense_lawyer: "Waiting for liability details. I'll identify comparative fault opportunities and mitigation strategies.",
+      insurance_company: "Waiting for liability analysis. I'll assess exposure percentages and settlement recommendations."
     }
   };
 
-  return waitingMessages[stepTitle]?.[userType] || "Please begin entering information for this step. I'm ready to provide experienced guidance as you proceed.";
+  return waitingMessages[stepTitle]?.[userType] || "Waiting for your input on this step. I'll provide analysis once you begin entering information.";
 }
 
 function getFallbackAdvice(stepTitle: string, userType: string): string {
