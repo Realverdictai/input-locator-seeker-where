@@ -22,15 +22,15 @@ serve(async (req) => {
 
     const parsedFormData = formData ? JSON.parse(formData) : {};
     
-    const systemPrompt = `You are Judge Iskander, a highly experienced settlement mediator in personal injury cases. You are wise, reassuring, and focused on helping parties reach fair settlements.
+    const systemPrompt = `You are Judge Iskander, a retired attorney with decades of experience who has evaluated hundreds of thousands of personal injury cases throughout your career. You possess deep technical legal knowledge and speak with the authority of someone who has seen every variation of case strategy and outcome.
 
-Your personality:
-- Warm and grandfatherly, but sharp and experienced
-- Speaks with authority but remains approachable
-- Uses analogies and real-world examples
-- Always focused on settlement and resolution
-- Balances empathy with practical legal strategy
-- Provides real-time commentary on form inputs as they're filled out
+Your approach:
+- Technically proficient with comprehensive knowledge of personal injury law
+- Understanding and respectful of both plaintiff and defense positions
+- Analytical and measured - you work only with the information provided
+- Never speculate about future steps or jump to premature conclusions
+- Provide practical, experience-based guidance grounded in legal reality
+- Speak as a seasoned practitioner who understands case dynamics and settlement patterns
 
 Current context:
 - Step: ${stepTitle} (${stepNumber} of ${totalSteps})
@@ -109,26 +109,31 @@ Remember: You're guiding them toward settlement, not litigation.`;
 function getFallbackAdvice(stepTitle: string, userType: string): string {
   const adviceMap: Record<string, Record<string, string>> = {
     "Upload Documents": {
-      plaintiff_lawyer: "Start strong by uploading demand letters or medical records. This helps me understand your case's foundation for better settlement guidance.",
-      defense_lawyer: "Review any uploaded documents carefully - they often reveal the plaintiff's settlement expectations and case strengths.",
-      insurance_company: "Use document uploads to quickly assess claim validity and potential exposure ranges."
+      plaintiff_lawyer: "Document quality and organization significantly impact case valuation. Medical records, wage statements, and expert reports form the evidentiary foundation for settlement negotiations.",
+      defense_lawyer: "Thorough document review reveals case strengths and weaknesses early. Look for gaps in causation, pre-existing conditions, and inconsistencies in medical treatment patterns.",
+      insurance_company: "Document analysis drives accurate reserve setting. Focus on medical necessity, treatment duration, and objective findings to assess exposure parameters."
     },
     "Parties": {
-      plaintiff_lawyer: "Multiple plaintiffs can strengthen your negotiating position, but may complicate settlement discussions. Consider how to present unified demands.",
-      defense_lawyer: "Multiple defendants create opportunities for allocation disputes. Use this to your advantage in settlement negotiations.",
-      insurance_company: "More parties often mean more complexity - factor this into your settlement authority and strategy."
+      plaintiff_lawyer: "Multiple plaintiff cases require coordinated settlement strategies. Consider apportionment of damages and potential conflicts in settlement timing and amounts.",
+      defense_lawyer: "Multi-defendant scenarios create allocation opportunities. Joint defense agreements and coordinated discovery can reduce individual client exposure.",
+      insurance_company: "Complex party structures affect coverage analysis and settlement authority. Evaluate contribution claims and cross-claims when setting reserves."
     },
     "Settlement Position": {
-      plaintiff_lawyer: "Set your bottom line thoughtfully - it's your anchor point for all negotiations. Remember, you can always adjust upward.",
-      defense_lawyer: "Your authority limits should reflect realistic case value. Having proper authority prevents delays and builds trust.",
-      insurance_company: "Clear settlement authority streamlines negotiations and prevents missed opportunities for early resolution."
+      plaintiff_lawyer: "Settlement authority should reflect case value analysis, client objectives, and risk tolerance. Establish clear parameters for negotiation flexibility.",
+      defense_lawyer: "Adequate settlement authority prevents missed resolution opportunities. Consider liability exposure, damages analysis, and litigation costs in authority calculations.",
+      insurance_company: "Settlement authority must account for coverage limits, bad faith exposure, and cost of defense. Timely evaluation prevents escalating damages."
     },
     "Case Category": {
-      plaintiff_lawyer: "The category drives everything - make sure it accurately reflects your strongest case theory for maximum settlement value.",
-      defense_lawyer: "Understanding the case category helps predict plaintiff strategies and set appropriate settlement ranges.",
-      insurance_company: "Case category directly impacts exposure levels - use historical data to inform your settlement approach."
+      plaintiff_lawyer: "Case categorization drives damages calculations and venue selection. Ensure your theory aligns with available evidence and applicable law.",
+      defense_lawyer: "Understanding plaintiff's case theory enables targeted discovery and motion practice. Early case categorization informs settlement range analysis.",
+      insurance_company: "Accurate case typing is essential for proper reserving and coverage analysis. Historical settlement data for similar cases guides evaluation."
+    },
+    "Liability & Impact": {
+      plaintiff_lawyer: "Liability analysis affects settlement leverage and case value. Document clear fault and minimize contributory factors.",
+      defense_lawyer: "Comparative fault analysis can significantly reduce exposure. Identify all potential liability factors and third-party contributions.",
+      insurance_company: "Liability percentage directly correlates to damages exposure. Conservative liability assessment protects against adverse verdicts."
     }
   };
 
-  return adviceMap[stepTitle]?.[userType] || "This step is crucial for building a strong foundation for settlement negotiations. Take your time to be thorough.";
+  return adviceMap[stepTitle]?.[userType] || "Thorough analysis at this stage prevents complications in later settlement discussions. Focus on accuracy and completeness.";
 }
