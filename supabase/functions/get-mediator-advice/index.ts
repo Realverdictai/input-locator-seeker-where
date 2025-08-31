@@ -49,34 +49,36 @@ Your approach:
 - Provide practical, experience-based guidance grounded in legal reality
 - Speak as a seasoned practitioner who understands case dynamics and settlement patterns
 
+CRITICAL: Stay strictly focused on the current step. Do NOT discuss liability percentages, fault analysis, or settlement valuations until the user reaches those specific steps later in the process.
+
 Current context:
 - Step: ${stepTitle} (${stepNumber} of ${totalSteps})
 - User type: ${userType}
 - Form data: ${JSON.stringify(parsedFormData, null, 2)}
 
+Step-specific focus rules:
+- Steps 1-2 (Parties, Basic Info): Focus ONLY on party identification, complexity, representation
+- Step 3 (Case Category): Focus ONLY on case type selection and categorization  
+- Steps 4-5 (Medical, Documents): Focus ONLY on medical treatment and documentation
+- Step 6 (Liability & Impact): NOW you can discuss liability percentages and fault
+- Later steps: Focus on their specific content without jumping ahead
+
 IMPORTANT: You are providing REAL-TIME commentary as the user fills out fields. If form data has been entered, comment specifically on what they've entered and provide contextual advice about those values. If fields are empty, provide general step guidance.
 
 When form data is present, focus on:
 1. Commenting on specific values they've entered (amounts, dates, selections, etc.)
-2. How these values impact settlement strategy
-3. Whether the values seem reasonable/concerning from a settlement perspective
-4. Practical next steps based on what they've filled out
+2. How these values impact the CURRENT step's objectives
+3. Whether the values seem reasonable/concerning from a completion perspective
+4. Practical next steps for completing THIS SPECIFIC step
 
 Provide specific, actionable advice for this current step "${stepTitle}". Focus on:
 1. Acknowledging the user's perspective (plaintiff/defense/insurance)
 2. Offering practical guidance for completing THIS SPECIFIC step effectively
-3. Connecting this step to overall settlement strategy
+3. Connecting this step to overall case preparation (NOT settlement strategy until later)
 4. Using encouraging, professional tone
 5. Keeping response to 2-3 sentences maximum
 
-Key step guidance:
-- "Settlement Position": Focus on strategy, bottom lines, authority limits
-- "Parties": Focus on complexity of multiple parties
-- "Case Category": Focus on case type selection
-- "Liability & Impact": NOW you can discuss liability percentages and fault
-- Other steps: Focus on their specific content
-
-Remember: You're guiding them toward settlement, not litigation.`;
+Remember: You're guiding them toward thorough case preparation. Settlement discussions come later.`;
 
     const userPrompt = `Please provide advice for the "${stepTitle}" step for a ${userType.replace('_', ' ')}. This is step ${stepNumber} of ${totalSteps} in the case evaluation process.`;
 
@@ -131,9 +133,9 @@ function getWaitingAdvice(stepTitle: string, userType: string): string {
       insurance_company: "Ready to assess documentation quality for reserve setting once you begin the upload process."
     },
     "Parties": {
-      plaintiff_lawyer: "Please begin entering plaintiff and defendant information. I'll advise on multi-party complexity as you proceed.",
-      defense_lawyer: "Start by identifying all parties. I'll analyze allocation opportunities and joint defense strategies.",
-      insurance_company: "Waiting for party information to assess coverage implications and contribution claims."
+      plaintiff_lawyer: "Please begin entering plaintiff and defendant information. I'll focus on party complexity and representation issues as you proceed.",
+      defense_lawyer: "Start by identifying all parties. I'll analyze multi-party dynamics and coordination opportunities.",
+      insurance_company: "Waiting for party information to assess coverage implications and potential contribution issues."
     },
     "Settlement Position": {
       plaintiff_lawyer: "Ready to review your settlement strategy once you enter your authority limits and objectives.",
@@ -163,9 +165,9 @@ function getFallbackAdvice(stepTitle: string, userType: string): string {
       insurance_company: "Document analysis drives accurate reserve setting. Focus on medical necessity, treatment duration, and objective findings to assess exposure parameters."
     },
     "Parties": {
-      plaintiff_lawyer: "Multiple plaintiff cases require coordinated settlement strategies. Consider apportionment of damages and potential conflicts in settlement timing and amounts.",
-      defense_lawyer: "Multi-defendant scenarios create allocation opportunities. Joint defense agreements and coordinated discovery can reduce individual client exposure.",
-      insurance_company: "Complex party structures affect coverage analysis and settlement authority. Evaluate contribution claims and cross-claims when setting reserves."
+      plaintiff_lawyer: "Multiple plaintiff cases require coordinated case management. Consider representation complexities and potential conflicts between parties.",
+      defense_lawyer: "Multi-defendant scenarios create coordination opportunities. Joint defense agreements and shared discovery can be beneficial.",
+      insurance_company: "Complex party structures affect coverage analysis. Evaluate primary vs. excess coverage and contribution potential."
     },
     "Settlement Position": {
       plaintiff_lawyer: "Settlement authority should reflect case value analysis, client objectives, and risk tolerance. Establish clear parameters for negotiation flexibility.",
