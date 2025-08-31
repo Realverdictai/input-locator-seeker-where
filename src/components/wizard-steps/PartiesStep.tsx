@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CaseData } from "@/types/verdict";
 
 interface PartiesStepProps {
@@ -23,14 +24,30 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
     setFormData({...formData, defendantNames});
   };
 
+  const updatePlaintiffDescription = (index: number, description: string) => {
+    const plaintiffDescriptions = [...(formData.plaintiffDescriptions || [])];
+    plaintiffDescriptions[index] = description;
+    setFormData({...formData, plaintiffDescriptions});
+  };
+
+  const updateDefendantDescription = (index: number, description: string) => {
+    const defendantDescriptions = [...(formData.defendantDescriptions || [])];
+    defendantDescriptions[index] = description;
+    setFormData({...formData, defendantDescriptions});
+  };
+
   const handleNumberOfPlaintiffsChange = (count: number) => {
     const plaintiffNames = Array(count).fill('').map((_, i) => 
       formData.plaintiffNames?.[i] || ''
     );
+    const plaintiffDescriptions = Array(count).fill('').map((_, i) => 
+      formData.plaintiffDescriptions?.[i] || ''
+    );
     setFormData({
       ...formData, 
       numberOfPlaintiffs: count,
-      plaintiffNames
+      plaintiffNames,
+      plaintiffDescriptions
     });
   };
 
@@ -38,10 +55,14 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
     const defendantNames = Array(count).fill('').map((_, i) => 
       formData.defendantNames?.[i] || ''
     );
+    const defendantDescriptions = Array(count).fill('').map((_, i) => 
+      formData.defendantDescriptions?.[i] || ''
+    );
     setFormData({
       ...formData, 
       numberOfDefendants: count,
-      defendantNames
+      defendantNames,
+      defendantDescriptions
     });
   };
 
@@ -79,44 +100,76 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
         </div>
       </div>
 
-      {/* Plaintiff Names */}
+      {/* Plaintiff Names and Descriptions */}
       {numberOfPlaintiffs > 0 && (
         <div className="space-y-4">
-          <Label className="text-lg font-medium">Plaintiff Names</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Label className="text-lg font-medium">Plaintiff Information</Label>
+          <div className="space-y-6">
             {Array.from({ length: numberOfPlaintiffs }, (_, index) => (
-              <div key={`plaintiff-${index}`} className="space-y-2">
-                <Label htmlFor={`plaintiff-${index}`}>
-                  Plaintiff {index + 1}
-                </Label>
-                <Input
-                  id={`plaintiff-${index}`}
-                  value={formData.plaintiffNames?.[index] || ''}
-                  onChange={(e) => updatePlaintiffName(index, e.target.value)}
-                  placeholder={`e.g., John D., Plaintiff ${index + 1}, etc.`}
-                />
+              <div key={`plaintiff-${index}`} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`plaintiff-name-${index}`}>
+                      Plaintiff {index + 1} Name
+                    </Label>
+                    <Input
+                      id={`plaintiff-name-${index}`}
+                      value={formData.plaintiffNames?.[index] || ''}
+                      onChange={(e) => updatePlaintiffName(index, e.target.value)}
+                      placeholder={`e.g., John D., Plaintiff ${index + 1}, etc.`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`plaintiff-desc-${index}`}>
+                    Description <span className="text-sm text-gray-500">(Optional - helps AI provide better analysis)</span>
+                  </Label>
+                  <Textarea
+                    id={`plaintiff-desc-${index}`}
+                    value={formData.plaintiffDescriptions?.[index] || ''}
+                    onChange={(e) => updatePlaintiffDescription(index, e.target.value)}
+                    placeholder="e.g., 45-year-old construction worker, passenger in vehicle, pedestrian crossing street, etc."
+                    rows={3}
+                  />
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Defendant Names */}
+      {/* Defendant Names and Descriptions */}
       {numberOfDefendants > 0 && (
         <div className="space-y-4">
-          <Label className="text-lg font-medium">Defendant Names</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Label className="text-lg font-medium">Defendant Information</Label>
+          <div className="space-y-6">
             {Array.from({ length: numberOfDefendants }, (_, index) => (
-              <div key={`defendant-${index}`} className="space-y-2">
-                <Label htmlFor={`defendant-${index}`}>
-                  Defendant {index + 1}
-                </Label>
-                <Input
-                  id={`defendant-${index}`}
-                  value={formData.defendantNames?.[index] || ''}
-                  onChange={(e) => updateDefendantName(index, e.target.value)}
-                  placeholder={`e.g., ABC Company, Driver A, etc.`}
-                />
+              <div key={`defendant-${index}`} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`defendant-name-${index}`}>
+                      Defendant {index + 1} Name
+                    </Label>
+                    <Input
+                      id={`defendant-name-${index}`}
+                      value={formData.defendantNames?.[index] || ''}
+                      onChange={(e) => updateDefendantName(index, e.target.value)}
+                      placeholder={`e.g., ABC Company, Driver A, etc.`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`defendant-desc-${index}`}>
+                    Description <span className="text-sm text-gray-500">(Optional - helps AI provide better analysis)</span>
+                  </Label>
+                  <Textarea
+                    id={`defendant-desc-${index}`}
+                    value={formData.defendantDescriptions?.[index] || ''}
+                    onChange={(e) => updateDefendantDescription(index, e.target.value)}
+                    placeholder="e.g., Trucking company, individual driver, property owner, government entity, etc."
+                    rows={3}
+                  />
+                </div>
               </div>
             ))}
           </div>

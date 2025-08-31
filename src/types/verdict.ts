@@ -12,6 +12,8 @@ export interface CaseData {
   numberOfDefendants?: number;
   plaintiffNames?: string[];
   defendantNames?: string[];
+  plaintiffDescriptions?: string[];
+  defendantDescriptions?: string[];
   umbrellaCoverage?: string;
   tbiSeverity?: string;
   surgeryType?: string;
