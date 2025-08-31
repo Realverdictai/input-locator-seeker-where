@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Sparkles, Scale } from "lucide-react";
@@ -19,6 +19,8 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const previousFormDataRef = useRef<string>("");
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
   const getMediatorAdvice = async () => {
     if (isLoading) return;
@@ -60,9 +62,41 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
   };
 
   useEffect(() => {
-    // Auto-generate advice when component mounts
+    // Auto-generate advice when component mounts or step changes
     getMediatorAdvice();
   }, [stepTitle, stepNumber]);
+
+  // Watch for form data changes and provide real-time commentary
+  useEffect(() => {
+    const currentFormDataString = JSON.stringify(formData);
+    const previousFormDataString = previousFormDataRef.current;
+    
+    // Skip if it's the initial load or no form data
+    if (!previousFormDataString || currentFormDataString === previousFormDataString) {
+      previousFormDataRef.current = currentFormDataString;
+      return;
+    }
+
+    // Clear any existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Debounce the advice update to avoid too many API calls
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log('Form data changed, getting new advice:', formData);
+      getMediatorAdvice();
+    }, 1500); // Wait 1.5 seconds after user stops typing
+
+    previousFormDataRef.current = currentFormDataString;
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [formData]);
 
   if (!isVisible) return null;
 
