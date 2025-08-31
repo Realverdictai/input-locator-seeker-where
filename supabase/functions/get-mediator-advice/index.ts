@@ -78,6 +78,7 @@ When analyzing the Parties step specifically, consider:
 - Number of defendants: ${parsedFormData.numberOfDefendants || 1}
 - Party complexity and coordination challenges
 - Representation considerations for multi-party cases
+- For plaintiff attorneys: Assess plaintiff sympathy factors (age, occupation, family status, vulnerabilities) that impact jury perception and storytelling potential
 
 When form data is present, focus on:
 1. Commenting on specific values they've entered (party counts, names, descriptions)
