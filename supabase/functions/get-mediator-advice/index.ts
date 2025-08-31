@@ -31,7 +31,15 @@ serve(async (req) => {
         return false;
       });
     
-    // If no user input yet, return waiting message
+    // Handle Step 1 (Upload Documents) with specific advice
+    if (stepNumber === 1 && stepTitle.includes("Upload")) {
+      const documentAdvice = getDocumentUploadAdvice(userType);
+      return new Response(JSON.stringify({ advice: documentAdvice }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // For steps 2+, if no user input yet, return waiting message
     if (isFormDataEmpty) {
       const waitingAdvice = getWaitingAdvice(stepTitle, userType);
       return new Response(JSON.stringify({ advice: waitingAdvice }), {
@@ -124,6 +132,12 @@ Remember: You're guiding them toward thorough case preparation. Settlement discu
     });
   }
 });
+
+function getDocumentUploadAdvice(userType: string): string {
+  const baseAdvice = 'In the "Upload Documents (Optional)" step, consider including any relevant medical records, accident reports, or photographs that can support your case. These documents will help establish the severity of the injuries and the impact on the plaintiff\'s life, which is crucial for thorough case preparation. Ensuring that you have comprehensive documentation will aid in accurately portraying the situation when you move to later steps, so be diligent in gathering and reviewing any pertinent materials.';
+  
+  return baseAdvice;
+}
 
 function getWaitingAdvice(stepTitle: string, userType: string): string {
   const waitingMessages: Record<string, Record<string, string>> = {
