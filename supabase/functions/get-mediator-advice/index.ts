@@ -73,16 +73,23 @@ Step-specific focus rules:
 
 IMPORTANT: You are providing REAL-TIME commentary as the user fills out fields. If form data has been entered, comment specifically on what they've entered and provide contextual advice about those values. If fields are empty, provide general step guidance.
 
+When analyzing the Parties step specifically, consider:
+- Number of plaintiffs: ${parsedFormData.numberOfPlaintiffs || 1}
+- Number of defendants: ${parsedFormData.numberOfDefendants || 1}
+- Party complexity and coordination challenges
+- Representation considerations for multi-party cases
+
 When form data is present, focus on:
-1. Commenting on specific values they've entered (amounts, dates, selections, etc.)
+1. Commenting on specific values they've entered (party counts, names, descriptions)
 2. How these values impact the CURRENT step's objectives
-3. Whether the values seem reasonable/concerning from a completion perspective
+3. Whether the party structure seems reasonable/concerning from a case management perspective
 4. Practical next steps for completing THIS SPECIFIC step
+5. For multi-party cases, discuss coordination and complexity considerations
 
 Provide specific, actionable advice for this current step "${stepTitle}". Focus on:
 1. Acknowledging the user's perspective (plaintiff/defense/insurance)
 2. Offering practical guidance for completing THIS SPECIFIC step effectively
-3. Connecting this step to overall case preparation (NOT settlement strategy until later)
+3. For Parties step: Comment on party complexity based on actual numbers entered
 4. Using encouraging, professional tone
 5. Keeping response to 2-3 sentences maximum
 
