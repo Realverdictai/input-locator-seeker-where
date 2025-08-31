@@ -22,6 +22,23 @@ serve(async (req) => {
 
     const parsedFormData = formData ? JSON.parse(formData) : {};
     
+    // Check if form data is empty (user hasn't started entering info yet)
+    const isFormDataEmpty = !parsedFormData || Object.keys(parsedFormData).length === 0 || 
+      Object.values(parsedFormData).every(value => {
+        if (value === null || value === undefined || value === '') return true;
+        if (Array.isArray(value) && value.length === 0) return true;
+        if (typeof value === 'object' && Object.keys(value).length === 0) return true;
+        return false;
+      });
+    
+    // If no user input yet, return waiting message
+    if (isFormDataEmpty) {
+      const waitingAdvice = getWaitingAdvice(stepTitle, userType);
+      return new Response(JSON.stringify({ advice: waitingAdvice }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const systemPrompt = `You are Judge Iskander, a retired attorney with decades of experience who has evaluated hundreds of thousands of personal injury cases throughout your career. You possess deep technical legal knowledge and speak with the authority of someone who has seen every variation of case strategy and outcome.
 
 Your approach:
@@ -105,6 +122,38 @@ Remember: You're guiding them toward settlement, not litigation.`;
     });
   }
 });
+
+function getWaitingAdvice(stepTitle: string, userType: string): string {
+  const waitingMessages: Record<string, Record<string, string>> = {
+    "Upload Documents": {
+      plaintiff_lawyer: "I'm ready to review your document strategy once you begin uploading. Please start with your medical records and key evidence.",
+      defense_lawyer: "Waiting for document uploads to analyze potential case weaknesses and discovery opportunities.",
+      insurance_company: "Ready to assess documentation quality for reserve setting once you begin the upload process."
+    },
+    "Parties": {
+      plaintiff_lawyer: "Please begin entering plaintiff and defendant information. I'll advise on multi-party complexity as you proceed.",
+      defense_lawyer: "Start by identifying all parties. I'll analyze allocation opportunities and joint defense strategies.",
+      insurance_company: "Waiting for party information to assess coverage implications and contribution claims."
+    },
+    "Settlement Position": {
+      plaintiff_lawyer: "Ready to review your settlement strategy once you enter your authority limits and objectives.",
+      defense_lawyer: "Please input your settlement parameters. I'll provide guidance on negotiation positioning.",
+      insurance_company: "Waiting for settlement authority information to advise on reserve adequacy and bad faith considerations."
+    },
+    "Case Category": {
+      plaintiff_lawyer: "Please select your case type and theory. I'll provide strategic guidance based on your categorization.",
+      defense_lawyer: "Start by identifying the case category. I'll analyze defense strategies specific to that case type.",
+      insurance_company: "Waiting for case type selection to provide historical settlement data and coverage analysis."
+    },
+    "Liability & Impact": {
+      plaintiff_lawyer: "Ready to analyze liability factors once you begin entering fault assessments and impact details.",
+      defense_lawyer: "Please start with liability analysis. I'll identify comparative fault opportunities and mitigation strategies.",
+      insurance_company: "Waiting for liability information to assess exposure percentages and settlement recommendations."
+    }
+  };
+
+  return waitingMessages[stepTitle]?.[userType] || "Please begin entering information for this step. I'm ready to provide experienced guidance as you proceed.";
+}
 
 function getFallbackAdvice(stepTitle: string, userType: string): string {
   const adviceMap: Record<string, Record<string, string>> = {

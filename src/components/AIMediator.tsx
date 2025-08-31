@@ -22,8 +22,26 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
   const previousFormDataRef = useRef<string>("");
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
+  const isFormDataEmpty = () => {
+    if (!formData || Object.keys(formData).length === 0) return true;
+    
+    // Check if all values are empty, null, undefined, or empty arrays
+    return Object.values(formData).every(value => {
+      if (value === null || value === undefined || value === '') return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      if (typeof value === 'object' && Object.keys(value).length === 0) return true;
+      return false;
+    });
+  };
+
   const getMediatorAdvice = async () => {
     if (isLoading) return;
+    
+    // If no user input yet, show waiting message
+    if (isFormDataEmpty()) {
+      setAdvice(getWaitingMessage());
+      return;
+    }
     
     setIsLoading(true);
     setIsAnimating(true);
@@ -49,6 +67,16 @@ const AIMediator = ({ stepTitle, stepNumber, totalSteps, userType, formData }: A
       setIsLoading(false);
       setIsAnimating(false);
     }
+  };
+
+  const getWaitingMessage = () => {
+    const waitingMessages = {
+      plaintiff_lawyer: "I'm ready to provide guidance once you begin entering information for this step. Please start by filling out the fields above.",
+      defense_lawyer: "Waiting for your input on this step. I'll analyze and provide strategic advice as you complete the information above.",
+      insurance_company: "Please begin entering the required information for this step. I'll provide risk assessment guidance as you proceed."
+    };
+    
+    return waitingMessages[userType] || "Please start entering information for this step. I'll provide analysis as you proceed.";
   };
 
   const getDefaultAdvice = () => {
