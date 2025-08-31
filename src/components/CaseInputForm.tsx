@@ -112,17 +112,6 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       component: <PartiesStep formData={formData} setFormData={setFormData} />
     },
     {
-      title: "Settlement Position",
-      description: "Specify bottom line or authority information",
-      component: (
-        <SettlementStrategyStep
-          formData={formData}
-          setFormData={setFormData}
-          userType={userType}
-        />
-      )
-    },
-    {
       title: "Case Category",
       description: "Choose case category and specific accident type",
       component: <CaseAndAccidentTypeStep formData={formData} setFormData={setFormData} />
@@ -138,6 +127,11 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       component: <InjuryTypeStep formData={formData} setFormData={setFormData} />
     },
     {
+      title: "Liability & Impact",
+      description: "Define liability and impact severity details",
+      component: <LiabilityImpactStep formData={formData} setFormData={setFormData} />
+    },
+    {
       title: "Venue (Optional)",
       description: "Choose the county where the case will be filed",
       component: <VenueStep formData={formData} setFormData={setFormData} />
@@ -146,11 +140,6 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       title: "Vehicle Info",
       description: "Provide make, model and size for each vehicle",
       component: <VehicleInfoStep formData={formData} setFormData={setFormData} />
-    },
-    {
-      title: "Liability & Impact",
-      description: "Define liability and impact severity details",
-      component: <LiabilityImpactStep formData={formData} setFormData={setFormData} />
     },
     {
       title: "Medical Treatment",
@@ -166,6 +155,17 @@ const CaseInputForm = ({ onSubmit, isLoading, userType }: CaseInputFormProps) =>
       title: "Legal & Insurance Info",
       description: "Provide legal factors and insurance details",
       component: <LegalInsuranceStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: "Settlement Position",
+      description: "Specify bottom line or authority information",
+      component: (
+        <SettlementStrategyStep
+          formData={formData}
+          setFormData={setFormData}
+          userType={userType}
+        />
+      )
     },
     {
       title: "Final Review",
