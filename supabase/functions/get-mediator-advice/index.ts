@@ -31,15 +31,15 @@ serve(async (req) => {
         return false;
       });
     
-    // Handle Step 1 (Upload Documents) with specific advice
-    if (stepNumber === 1 && stepTitle.includes("Upload")) {
+    // Handle Upload Documents step with specific advice
+    if (stepTitle.includes("Upload")) {
       const documentAdvice = getDocumentUploadAdvice(userType);
       return new Response(JSON.stringify({ advice: documentAdvice }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
-    // For steps 2+, if no user input yet, return waiting message
+    // For all other steps, if no user input yet, return waiting message
     if (isFormDataEmpty) {
       const waitingAdvice = getWaitingAdvice(stepTitle, userType);
       return new Response(JSON.stringify({ advice: waitingAdvice }), {
