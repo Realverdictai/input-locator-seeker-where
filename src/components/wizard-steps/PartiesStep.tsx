@@ -9,8 +9,8 @@ interface PartiesStepProps {
 }
 
 const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
-  const numberOfPlaintiffs = formData.numberOfPlaintiffs || 1;
-  const numberOfDefendants = formData.numberOfDefendants || 1;
+  const numberOfPlaintiffs = formData.numberOfPlaintiffs || 0;
+  const numberOfDefendants = formData.numberOfDefendants || 0;
 
   const updatePlaintiffName = (index: number, name: string) => {
     const plaintiffNames = [...(formData.plaintiffNames || [])];
@@ -81,9 +81,9 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
             id="numberOfPlaintiffs"
             type="number"
             min="1"
-            value={numberOfPlaintiffs}
-            onChange={(e) => handleNumberOfPlaintiffsChange(parseInt(e.target.value) || 1)}
-            placeholder="1"
+            value={numberOfPlaintiffs || ''}
+            onChange={(e) => handleNumberOfPlaintiffsChange(parseInt(e.target.value) || 0)}
+            placeholder="Enter number"
           />
         </div>
 
@@ -93,9 +93,9 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
             id="numberOfDefendants"
             type="number"
             min="1"
-            value={numberOfDefendants}
-            onChange={(e) => handleNumberOfDefendantsChange(parseInt(e.target.value) || 1)}
-            placeholder="1"
+            value={numberOfDefendants || ''}
+            onChange={(e) => handleNumberOfDefendantsChange(parseInt(e.target.value) || 0)}
+            placeholder="Enter number"
           />
         </div>
       </div>
