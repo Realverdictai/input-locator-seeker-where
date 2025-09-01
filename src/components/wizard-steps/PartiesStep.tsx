@@ -103,7 +103,7 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
             min="1"
             value={numberOfPlaintiffs || ''}
             onChange={(e) => handleNumberOfPlaintiffsChange(parseInt(e.target.value) || 0)}
-            placeholder="Enter number"
+            placeholder="Please select the number of plaintiffs"
           />
         </div>
 
@@ -115,7 +115,7 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
             min="1"
             value={numberOfDefendants || ''}
             onChange={(e) => handleNumberOfDefendantsChange(parseInt(e.target.value) || 0)}
-            placeholder="Enter number"
+            placeholder="Please select the number of defendants"
           />
         </div>
       </div>
