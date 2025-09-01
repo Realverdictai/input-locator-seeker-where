@@ -9,8 +9,8 @@ interface PartiesStepProps {
 }
 
 const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
-  const numberOfPlaintiffs = formData.numberOfPlaintiffs || 0;
-  const numberOfDefendants = formData.numberOfDefendants || 0;
+  const numberOfPlaintiffs = formData.numberOfPlaintiffs;
+  const numberOfDefendants = formData.numberOfDefendants;
 
   const updatePlaintiffName = (index: number, name: string) => {
     const plaintiffNames = [...(formData.plaintiffNames || [])];
@@ -37,6 +37,16 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
   };
 
   const handleNumberOfPlaintiffsChange = (count: number) => {
+    if (count < 1) {
+      setFormData({
+        ...formData, 
+        numberOfPlaintiffs: undefined,
+        plaintiffNames: [],
+        plaintiffDescriptions: []
+      });
+      return;
+    }
+    
     const plaintiffNames = Array(count).fill('').map((_, i) => 
       formData.plaintiffNames?.[i] || ''
     );
@@ -52,6 +62,16 @@ const PartiesStep = ({ formData, setFormData }: PartiesStepProps) => {
   };
 
   const handleNumberOfDefendantsChange = (count: number) => {
+    if (count < 1) {
+      setFormData({
+        ...formData, 
+        numberOfDefendants: undefined,
+        defendantNames: [],
+        defendantDescriptions: []
+      });
+      return;
+    }
+    
     const defendantNames = Array(count).fill('').map((_, i) => 
       formData.defendantNames?.[i] || ''
     );
