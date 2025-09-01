@@ -16,6 +16,9 @@ serve(async (req) => {
   try {
     const { stepTitle, stepNumber, totalSteps, userType, formData } = await req.json();
     
+    console.log('Step title received:', stepTitle);
+    console.log('User type:', userType);
+    
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
@@ -31,18 +34,24 @@ serve(async (req) => {
         return false;
       });
     
-    // Handle Upload Documents step with specific advice
-    if (stepTitle.includes("Upload") && !stepTitle.includes("Parties")) {
-      const documentAdvice = getDocumentUploadAdvice(userType);
-      return new Response(JSON.stringify({ advice: documentAdvice }), {
+    console.log('Form data empty:', isFormDataEmpty);
+    console.log('Step title includes Parties:', stepTitle.includes("Parties"));
+    console.log('Step title includes Upload:', stepTitle.includes("Upload"));
+    
+    // Handle Parties step with default analysis first
+    if (stepTitle.includes("Parties")) {
+      console.log('Returning parties advice');
+      const partiesAdvice = getPartiesDefaultAdvice(userType);
+      return new Response(JSON.stringify({ advice: partiesAdvice }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     
-    // Handle Parties step with default analysis
-    if (stepTitle.includes("Parties")) {
-      const partiesAdvice = getPartiesDefaultAdvice(userType);
-      return new Response(JSON.stringify({ advice: partiesAdvice }), {
+    // Handle Upload Documents step with specific advice
+    if (stepTitle.includes("Upload")) {
+      console.log('Returning upload advice');
+      const documentAdvice = getDocumentUploadAdvice(userType);
+      return new Response(JSON.stringify({ advice: documentAdvice }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
