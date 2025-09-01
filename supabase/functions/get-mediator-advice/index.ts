@@ -159,9 +159,9 @@ function getWaitingAdvice(stepTitle: string, userType: string): string {
       insurance_company: "Waiting for document uploads. I'll evaluate documentation quality for reserve setting."
     },
     "Parties": {
-      plaintiff_lawyer: "Waiting for party information. I'll analyze party complexity and representation issues once you enter details.",
-      defense_lawyer: "Waiting for party identification. I'll review multi-party dynamics and coordination opportunities.",
-      insurance_company: "Waiting for party details. I'll assess coverage implications and potential contribution issues."
+      plaintiff_lawyer: "Most cases start with one plaintiff versus one defendant - a clean, manageable structure. This simplicity allows you to focus on building a strong narrative around your client's story and damages without the coordination complexities of multiple parties.",
+      defense_lawyer: "A single plaintiff, single defendant case offers strategic advantages - cleaner liability assessment, simpler discovery coordination, and more predictable settlement negotiations. You can focus on the core liability and damages issues without multi-party complications.",
+      insurance_company: "Single plaintiff, single defendant cases typically provide the most straightforward coverage analysis and claims handling. No contribution issues, clear liability assessment, and simpler reserve calculations make these cases more manageable for evaluation purposes."
     },
     "Settlement Position": {
       plaintiff_lawyer: "Waiting for settlement parameters. I'll review your strategy once you enter authority limits.",
