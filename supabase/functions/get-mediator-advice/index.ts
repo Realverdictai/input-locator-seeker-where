@@ -32,9 +32,17 @@ serve(async (req) => {
       });
     
     // Handle Upload Documents step with specific advice
-    if (stepTitle.includes("Upload")) {
+    if (stepTitle.includes("Upload") && !stepTitle.includes("Parties")) {
       const documentAdvice = getDocumentUploadAdvice(userType);
       return new Response(JSON.stringify({ advice: documentAdvice }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Handle Parties step with default analysis
+    if (stepTitle.includes("Parties")) {
+      const partiesAdvice = getPartiesDefaultAdvice(userType);
+      return new Response(JSON.stringify({ advice: partiesAdvice }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -149,6 +157,16 @@ function getDocumentUploadAdvice(userType: string): string {
   const baseAdvice = 'In the "Upload Documents (Optional)" step, consider including any relevant medical records, accident reports, or photographs that can support your case. These documents will help establish the severity of the injuries and the impact on the plaintiff\'s life, which is crucial for thorough case preparation. Ensuring that you have comprehensive documentation will aid in accurately portraying the situation when you move to later steps, so be diligent in gathering and reviewing any pertinent materials.';
   
   return baseAdvice;
+}
+
+function getPartiesDefaultAdvice(userType: string): string {
+  const partiesAdviceMap: Record<string, string> = {
+    plaintiff_lawyer: "Most cases start with one plaintiff versus one defendant - a clean, manageable structure. This simplicity allows you to focus on building a strong narrative around your client's story and damages without the coordination complexities of multiple parties.",
+    defense_lawyer: "A single plaintiff, single defendant case offers strategic advantages - cleaner liability assessment, simpler discovery coordination, and more predictable settlement negotiations. You can focus on the core liability and damages issues without multi-party complications.",
+    insurance_company: "Single plaintiff, single defendant cases typically provide the most straightforward coverage analysis and claims handling. No contribution issues, clear liability assessment, and simpler reserve calculations make these cases more manageable for evaluation purposes."
+  };
+
+  return partiesAdviceMap[userType] || "Single plaintiff versus single defendant cases represent the most straightforward party structure for case evaluation and settlement negotiations.";
 }
 
 function getWaitingAdvice(stepTitle: string, userType: string): string {
