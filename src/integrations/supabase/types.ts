@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -320,6 +320,10 @@ export type Database = {
         Args: { p_case_id: number }
         Returns: undefined
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown
@@ -355,24 +359,24 @@ export type Database = {
       hybrid_case_similarity: {
         Args: {
           query_embedding: string
+          query_has_surgery?: boolean
           query_liab_pct?: number
           query_policy_bucket?: string
           query_tbi_level?: number
-          query_has_surgery?: boolean
           result_limit?: number
         }
         Returns: {
+          acc_type: string
           case_id: number
-          surgery: string
           inject: string
           injuries: string
-          settle: string
-          pol_lim: string
-          venue: string
           liab_pct: string
-          acc_type: string
           narrative: string
+          pol_lim: string
           score: number
+          settle: string
+          surgery: string
+          venue: string
         }[]
       }
       ivfflat_bit_support: {
@@ -397,14 +401,14 @@ export type Database = {
       }
       match_uploaded_docs: {
         Args: {
-          query_embedding: string
           match_count?: number
           p_session?: string
+          query_embedding: string
         }
         Returns: {
           file_name: string
-          snippet: string
           similarity: number
+          snippet: string
         }[]
       }
       sparsevec_out: {
@@ -445,7 +449,7 @@ export type Database = {
       }
     }
     Enums: {
-      user_type: "pi_lawyer" | "insurance_defense"
+      user_type: "pi_lawyer" | "insurance_defense" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -573,7 +577,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      user_type: ["pi_lawyer", "insurance_defense"],
+      user_type: ["pi_lawyer", "insurance_defense", "admin"],
     },
   },
 } as const
