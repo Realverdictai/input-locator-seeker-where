@@ -15,12 +15,23 @@ import PI_MediatorDemo from "@/components/PI_MediatorDemo";
 import MediatorOverlay from "@/components/MediatorOverlay";
 import { PI_SYSTEM_PROMPT } from "@/mediator/pi_brain";
 import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/schema";
+import { startPiSession, type JudgeIskanderSessionBrain } from "@/agents/judgeIskander/session_brain";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
   const [routeConfig, setLocalRouteConfig] = useState<RouteConfig>(getRouteConfig());
   const [globalOverrideEnabled, setGlobalOverrideEnabled] = useState(false);
   const [showSmokeTest, setShowSmokeTest] = useState(false);
+  const [showJudgeIskanderTest, setShowJudgeIskanderTest] = useState(false);
+  const [sessionBrain, setSessionBrain] = useState<JudgeIskanderSessionBrain | null>(null);
+  const [sessionLog, setSessionLog] = useState<Array<{
+    type: 'user' | 'assistant' | 'tool';
+    content: string;
+    timestamp: Date;
+  }>>([]);
+  const { toast } = useToast();
 
   const modelsByProvider: Record<Provider, string[]> = {
     lovable: [
@@ -102,10 +113,93 @@ const FeatureFlagsPage = () => {
     setRouteConfig(updated);
   };
 
+  const handleJudgeIskanderTest = async () => {
+    setSessionLog([]);
+    setShowJudgeIskanderTest(true);
+
+    try {
+      // Seed the initial user message
+      const seedMessage = "Rear-end, LA, CT negative, PT 12… demand 35k, offer 8k; limits unknown";
+      
+      setSessionLog(prev => [...prev, {
+        type: 'user',
+        content: seedMessage,
+        timestamp: new Date()
+      }]);
+
+      let responsesReceived = 0;
+      
+      const brain = await startPiSession({
+        stepHint: 'upload_intake',
+        onPartial: () => {}, // Ignore partials for this test
+        onFinal: (text, speaker) => {
+          if (speaker === 'assistant') {
+            responsesReceived++;
+            if (responsesReceived <= 2) {
+              setSessionLog(prev => [...prev, {
+                type: 'assistant',
+                content: text,
+                timestamp: new Date()
+              }]);
+            }
+          }
+        },
+        onToolCall: (toolName, args, result) => {
+          if (toolName === 'update_field' && result.ok) {
+            setSessionLog(prev => [...prev, {
+              type: 'tool',
+              content: `update_field: ${args.path} = ${JSON.stringify(args.value)}`,
+              timestamp: new Date()
+            }]);
+          }
+        },
+        onError: (error) => {
+          toast({
+            title: 'Session Error',
+            description: error.message,
+            variant: 'destructive'
+          });
+        }
+      });
+
+      setSessionBrain(brain);
+
+      // Send the seed message
+      brain.sendUserMessage(seedMessage);
+
+      toast({
+        title: 'Test Started',
+        description: 'Judge Iskander session initiated',
+        duration: 2000
+      });
+
+    } catch (error) {
+      console.error('Failed to start test:', error);
+      toast({
+        title: 'Test Failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleStopJudgeIskanderTest = () => {
+    if (sessionBrain) {
+      sessionBrain.stop();
+      setSessionBrain(null);
+    }
+    setShowJudgeIskanderTest(false);
+    toast({
+      title: 'Test Stopped',
+      description: 'Judge Iskander session ended',
+      duration: 2000
+    });
+  };
+
   const flagDescriptions: Record<string, { title: string; description: string; status: string }> = {
     mediatorOverlay: {
-      title: "Mediator Overlay",
-      description: "Enable AI mediator overlay on case evaluation screens",
+      title: "Enable Judge Iskander Session",
+      description: "Enable voice-enabled Judge Iskander mediation sessions on PI screens",
       status: "Development",
     },
     modelAuditTools: {
@@ -385,6 +479,74 @@ const FeatureFlagsPage = () => {
                   Tests the PI mediator with the query_cases tool registered. Uses OpenAI model based on global override settings.
                   The overlay will open automatically with a test case.
                 </p>
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <Collapsible open={showJudgeIskanderTest} onOpenChange={setShowJudgeIskanderTest}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full mb-4">
+              <PlayCircle className="w-4 h-4 mr-2" />
+              PI Session Smoke Test (Judge Iskander)
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Judge Iskander Session Test</CardTitle>
+                <CardDescription>
+                  Seeds: "Rear-end, LA, CT negative, PT 12… demand 35k, offer 8k; limits unknown"
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!sessionBrain ? (
+                  <Button onClick={handleJudgeIskanderTest} className="w-full">
+                    Start Test Session
+                  </Button>
+                ) : (
+                  <Button onClick={handleStopJudgeIskanderTest} variant="destructive" className="w-full">
+                    Stop Session
+                  </Button>
+                )}
+
+                {sessionLog.length > 0 && (
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <Label className="text-sm font-semibold mb-2 block">Session Log</Label>
+                    <ScrollArea className="h-64">
+                      <div className="space-y-3">
+                        {sessionLog.map((entry, i) => (
+                          <div key={i} className="text-sm">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant={
+                                entry.type === 'user' ? 'default' :
+                                entry.type === 'assistant' ? 'secondary' :
+                                'outline'
+                              } className="text-xs">
+                                {entry.type === 'user' ? 'User' :
+                                 entry.type === 'assistant' ? 'Judge Iskander' :
+                                 'Tool'}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                {entry.timestamp.toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <p className="text-gray-700 pl-2 border-l-2 border-gray-300">
+                              {entry.content}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>• Shows first 2 agent responses</p>
+                  <p>• Logs all update_field actions</p>
+                  <p>• Uses upload_intake step context</p>
+                  <p>• Non-blocking tool execution</p>
+                </div>
               </CardContent>
             </Card>
           </CollapsibleContent>
