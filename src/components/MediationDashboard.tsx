@@ -216,7 +216,7 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                 Start Evaluation
               </Button>
               <Button 
-                onClick={() => {
+                onClick={async () => {
                   if (!newSessionCode.trim()) {
                     toast({
                       title: "Please enter a session code",
@@ -224,8 +224,43 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                     });
                     return;
                   }
-                  createMediationSession();
-                  setTimeout(() => onStartEvaluation(newSessionCode, true), 500);
+                  setIsLoading(true);
+                  try {
+                    const sessionData: any = {
+                      session_code: newSessionCode,
+                      status: 'pending',
+                      is_voice_session: true
+                    };
+
+                    if (userProfile.user_type === 'pi_lawyer') {
+                      sessionData.pi_lawyer_id = userProfile.id;
+                    } else {
+                      sessionData.insurance_id = userProfile.id;
+                    }
+
+                    const { error } = await supabase
+                      .from('mediation_sessions')
+                      .insert([sessionData]);
+
+                    if (error) throw error;
+
+                    toast({
+                      title: "Voice mediation session created!",
+                      description: `Session code: ${newSessionCode}`
+                    });
+
+                    setNewSessionCode('');
+                    fetchMediationSessions();
+                    onStartEvaluation(newSessionCode, true);
+                  } catch (error: any) {
+                    toast({
+                      title: "Error creating session",
+                      description: error.message,
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setIsLoading(false);
+                  }
                 }} 
                 disabled={isLoading}
                 variant="outline"
@@ -262,9 +297,70 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                 Join & Evaluate
               </Button>
               <Button 
-                onClick={() => {
-                  joinMediationSession();
-                  setTimeout(() => onStartEvaluation(joinSessionCode, true), 500);
+                onClick={async () => {
+                  if (!joinSessionCode.trim()) {
+                    toast({
+                      title: "Please enter a session code",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+
+                  setIsLoading(true);
+                  try {
+                    const { data: session, error: fetchError } = await supabase
+                      .from('mediation_sessions')
+                      .select('*')
+                      .eq('session_code', joinSessionCode)
+                      .single();
+
+                    if (fetchError) throw new Error('Session not found');
+
+                    const updateData: any = { is_voice_session: true };
+                    let canJoin = false;
+
+                    if (userProfile.user_type === 'pi_lawyer') {
+                      if (!session.pi_lawyer_id) {
+                        updateData.pi_lawyer_id = userProfile.id;
+                        canJoin = true;
+                      } else if (session.pi_lawyer_id === userProfile.id) {
+                        canJoin = true;
+                      }
+                    } else if (userProfile.user_type === 'insurance_defense') {
+                      if (!session.insurance_id) {
+                        updateData.insurance_id = userProfile.id;
+                        canJoin = true;
+                      } else if (session.insurance_id === userProfile.id) {
+                        canJoin = true;
+                      }
+                    }
+
+                    if (!canJoin) throw new Error('Cannot join this session');
+
+                    const { error: updateError } = await supabase
+                      .from('mediation_sessions')
+                      .update(updateData)
+                      .eq('id', session.id);
+
+                    if (updateError) throw updateError;
+
+                    toast({
+                      title: "Joined voice mediation session!",
+                      description: `Session code: ${joinSessionCode}`
+                    });
+
+                    setJoinSessionCode('');
+                    fetchMediationSessions();
+                    onStartEvaluation(joinSessionCode, true);
+                  } catch (error: any) {
+                    toast({
+                      title: "Error joining session",
+                      description: error.message,
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setIsLoading(false);
+                  }
                 }} 
                 disabled={isLoading}
                 variant="outline"
@@ -302,7 +398,7 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                   </div>
                   <Button 
                     variant="outline" 
-                    onClick={() => onStartEvaluation(session.session_code)}
+                    onClick={() => onStartEvaluation(session.session_code, session.is_voice_session)}
                   >
                     Continue Evaluation
                   </Button>

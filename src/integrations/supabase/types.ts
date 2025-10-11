@@ -134,6 +134,7 @@ export type Database = {
           id: string
           insurance_evaluation_id: string | null
           insurance_id: string | null
+          is_voice_session: boolean | null
           mediation_proposal: Json | null
           pi_evaluation_id: string | null
           pi_lawyer_id: string | null
@@ -146,6 +147,7 @@ export type Database = {
           id?: string
           insurance_evaluation_id?: string | null
           insurance_id?: string | null
+          is_voice_session?: boolean | null
           mediation_proposal?: Json | null
           pi_evaluation_id?: string | null
           pi_lawyer_id?: string | null
@@ -158,6 +160,7 @@ export type Database = {
           id?: string
           insurance_evaluation_id?: string | null
           insurance_id?: string | null
+          is_voice_session?: boolean | null
           mediation_proposal?: Json | null
           pi_evaluation_id?: string | null
           pi_lawyer_id?: string | null

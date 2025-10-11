@@ -18,6 +18,7 @@ export interface MediationSession {
   insurance_evaluation_id?: string;
   mediation_proposal?: any;
   status: MediationStatus;
+  is_voice_session?: boolean;
   created_at: string;
   updated_at: string;
 }
