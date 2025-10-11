@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Scale, Brain, Shield, Users, TrendingUp } from "lucide-react";
+import { VoiceMediationSession } from "@/components/VoiceMediationSession";
 
 const Index = () => {
   console.log("Index component rendering");
@@ -22,14 +23,16 @@ const Index = () => {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [currentSessionCode, setCurrentSessionCode] = useState<string | null>(null);
   const [showEvaluation, setShowEvaluation] = useState(false);
+  const [useVoiceSession, setUseVoiceSession] = useState(false);
   const { toast } = useToast();
 
   const handleAuthSuccess = () => {
     // User will be automatically set by the auth hook
   };
 
-  const handleStartEvaluation = (sessionCode?: string) => {
+  const handleStartEvaluation = (sessionCode?: string, useVoice?: boolean) => {
     setCurrentSessionCode(sessionCode || null);
+    setUseVoiceSession(useVoice || false);
     setShowEvaluation(true);
   };
 
@@ -38,6 +41,7 @@ const Index = () => {
     setCaseData(null);
     setVerdictEstimate(null);
     setCurrentSessionCode(null);
+    setUseVoiceSession(false);
   };
 
   const handleCaseSubmit = async (data: CaseData) => {
@@ -234,7 +238,20 @@ const Index = () => {
     );
   }
 
-  console.log("Rendering Index with state:", { caseData: !!caseData, verdictEstimate: !!verdictEstimate, isEvaluating });
+  console.log("Rendering Index with state:", { caseData: !!caseData, verdictEstimate: !!verdictEstimate, isEvaluating, useVoiceSession });
+
+  // Show voice mediation if requested
+  if (useVoiceSession && userProfile) {
+    return (
+      <VoiceMediationSession
+        userProfile={userProfile}
+        sessionCode={currentSessionCode || undefined}
+        caseData={caseData || undefined}
+        onClose={handleBackToDashboard}
+        onCaseDataUpdate={(data) => setCaseData(prev => ({ ...prev, ...data } as CaseData))}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">

@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.eleven-labs-session]
 verify_jwt = false
+
+[functions.case-data-query]
+verify_jwt = false

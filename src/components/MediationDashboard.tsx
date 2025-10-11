@@ -8,11 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { MediationSession } from "@/types/mediation";
 import { UserProfile } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Mic } from "lucide-react";
 
 interface MediationDashboardProps {
   userProfile: UserProfile;
-  onStartEvaluation: (sessionCode?: string) => void;
+  onStartEvaluation: (sessionCode?: string, useVoice?: boolean) => void;
 }
 
 const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboardProps) => {
@@ -211,9 +211,29 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                 placeholder="Enter unique session code"
               />
             </div>
-            <Button onClick={createMediationSession} disabled={isLoading} className="w-full">
-              Create Session & Start Evaluation
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={createMediationSession} disabled={isLoading} className="flex-1">
+                Start Evaluation
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (!newSessionCode.trim()) {
+                    toast({
+                      title: "Please enter a session code",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  createMediationSession();
+                  setTimeout(() => onStartEvaluation(newSessionCode, true), 500);
+                }} 
+                disabled={isLoading}
+                variant="outline"
+                className="px-4"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -237,9 +257,22 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                 placeholder="Enter session code to join"
               />
             </div>
-            <Button onClick={joinMediationSession} disabled={isLoading} className="w-full">
-              Join Session & Start Evaluation
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={joinMediationSession} disabled={isLoading} className="flex-1">
+                Join & Evaluate
+              </Button>
+              <Button 
+                onClick={() => {
+                  joinMediationSession();
+                  setTimeout(() => onStartEvaluation(joinSessionCode, true), 500);
+                }} 
+                disabled={isLoading}
+                variant="outline"
+                className="px-4"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
