@@ -22,6 +22,7 @@ import {
   validateToolArgs 
 } from "@/agents/tools";
 import { createRealtimeClient, type RealtimeEvents } from "@/agents/voice/openaiRealtimeClient";
+import { dbg, dbe } from "@/debug/mediatorDebugStore";
 
 interface SessionConfig {
   stepHint?: PiStepId;
@@ -83,6 +84,11 @@ export class JudgeIskanderSessionBrain {
       const questionPlans = getQuestionsForStep(this.state.currentStep, context);
       const questions = getFlattenedQuestions(questionPlans);
 
+      dbg('session', 'start', { 
+        step: this.state.currentStep, 
+        unknowns: context.unknowns?.length || 0 
+      });
+
       // Build system prompt
       const systemPrompt = this.buildSystemPrompt(
         this.state.currentStep,
@@ -101,6 +107,9 @@ export class JudgeIskanderSessionBrain {
         onFinal: (text) => this.handleFinalTranscript(text, 'assistant'),
         onToolCall: async (toolName, args) => this.handleToolCall(toolName, args)
       };
+
+      // Log tool registration
+      dbg('session', 'tools_registered', ['query_cases', 'ingest_docs', 'summarize_doc', 'update_field']);
 
       // Start voice session
       await this.voiceClient.start(
@@ -121,6 +130,7 @@ export class JudgeIskanderSessionBrain {
 
     } catch (error) {
       console.error('[Judge Iskander] Failed to start session:', error);
+      dbe('session', 'error', error instanceof Error ? error.message : String(error));
       if (this.config.onError) {
         this.config.onError(error as Error);
       }
@@ -157,6 +167,7 @@ export class JudgeIskanderSessionBrain {
     }
 
     console.log('[Judge Iskander] User message:', text);
+    dbg('session', 'user_utterance', { text });
     this.handleFinalTranscript(text, 'user');
     
     if (this.voiceClient) {
@@ -274,6 +285,7 @@ You are guiding a legal professional through case evaluation. They trust your pr
    */
   private handlePartialTranscript(text: string, speaker: 'user' | 'assistant'): void {
     this.currentPartialText = text;
+    dbg('session', 'partial', { speaker, chunk: text.substring(0, 50) });
     
     if (this.config.onPartial) {
       this.config.onPartial(text, speaker);
@@ -285,6 +297,7 @@ You are guiding a legal professional through case evaluation. They trust your pr
    */
   private handleFinalTranscript(text: string, speaker: 'user' | 'assistant'): void {
     console.log(`[Judge Iskander] ${speaker}:`, text.substring(0, 100));
+    dbg('session', 'final', { speaker, msg: text });
 
     const entry = {
       speaker,

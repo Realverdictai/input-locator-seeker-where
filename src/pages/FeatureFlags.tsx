@@ -18,7 +18,7 @@ import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/sch
 import { startPiSession, type JudgeIskanderSessionBrain } from "@/agents/judgeIskander/session_brain";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { getLogs, clearLogs } from "@/debug/mediatorDebugStore";
+import { getLogs, clearLogs, dbg } from "@/debug/mediatorDebugStore";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
@@ -124,6 +124,7 @@ const FeatureFlagsPage = () => {
   };
 
   const handleJudgeIskanderTest = async () => {
+    dbg('ui', 'smoke_test_clicked', {});
     setSessionLog([]);
     setShowJudgeIskanderTest(true);
 

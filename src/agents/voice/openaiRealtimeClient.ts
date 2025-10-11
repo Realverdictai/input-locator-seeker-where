@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { dbg, dbe } from "@/debug/mediatorDebugStore";
 
 export interface CallConfig {
   systemPrompt?: string;
@@ -80,6 +81,7 @@ class OpenAIRealtimeClient {
 
       this.ws.onopen = () => {
         console.log('WebSocket connected');
+        dbg('rt', 'open', {});
         this.setupRealtimeSession();
       };
 
@@ -89,10 +91,12 @@ class OpenAIRealtimeClient {
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        dbe('rt', 'error', error);
       };
 
-      this.ws.onclose = () => {
+      this.ws.onclose = (event: any) => {
         console.log('WebSocket closed');
+        dbe('rt', 'close', event?.code || 'unknown');
       };
 
       // Set up audio streaming
@@ -236,6 +240,7 @@ class OpenAIRealtimeClient {
 
   private async startFallbackSession() {
     console.log('Starting fallback session (Web Speech API + Whisper)');
+    dbg('rt', 'fallback_chat', {});
 
     // Initialize Web Speech API
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
