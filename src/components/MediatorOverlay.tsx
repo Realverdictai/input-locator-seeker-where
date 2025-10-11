@@ -21,6 +21,10 @@ interface MediatorOverlayProps {
   model?: string;
   purpose?: ModelChoice['purpose'];
   route?: 'pi' | 'wc' | 'divorce';
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialMessage?: string;
+  hideTrigger?: boolean;
 }
 
 const MediatorOverlay = ({ 
@@ -28,14 +32,23 @@ const MediatorOverlay = ({
   tools,
   model: modelProp,
   purpose = 'pi_reasoning',
-  route
+  route,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+  initialMessage,
+  hideTrigger = false
 }: MediatorOverlayProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasAutoSent, setHasAutoSent] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Use external control if provided, otherwise internal state
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = externalOnOpenChange || setInternalOpen;
 
   // Resolve model based on feature flags and router
   const flags = getFeatureFlags();
@@ -46,6 +59,34 @@ const MediatorOverlay = ({
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  // Auto-send initial message when opened
+  useEffect(() => {
+    if (isOpen && initialMessage && !hasAutoSent && messages.length === 0 && !isLoading) {
+      setHasAutoSent(true);
+      const userMessage: Message = { role: "user", content: initialMessage };
+      setMessages([userMessage]);
+      setIsLoading(true);
+      streamChat([userMessage])
+        .catch((error) => {
+          console.error("Auto-send error:", error);
+          toast({
+            title: "Error",
+            description: "Failed to send initial message. Please try again.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [isOpen, initialMessage, hasAutoSent, messages.length, isLoading]);
+
+  // Reset auto-send flag when overlay closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasAutoSent(false);
+      setMessages([]);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -232,14 +273,16 @@ const MediatorOverlay = ({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button
-            size="lg"
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 z-50"
-          >
-            <MessageCircle className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
+        {!hideTrigger && (
+          <SheetTrigger asChild>
+            <Button
+              size="lg"
+              className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 z-50"
+            >
+              <MessageCircle className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+        )}
         <SheetContent side="right" className="w-full sm:w-[500px] flex flex-col p-0">
           <SheetHeader className="p-6 pb-4 border-b">
             <SheetTitle className="flex items-center gap-2">

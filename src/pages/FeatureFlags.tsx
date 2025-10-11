@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Flag, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowLeft, Flag, ToggleLeft, ToggleRight, PlayCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getFeatureFlags, setFeatureFlags, getRouteConfig, setRouteConfig, type FeatureFlags, type RouteConfig } from "@/lib/featureFlags";
 import type { ModelChoice, Provider } from "@/lib/modelRouter";
+import PI_MediatorDemo from "@/components/PI_MediatorDemo";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
@@ -352,6 +354,18 @@ const FeatureFlagsPage = () => {
             </Accordion>
           </CardContent>
         </Card>
+
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full mb-4">
+              <PlayCircle className="w-4 h-4 mr-2" />
+              PI Mediator Demo (Dev Only)
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mb-6">
+            <PI_MediatorDemo />
+          </CollapsibleContent>
+        </Collapsible>
 
         <Card className="bg-amber-50 border-amber-200">
           <CardContent className="pt-6">
