@@ -129,30 +129,16 @@ const FeatureFlagsPage = () => {
     setShowJudgeIskanderTest(true);
 
     try {
-      // Seed the initial user message
-      const seedMessage = "Rear-end, LA, CT negative, PT 12… demand 35k, offer 8k; limits unknown";
-      
-      setSessionLog(prev => [...prev, {
-        type: 'user',
-        content: seedMessage,
-        timestamp: new Date()
-      }]);
-
-      let responsesReceived = 0;
-      
       const brain = await startPiSession({
         stepHint: 'upload_intake',
         onPartial: () => {}, // Ignore partials for this test
         onFinal: (text, speaker) => {
           if (speaker === 'assistant') {
-            responsesReceived++;
-            if (responsesReceived <= 2) {
-              setSessionLog(prev => [...prev, {
-                type: 'assistant',
-                content: text,
-                timestamp: new Date()
-              }]);
-            }
+            setSessionLog(prev => [...prev, {
+              type: 'assistant',
+              content: text,
+              timestamp: new Date()
+            }]);
           }
         },
         onToolCall: (toolName, args, result) => {
@@ -175,14 +161,27 @@ const FeatureFlagsPage = () => {
 
       setSessionBrain(brain);
 
-      // Send the seed message
-      brain.sendUserMessage(seedMessage);
+      // Send the test message via text path (not voice)
+      const testMessage = "Rear-end MVA; LA venue; CT negative; PT x12; demand 35k; offer 8k; limits unknown; prior 2019 cervical strain.";
+      brain.sendUserMessage(testMessage);
 
       toast({
         title: 'Test Started',
-        description: 'Judge Iskander session initiated',
+        description: 'Judge Iskander session initiated via text path',
         duration: 2000
       });
+
+      // After 5 seconds, update session log with last 10 debug logs
+      setTimeout(() => {
+        const recentLogs = getLogs().slice(-10);
+        setSessionLog(prev => [...prev, {
+          type: 'tool' as const,
+          content: `Debug Logs (last 10):\n${recentLogs.map(log => 
+            `[${new Date(log.t).toLocaleTimeString()}] [${log.tag}] ${log.msg}`
+          ).join('\n')}`,
+          timestamp: new Date()
+        }]);
+      }, 5000);
 
     } catch (error) {
       console.error('Failed to start test:', error);
@@ -606,7 +605,7 @@ const FeatureFlagsPage = () => {
               <CardHeader>
                 <CardTitle className="text-sm">Judge Iskander Session Test</CardTitle>
                 <CardDescription>
-                  Seeds: "Rear-end, LA, CT negative, PT 12… demand 35k, offer 8k; limits unknown"
+                  Seeds: "Rear-end MVA; LA venue; CT negative; PT x12; demand 35k; offer 8k; limits unknown; prior 2019 cervical strain."
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
