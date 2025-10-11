@@ -83,7 +83,7 @@ export function VoiceMediationSession({
       // Upload to Supabase storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${sessionCode || 'individual'}/${fileName}`;
+      const filePath = `${userProfile.id}/${sessionCode || 'individual'}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('case_uploads')
