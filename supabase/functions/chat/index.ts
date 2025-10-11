@@ -78,17 +78,11 @@ serve(async (req) => {
       max_tokens: 1000
     };
 
-    // Add tools if provided
+    // Add tools if provided - tools are already in OpenAI format
     if (tools && tools.length > 0) {
-      requestBody.tools = tools.map((tool: any) => ({
-        type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.parameters
-        }
-      }));
+      requestBody.tools = tools;
       requestBody.tool_choice = 'auto';
+      console.log('Tools registered:', tools.length, 'tools');
     }
 
     console.log('Calling OpenAI Chat Completions API...');
@@ -105,7 +99,25 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      
+      // Try to parse error details
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('OpenAI error details:', JSON.stringify(errorJson, null, 2));
+      } catch (e) {
+        // Not JSON, log raw text
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `OpenAI API error: ${response.status}`,
+          details: errorText.substring(0, 500) // First 500 chars for debugging
+        }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const result = await response.json();
