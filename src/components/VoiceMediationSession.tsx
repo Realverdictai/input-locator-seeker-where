@@ -80,49 +80,22 @@ export function VoiceMediationSession({
     setIsProcessingBrief(true);
 
     try {
-      // Upload to Supabase storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${userProfile.id}/${sessionCode || 'individual'}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('case_uploads')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Extract text from the document
+      // Send file to Edge Function which handles storage upload, text extraction, and embeddings
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('caseSessionId', sessionCode || `individual-${userProfile.id}`);
+      formData.append('files', file);
 
-      const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
-        'summarize-document',
-        {
-          body: formData
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('upload-docs', {
+        body: formData
+      });
 
-      if (summaryError) throw summaryError;
-
-      setBriefText(summaryData.summary || '');
-      
-      // Store in database
-      const sessionId = sessionCode || `individual-${userProfile.id}`;
-      const { error: dbError } = await supabase
-        .from('uploaded_docs')
-        .insert({
-          case_session_id: sessionId,
-          file_name: file.name,
-          storage_path: filePath,
-          mime_type: file.type,
-          text_content: summaryData.summary
-        });
-
-      if (dbError) throw dbError;
+      if (error || !data?.ok) {
+        throw new Error(error?.message || 'Failed to process document');
+      }
 
       toast({
-        title: 'Brief uploaded successfully',
-        description: 'AI mediator will reference this during your session',
+        title: 'Brief uploaded',
+        description: 'Your document was uploaded and processed successfully',
       });
     } catch (error) {
       console.error('[Voice Mediation] Brief upload error:', error);
@@ -138,14 +111,7 @@ export function VoiceMediationSession({
   };
 
   const handleProceedToSession = () => {
-    if (!uploadedBrief) {
-      toast({
-        title: 'Brief required',
-        description: 'Please upload your mediation brief before starting the session',
-        variant: 'destructive',
-      });
-      return;
-    }
+    // Brief is optional; proceed even if none uploaded
     setStep('session');
   };
 
