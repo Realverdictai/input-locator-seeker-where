@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { getFeatureFlags } from "@/lib/featureFlags";
 import { resolveModel, type ModelChoice } from "@/lib/modelRouter";
+import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/schema";
 
 const DEFAULT_SYSTEM_PROMPT = `You are Verdict AI, a neutral virtual mediator. You clarify facts, identify disputes, summarize competing narratives, assess risk, and generate bracketed settlement strategies. You do not give legal advice; you facilitate resolution. Always (1) ask for missing facts, (2) cite evidence sources when possible, (3) surface uncertainty, (4) explain tradeoffs, (5) keep tone calm, fair, and reality-testing.`;
 
@@ -97,7 +98,7 @@ const MediatorOverlay = ({
     }
   }, [messages]);
 
-  const streamChat = async (userMessages: Message[]) => {
+  const streamChat = async (userMessages: Message[], toolResults?: any[]) => {
     // Route to appropriate edge function based on provider
     let chatUrl: string;
     let requestBody: any;
@@ -110,12 +111,13 @@ const MediatorOverlay = ({
         model
       };
     } else if (provider === 'openai-direct') {
-      // Check if openai-direct function exists, otherwise fall back to mediator-chat
       chatUrl = `${SUPABASE_URL}/functions/v1/mediator-openai-direct`;
       requestBody = {
         messages: userMessages,
         systemPrompt,
-        model
+        model,
+        tools: tools || undefined,
+        toolResults: toolResults || undefined
       };
     } else if (provider === 'anthropic' || provider === 'replicate') {
       toast({
@@ -169,6 +171,7 @@ const MediatorOverlay = ({
     let textBuffer = "";
     let streamDone = false;
     let assistantContent = "";
+    let toolCallsAccumulator: any = {};
 
     while (!streamDone) {
       const { done, value } = await reader.read();
@@ -192,7 +195,10 @@ const MediatorOverlay = ({
 
         try {
           const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          const delta = parsed.choices?.[0]?.delta;
+          
+          // Handle text content
+          const content = delta?.content as string | undefined;
           if (content) {
             assistantContent += content;
             setMessages(prev => {
@@ -204,6 +210,26 @@ const MediatorOverlay = ({
               }
               return [...prev, { role: "assistant", content: assistantContent }];
             });
+          }
+
+          // Handle tool calls
+          if (delta?.tool_calls) {
+            for (const toolCallDelta of delta.tool_calls) {
+              const index = toolCallDelta.index;
+              if (!toolCallsAccumulator[index]) {
+                toolCallsAccumulator[index] = {
+                  id: toolCallDelta.id || "",
+                  type: "function",
+                  function: {
+                    name: toolCallDelta.function?.name || "",
+                    arguments: ""
+                  }
+                };
+              }
+              if (toolCallDelta.function?.arguments) {
+                toolCallsAccumulator[index].function.arguments += toolCallDelta.function.arguments;
+              }
+            }
           }
         } catch {
           textBuffer = line + "\n" + textBuffer;
@@ -237,6 +263,47 @@ const MediatorOverlay = ({
             });
           }
         } catch { /* ignore */ }
+      }
+    }
+
+    // Handle tool calls if any were accumulated
+    const toolCalls = Object.values(toolCallsAccumulator);
+    if (toolCalls.length > 0 && provider === 'openai-direct') {
+      const toolResults = [];
+      for (const toolCall of toolCalls as any[]) {
+        if (toolCall.function.name === 'query_cases') {
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            const toolResp = await fetch(`${SUPABASE_URL}/functions/v1/tools/db_read`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify(args),
+            });
+            const toolData = await toolResp.json();
+            toolResults.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "query_cases",
+              content: JSON.stringify(toolData)
+            });
+          } catch (err) {
+            console.error("Tool execution error:", err);
+            toolResults.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: "query_cases",
+              content: JSON.stringify({ ok: false, error: "Tool execution failed" })
+            });
+          }
+        }
+      }
+
+      // Continue streaming with tool results
+      if (toolResults.length > 0) {
+        await streamChat(userMessages, toolResults);
       }
     }
   };

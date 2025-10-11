@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, systemPrompt, model } = await req.json();
+    const { messages, systemPrompt, model, tools, toolResults } = await req.json();
     
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     if (!OPENAI_API_KEY) {
@@ -22,20 +22,33 @@ serve(async (req) => {
     // Default to gpt-5-mini if no model specified
     const openaiModel = model || "gpt-5-mini-2025-08-07";
 
+    const requestBody: any = {
+      model: openaiModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      stream: true,
+    };
+
+    // Add tools if provided
+    if (tools && tools.length > 0) {
+      requestBody.tools = tools;
+      requestBody.tool_choice = "auto";
+    }
+
+    // Add tool results if provided (continuation of tool call)
+    if (toolResults && toolResults.length > 0) {
+      requestBody.messages.push(...toolResults);
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: openaiModel,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: true,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

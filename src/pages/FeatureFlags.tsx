@@ -12,11 +12,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { getFeatureFlags, setFeatureFlags, getRouteConfig, setRouteConfig, type FeatureFlags, type RouteConfig } from "@/lib/featureFlags";
 import type { ModelChoice, Provider } from "@/lib/modelRouter";
 import PI_MediatorDemo from "@/components/PI_MediatorDemo";
+import MediatorOverlay from "@/components/MediatorOverlay";
+import { PI_SYSTEM_PROMPT } from "@/mediator/pi_brain";
+import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/schema";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
   const [routeConfig, setLocalRouteConfig] = useState<RouteConfig>(getRouteConfig());
   const [globalOverrideEnabled, setGlobalOverrideEnabled] = useState(false);
+  const [showSmokeTest, setShowSmokeTest] = useState(false);
 
   const modelsByProvider: Record<Provider, string[]> = {
     lovable: [
@@ -366,6 +370,36 @@ const FeatureFlagsPage = () => {
             <PI_MediatorDemo />
           </CollapsibleContent>
         </Collapsible>
+
+        <Collapsible open={showSmokeTest} onOpenChange={setShowSmokeTest}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full mb-4">
+              <PlayCircle className="w-4 h-4 mr-2" />
+              PI Brain Smoke Test (Dev Only)
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-gray-600">
+                  Tests the PI mediator with the query_cases tool registered. Uses OpenAI model based on global override settings.
+                  The overlay will open automatically with a test case.
+                </p>
+              </CardContent>
+            </Card>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <MediatorOverlay
+          systemPrompt={PI_SYSTEM_PROMPT}
+          tools={[queryCasesToolSchema]}
+          purpose="pi_reasoning"
+          route="pi"
+          open={showSmokeTest}
+          onOpenChange={setShowSmokeTest}
+          initialMessage="Case 22-104. Rear-end MVA; venue LA. I have policy 15/30 with alleged neck strain, CT negative, PT x12, prior 2019 cervical strain. Offers: 8k; Demand: 35k."
+          hideTrigger={true}
+        />
 
         <Card className="bg-amber-50 border-amber-200">
           <CardContent className="pt-6">
