@@ -1,0 +1,281 @@
+import { useState, useRef, useEffect } from "react";
+import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+
+const DEFAULT_SYSTEM_PROMPT = `You are Verdict AI, a neutral virtual mediator. You clarify facts, identify disputes, summarize competing narratives, assess risk, and generate bracketed settlement strategies. You do not give legal advice; you facilitate resolution. Always (1) ask for missing facts, (2) cite evidence sources when possible, (3) surface uncertainty, (4) explain tradeoffs, (5) keep tone calm, fair, and reality-testing.`;
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+interface MediatorOverlayProps {
+  systemPrompt?: string;
+  tools?: any[];
+  model?: string;
+}
+
+const MediatorOverlay = ({ 
+  systemPrompt = DEFAULT_SYSTEM_PROMPT, 
+  tools,
+  model = "google/gemini-2.5-flash"
+}: MediatorOverlayProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mediator-chat`;
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  }, [messages]);
+
+  const streamChat = async (userMessages: Message[]) => {
+    const resp = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ 
+        messages: userMessages,
+        systemPrompt,
+        model 
+      }),
+    });
+
+    if (!resp.ok) {
+      if (resp.status === 429) {
+        toast({
+          title: "Rate Limit Exceeded",
+          description: "Please try again in a moment.",
+          variant: "destructive",
+        });
+        throw new Error("Rate limit exceeded");
+      }
+      if (resp.status === 402) {
+        toast({
+          title: "Payment Required",
+          description: "Please add credits to your Lovable AI workspace.",
+          variant: "destructive",
+        });
+        throw new Error("Payment required");
+      }
+      throw new Error("Failed to start stream");
+    }
+
+    if (!resp.body) throw new Error("No response body");
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let streamDone = false;
+    let assistantContent = "";
+
+    while (!streamDone) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") {
+          streamDone = true;
+          break;
+        }
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) => 
+                  i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                );
+              }
+              return [...prev, { role: "assistant", content: assistantContent }];
+            });
+          }
+        } catch {
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Final flush
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split("\n")) {
+        if (!raw) continue;
+        if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+        if (raw.startsWith(":") || raw.trim() === "") continue;
+        if (!raw.startsWith("data: ")) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) => 
+                  i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                );
+              }
+              return [...prev, { role: "assistant", content: assistantContent }];
+            });
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
+
+    const userMessage: Message = { role: "user", content: input.trim() };
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      await streamChat([...messages, userMessage]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button
+            size="lg"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-blue-600 hover:bg-blue-700 z-50"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-full sm:w-[500px] flex flex-col p-0">
+          <SheetHeader className="p-6 pb-4 border-b">
+            <SheetTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-blue-600" />
+              Verdict AI Mediator
+            </SheetTitle>
+          </SheetHeader>
+
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-6">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                <div className="p-4 bg-blue-50 rounded-full">
+                  <MessageCircle className="h-12 w-12 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Virtual Mediator</h3>
+                  <p className="text-sm text-gray-600 max-w-sm">
+                    I'm here to help clarify facts, assess risk, and explore settlement strategies.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-lg px-4 py-3 ${
+                        message.role === "user"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-100 text-gray-900"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                    </div>
+                  </div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 rounded-lg px-4 py-3">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+
+          <div className="p-4 border-t bg-white">
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about the case, request risk analysis..."
+                className="min-h-[80px] resize-none"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                size="icon"
+                className="h-[80px] w-12 bg-blue-600 hover:bg-blue-700"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Press Enter to send, Shift+Enter for new line
+            </p>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+};
+
+export default MediatorOverlay;
