@@ -4,7 +4,7 @@
  * Zoom-like interface for ElevenLabs conversational AI mediation
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useConversation } from '@11labs/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { AnimatedAvatar } from '@/components/AnimatedAvatar';
 import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ElevenLabsSessionRoomProps {
   agentId: string;
@@ -27,6 +28,7 @@ export function ElevenLabsSessionRoom({
   const { toast } = useToast();
   const [isConnected, setIsConnected] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
   const conversation = useConversation({
     onConnect: () => {
@@ -49,7 +51,7 @@ export function ElevenLabsSessionRoom({
       console.error('[ElevenLabs Room] Error:', error);
       toast({
         title: 'Session Error',
-        description: error.message || 'Unknown error occurred',
+        description: typeof error === 'string' ? error : 'Unknown error occurred',
         variant: 'destructive',
       });
     },
@@ -57,8 +59,19 @@ export function ElevenLabsSessionRoom({
 
   const handleStartSession = async () => {
     try {
+      // Get signed URL from our edge function
+      const { data, error } = await supabase.functions.invoke('eleven-labs-session', {
+        body: { agentId }
+      });
+
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error('No signed URL returned');
+
+      console.log('[ElevenLabs Room] Got signed URL, starting session...');
+      setSignedUrl(data.signedUrl);
+
       const id = await conversation.startSession({ 
-        agentId 
+        signedUrl: data.signedUrl
       });
       setConversationId(id);
     } catch (error) {
