@@ -18,7 +18,7 @@ import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/sch
 import { startPiSession, type JudgeIskanderSessionBrain } from "@/agents/judgeIskander/session_brain";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { getLogs, clearLogs, dbg } from "@/debug/mediatorDebugStore";
+import { getLogs, clearLogs, dbg, dbe } from "@/debug/mediatorDebugStore";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
@@ -129,42 +129,51 @@ const FeatureFlagsPage = () => {
     setShowJudgeIskanderTest(true);
 
     const runTest = async (useEchoMode: boolean = false) => {
-      const brain = await startPiSession({
-        stepHint: 'upload_intake',
-        echoMode: useEchoMode,
-        onPartial: () => {}, // Ignore partials for this test
-        onFinal: (text, speaker) => {
-          if (speaker === 'assistant') {
+      try {
+        const brain = await startPiSession({
+          stepHint: 'upload_intake',
+          echoMode: useEchoMode,
+          onPartial: () => {}, // Ignore partials for this test
+          onFinal: (text, speaker) => {
             setSessionLog(prev => [...prev, {
-              type: 'assistant',
+              type: speaker === 'user' ? 'user' : 'assistant',
               content: text,
               timestamp: new Date()
             }]);
+          },
+          onToolCall: (toolName, args, result) => {
+            dbg('ui', 'tool_call_received', { toolName, args, result });
+            setSessionLog(prev => [...prev, {
+              type: 'tool',
+              content: `🔧 ${toolName}(${JSON.stringify(args)}) => ${JSON.stringify(result)}`,
+              timestamp: new Date()
+            }]);
+          },
+          onError: (error) => {
+            dbe('test', 'session_error', error.message);
+            toast({
+              title: 'Session Error',
+              description: error.message,
+              variant: 'destructive'
+            });
           }
-        },
-        onToolCall: (toolName, args, result) => {
-          setSessionLog(prev => [...prev, {
-            type: 'tool',
-            content: `${toolName}: ${JSON.stringify(args)} => ${JSON.stringify(result)}`,
-            timestamp: new Date()
-          }]);
-        },
-        onError: (error) => {
-          toast({
-            title: 'Session Error',
-            description: error.message,
-            variant: 'destructive'
-          });
-        }
-      });
+        });
 
-      setSessionBrain(brain);
+        setSessionBrain(brain);
 
-      // Send the test message via text path (not voice)
-      const testMessage = "<TEST_TOOL> please echo 'hello' with diag_echo";
-      brain.sendUserMessage(testMessage);
+        // Wait a bit for session to be fully initialized
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      return brain;
+        // Send the test message via text path (not voice)
+        const testMessage = "<TEST_TOOL> please echo 'hello' with diag_echo";
+        dbg('test', 'sending_message', { message: testMessage, echoMode: useEchoMode });
+        brain.sendUserMessage(testMessage);
+
+        return brain;
+      } catch (error) {
+        dbe('test', 'runTest_error', error instanceof Error ? error.message : String(error));
+        throw error;
+      }
     };
 
     try {
@@ -181,8 +190,8 @@ const FeatureFlagsPage = () => {
         const recentLogs = getLogs().slice(-10);
         setSessionLog(prev => [...prev, {
           type: 'tool' as const,
-          content: `Debug Logs (last 10):\n${recentLogs.map(log => 
-            `[${new Date(log.t).toLocaleTimeString()}] [${log.tag}] ${log.msg}`
+          content: `📋 Debug Logs (last 10):\n${recentLogs.map(log => 
+            `[${new Date(log.t).toLocaleTimeString()}] ${log.level.toUpperCase()} [${log.tag}] ${log.msg}${log.data ? '\n  ' + JSON.stringify(log.data) : ''}`
           ).join('\n')}`,
           timestamp: new Date()
         }]);
@@ -190,16 +199,25 @@ const FeatureFlagsPage = () => {
 
     } catch (error) {
       console.error('Failed to start test, retrying with echo mode:', error);
+      dbe('test', 'normal_mode_failed', error instanceof Error ? error.message : String(error));
       
       try {
+        // Stop any existing session before retrying
+        if (sessionBrain) {
+          sessionBrain.stop();
+        }
+
+        // Small delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Retry with echo mode
         dbg('chat', 'echo_mode_used', {});
         await runTest(true);
 
         toast({
           title: 'Test Started (Echo Mode)',
-          description: 'Using echo mode fallback',
-          duration: 2000
+          description: 'Using echo mode fallback - OpenAI may be unavailable',
+          duration: 3000
         });
 
         // After 5 seconds, update session log with last 10 debug logs
@@ -207,19 +225,32 @@ const FeatureFlagsPage = () => {
           const recentLogs = getLogs().slice(-10);
           setSessionLog(prev => [...prev, {
             type: 'tool' as const,
-            content: `Debug Logs (last 10):\n${recentLogs.map(log => 
-              `[${new Date(log.t).toLocaleTimeString()}] [${log.tag}] ${log.msg}`
+            content: `📋 Debug Logs (last 10):\n${recentLogs.map(log => 
+              `[${new Date(log.t).toLocaleTimeString()}] ${log.level.toUpperCase()} [${log.tag}] ${log.msg}${log.data ? '\n  ' + JSON.stringify(log.data) : ''}`
             ).join('\n')}`,
             timestamp: new Date()
           }]);
         }, 5000);
       } catch (echoError) {
         console.error('Echo mode test also failed:', echoError);
+        dbe('test', 'echo_mode_failed', echoError instanceof Error ? echoError.message : String(echoError));
         toast({
           title: 'Test Failed',
-          description: echoError instanceof Error ? echoError.message : 'Unknown error',
+          description: 'Both normal and echo mode failed. Check debug logs.',
           variant: 'destructive'
         });
+        
+        // Still show debug logs even on failure
+        setTimeout(() => {
+          const recentLogs = getLogs().slice(-20); // Show more logs on failure
+          setSessionLog(prev => [...prev, {
+            type: 'tool' as const,
+            content: `❌ Debug Logs (last 20):\n${recentLogs.map(log => 
+              `[${new Date(log.t).toLocaleTimeString()}] ${log.level.toUpperCase()} [${log.tag}] ${log.msg}${log.data ? '\n  ' + JSON.stringify(log.data) : ''}`
+            ).join('\n')}`,
+            timestamp: new Date()
+          }]);
+        }, 1000);
       }
     }
   };
@@ -636,7 +667,9 @@ const FeatureFlagsPage = () => {
               <CardHeader>
                 <CardTitle className="text-sm">Judge Iskander Session Test</CardTitle>
                 <CardDescription>
-                  Seeds: "&lt;TEST_TOOL&gt; please echo 'hello' with diag_echo"
+                  Tests tool calling with: "&lt;TEST_TOOL&gt; please echo 'hello' with diag_echo"
+                  <br />
+                  <span className="text-xs text-muted-foreground">Verifies function calling mode is active. Look for 🔧 tool calls in logs.</span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
