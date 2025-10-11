@@ -1,7 +1,9 @@
 /**
- * ElevenLabs Session Room
+ * ElevenLabs Voice Mediation Session
  * 
- * Zoom-like interface for ElevenLabs conversational AI mediation
+ * Professional voice interface for asynchronous mediation.
+ * Each party (PI lawyer or insurance adjuster) completes their evaluation separately.
+ * The AI speaks as an experienced neutral mediator to seasoned professionals.
  */
 
 import { useState, useEffect } from 'react';
@@ -13,15 +15,20 @@ import { Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { UserProfile } from '@/types/auth';
 
 interface ElevenLabsSessionRoomProps {
   agentId: string;
+  userProfile: UserProfile;
+  sessionCode?: string;
   onClose: () => void;
   className?: string;
 }
 
 export function ElevenLabsSessionRoom({
   agentId,
+  userProfile,
+  sessionCode,
   onClose,
   className
 }: ElevenLabsSessionRoomProps) {
@@ -36,7 +43,7 @@ export function ElevenLabsSessionRoom({
       setIsConnected(true);
       toast({
         title: 'Connected',
-        description: 'Session started with Judge Iskander',
+        description: 'Voice mediation session started',
         duration: 2000,
       });
     },
@@ -104,10 +111,10 @@ export function ElevenLabsSessionRoom({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div>
-            <h2 className="text-xl font-semibold">Mediation Session</h2>
+            <h2 className="text-xl font-semibold">Voice Mediation Session</h2>
             <p className="text-sm text-muted-foreground">
-              {isConnected ? 'Connected' : 'Disconnected'}
-              {conversationId && ` • ID: ${conversationId.slice(0, 8)}`}
+              {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
+              {sessionCode && ` • Session: ${sessionCode}`}
             </p>
           </div>
           <Button
@@ -129,11 +136,17 @@ export function ElevenLabsSessionRoom({
           />
 
           {/* Status */}
-          <div className="text-center space-y-2">
-            <h3 className="text-2xl font-bold">Judge Iskander</h3>
+          <div className="text-center space-y-4">
+            <h3 className="text-2xl font-bold">Verdict AI</h3>
             <p className="text-lg text-muted-foreground">
               {conversation.isSpeaking ? 'Speaking...' : 'Listening...'}
             </p>
+            {!isConnected && (
+              <p className="text-sm text-muted-foreground max-w-md">
+                This is your private evaluation session. The other party will complete their evaluation separately. 
+                Speak naturally about your case—Verdict AI understands you're an experienced professional.
+              </p>
+            )}
           </div>
 
           {/* Connection status indicator */}
