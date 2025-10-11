@@ -162,13 +162,37 @@ export const updateFieldToolSchema = {
 };
 
 /**
+ * Tool: diag_echo
+ * Diagnostic tool to verify function calling is working
+ */
+export const diagEchoToolSchema = {
+  type: "function" as const,
+  function: {
+    name: "diag_echo",
+    description: "Diagnostic echo tool for testing function calling capability. Echoes back the provided message with a timestamp.",
+    parameters: {
+      type: "object",
+      properties: {
+        message: {
+          type: "string",
+          description: "The message to echo back"
+        }
+      },
+      required: ["message"],
+      additionalProperties: false
+    }
+  }
+};
+
+/**
  * All available tools for the agent
  */
 export const allAgentTools = [
   queryCasesToolSchema,
   ingestDocsToolSchema,
   summarizeDocToolSchema,
-  updateFieldToolSchema
+  updateFieldToolSchema,
+  diagEchoToolSchema
 ];
 
 // ============================================================================
@@ -394,6 +418,36 @@ export async function executeUpdateField(params: {
 }
 
 /**
+ * Execute diag_echo tool
+ */
+export async function executeDiagEcho(params: {
+  message: string;
+}): Promise<any> {
+  console.log('[Tool] diag_echo called:', params);
+
+  try {
+    if (!params.message) {
+      return {
+        ok: false,
+        error: 'Message is required'
+      };
+    }
+
+    return {
+      ok: true,
+      echoed: params.message,
+      ts: Date.now()
+    };
+  } catch (err) {
+    console.error('[Tool] diag_echo exception:', err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Failed to echo'
+    };
+  }
+}
+
+/**
  * Validate field values based on their type and constraints
  */
 function validateFieldValue(path: string, value: any): string | null {
@@ -451,6 +505,9 @@ export async function executeAgentTool(toolName: string, args: any): Promise<any
     case 'update_field':
       return executeUpdateField(args);
     
+    case 'diag_echo':
+      return executeDiagEcho(args);
+    
     default:
       console.error(`[Tool Executor] Unknown tool: ${toolName}`);
       return {
@@ -473,6 +530,8 @@ export function getToolSchema(toolName: string): any {
       return summarizeDocToolSchema;
     case 'update_field':
       return updateFieldToolSchema;
+    case 'diag_echo':
+      return diagEchoToolSchema;
     default:
       return null;
   }

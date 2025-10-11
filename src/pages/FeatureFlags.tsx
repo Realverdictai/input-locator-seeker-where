@@ -143,13 +143,11 @@ const FeatureFlagsPage = () => {
           }
         },
         onToolCall: (toolName, args, result) => {
-          if (toolName === 'update_field' && result.ok) {
-            setSessionLog(prev => [...prev, {
-              type: 'tool',
-              content: `update_field: ${args.path} = ${JSON.stringify(args.value)}`,
-              timestamp: new Date()
-            }]);
-          }
+          setSessionLog(prev => [...prev, {
+            type: 'tool',
+            content: `${toolName}: ${JSON.stringify(args)} => ${JSON.stringify(result)}`,
+            timestamp: new Date()
+          }]);
         },
         onError: (error) => {
           toast({
@@ -163,7 +161,7 @@ const FeatureFlagsPage = () => {
       setSessionBrain(brain);
 
       // Send the test message via text path (not voice)
-      const testMessage = "Rear-end MVA; LA venue; CT negative; PT x12; demand 35k; offer 8k; limits unknown; prior 2019 cervical strain.";
+      const testMessage = "<TEST_TOOL> please echo 'hello' with diag_echo";
       brain.sendUserMessage(testMessage);
 
       return brain;
@@ -638,7 +636,7 @@ const FeatureFlagsPage = () => {
               <CardHeader>
                 <CardTitle className="text-sm">Judge Iskander Session Test</CardTitle>
                 <CardDescription>
-                  Seeds: "Rear-end MVA; LA venue; CT negative; PT x12; demand 35k; offer 8k; limits unknown; prior 2019 cervical strain."
+                  Seeds: "&lt;TEST_TOOL&gt; please echo 'hello' with diag_echo"
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
