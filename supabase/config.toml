@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions."tools/db_read"]
 verify_jwt = true
+
+[functions.transcribe]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
