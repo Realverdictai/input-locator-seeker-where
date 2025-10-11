@@ -1,19 +1,17 @@
 /**
  * Voice Mediation Session
  * 
- * Full voice mediation with:
- * - Optional brief upload
- * - ElevenLabs conversational AI
- * - Case data integration
- * - Database access for the AI
+ * Two-step process:
+ * 1. Upload mediation brief/PLD/evaluation
+ * 2. Voice session with animated AI mediator
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useConversation } from '@11labs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedAvatar } from '@/components/AnimatedAvatar';
-import { Mic, MicOff, Phone, PhoneOff, Upload, FileText, X } from 'lucide-react';
+import { Phone, PhoneOff, FileText, Upload, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,21 +38,21 @@ export function VoiceMediationSession({
   onCaseDataUpdate
 }: VoiceMediationSessionProps) {
   const { toast } = useToast();
+  const [step, setStep] = useState<'upload' | 'session'>('upload');
   const [isConnected, setIsConnected] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [uploadedBrief, setUploadedBrief] = useState<File | null>(null);
   const [briefText, setBriefText] = useState<string>('');
   const [isProcessingBrief, setIsProcessingBrief] = useState(false);
-  const [transcript, setTranscript] = useState<Array<{role: string; text: string}>>([]);
 
   const conversation = useConversation({
     onConnect: () => {
       console.log('[Voice Mediation] Connected');
       setIsConnected(true);
       toast({
-        title: 'Voice session started',
-        description: 'You can now speak with Verdict AI',
-        duration: 2000,
+        title: 'Connected to AI Mediator',
+        description: 'You can now speak naturally about your case',
+        duration: 3000,
       });
     },
     onDisconnect: () => {
@@ -63,14 +61,6 @@ export function VoiceMediationSession({
     },
     onMessage: (message) => {
       console.log('[Voice Mediation] Message:', message);
-      // Add to transcript if it's a text message
-      if (typeof message === 'object' && message !== null) {
-        const messageText = JSON.stringify(message);
-        setTranscript(prev => [...prev, {
-          role: 'assistant',
-          text: messageText
-        }]);
-      }
     },
     onError: (error) => {
       console.error('[Voice Mediation] Error:', error);
@@ -132,7 +122,7 @@ export function VoiceMediationSession({
 
       toast({
         title: 'Brief uploaded successfully',
-        description: 'The AI can now reference your brief during the session',
+        description: 'AI mediator will reference this during your session',
       });
     } catch (error) {
       console.error('[Voice Mediation] Brief upload error:', error);
@@ -141,14 +131,27 @@ export function VoiceMediationSession({
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
+      setUploadedBrief(null);
     } finally {
       setIsProcessingBrief(false);
     }
   };
 
+  const handleProceedToSession = () => {
+    if (!uploadedBrief) {
+      toast({
+        title: 'Brief required',
+        description: 'Please upload your mediation brief before starting the session',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setStep('session');
+  };
+
   const handleStartSession = async () => {
     try {
-      // Save current case data context to database if available
+      // Save case context if available
       if (caseData && Object.keys(caseData).length > 0) {
         const { error } = await supabase
           .from('case_evaluations')
@@ -160,7 +163,7 @@ export function VoiceMediationSession({
         if (error) console.error('Error saving case context:', error);
       }
 
-      // Get signed URL from edge function
+      // Get signed URL for ElevenLabs
       const { data, error } = await supabase.functions.invoke('eleven-labs-session', {
         body: { 
           agentId: AGENT_ID,
@@ -176,7 +179,7 @@ export function VoiceMediationSession({
       if (error) throw error;
       if (!data?.signedUrl) throw new Error('No signed URL returned');
 
-      console.log('[Voice Mediation] Starting session with context...');
+      console.log('[Voice Mediation] Starting session...');
       
       const id = await conversation.startSession({ 
         signedUrl: data.signedUrl
@@ -196,17 +199,16 @@ export function VoiceMediationSession({
     try {
       await conversation.endSession();
       
-      // Save transcript to database
-      if (transcript.length > 0 && sessionCode) {
+      // Update session status
+      if (sessionCode) {
         const { error } = await supabase
           .from('mediation_sessions')
           .update({
-            status: 'completed',
-            mediation_proposal: { transcript }
+            status: 'completed'
           })
           .eq('session_code', sessionCode);
 
-        if (error) console.error('Error saving transcript:', error);
+        if (error) console.error('Error updating session:', error);
       }
 
       setConversationId(null);
@@ -216,43 +218,62 @@ export function VoiceMediationSession({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
-        {/* Header */}
-        <CardHeader className="border-b">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Voice Mediation Session</CardTitle>
-              <CardDescription>
-                {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
-                {sessionCode && ` • Session: ${sessionCode}`}
-              </CardDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleEndSession}
-              className="text-destructive hover:text-destructive"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </CardHeader>
+  // STEP 1: Upload Brief
+  if (step === 'upload') {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+        <Card className="w-full max-w-3xl shadow-2xl">
+          <CardHeader className="border-b">
+            <CardTitle className="text-2xl">Prepare for Mediation Session</CardTitle>
+            <CardDescription>
+              {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
+              {sessionCode && ` • Session: ${sessionCode}`}
+            </CardDescription>
+          </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col gap-6 p-6 overflow-hidden">
-          {/* Brief Upload Section (before session starts) */}
-          {!isConnected && (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <Label htmlFor="brief-upload" className="cursor-pointer">
-                  <div className="text-lg font-medium mb-2">
-                    Upload Brief (Optional)
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upload a demand letter, brief, or medical summary to help the AI understand your case
-                  </p>
+          <CardContent className="p-8 space-y-6">
+            {/* Upload Area */}
+            <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 text-center space-y-4">
+              <div className="flex justify-center">
+                {uploadedBrief ? (
+                  <CheckCircle2 className="h-16 w-16 text-green-500 animate-in fade-in" />
+                ) : (
+                  <FileText className="h-16 w-16 text-muted-foreground" />
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-2">
+                  {uploadedBrief ? 'Brief Uploaded' : 'Upload Your Mediation Brief'}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  {uploadedBrief 
+                    ? `Your brief "${uploadedBrief.name}" has been uploaded and processed. The AI mediator will reference this during your session.`
+                    : 'Upload your demand letter, PLD, case evaluation, or mediation brief. The AI will analyze it to facilitate your session.'
+                  }
+                </p>
+              </div>
+
+              {uploadedBrief ? (
+                <div className="flex items-center justify-center gap-3 text-sm">
+                  <FileText className="h-5 w-5 text-green-600" />
+                  <span className="font-medium">{uploadedBrief.name}</span>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="brief-upload">
+                    <Button 
+                      variant="outline" 
+                      disabled={isProcessingBrief}
+                      className="cursor-pointer"
+                      asChild
+                    >
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {isProcessingBrief ? 'Processing...' : 'Choose File'}
+                      </span>
+                    </Button>
+                  </Label>
                   <Input
                     id="brief-upload"
                     type="file"
@@ -261,108 +282,139 @@ export function VoiceMediationSession({
                     className="hidden"
                     disabled={isProcessingBrief}
                   />
-                  <Button variant="outline" disabled={isProcessingBrief} asChild>
-                    <span>
-                      <Upload className="h-4 w-4 mr-2" />
-                      {isProcessingBrief ? 'Processing...' : 'Choose File'}
-                    </span>
-                  </Button>
-                </Label>
-                {uploadedBrief && (
-                  <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
-                    <FileText className="h-4 w-4" />
-                    {uploadedBrief.name}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Voice Session Area */}
-          <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            <AnimatedAvatar 
-              isSpeaking={conversation.isSpeaking} 
-              className="w-48 h-48"
-            />
-
-            <div className="text-center space-y-2">
-              <h3 className="text-2xl font-bold">Verdict AI</h3>
-              <p className="text-lg text-muted-foreground">
-                {conversation.isSpeaking ? 'Speaking...' : isConnected ? 'Listening...' : 'Ready to start'}
-              </p>
-              {!isConnected && (
-                <p className="text-sm text-muted-foreground max-w-md mx-auto mt-4">
-                  This is your private evaluation session. Speak naturally about your case—Verdict AI will ask strategic questions and help evaluate your position.
-                </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Supported: PDF, DOC, DOCX, TXT
+                  </p>
+                </div>
               )}
             </div>
 
-            <div className={cn(
-              'h-3 w-3 rounded-full transition-colors',
-              isConnected ? 'bg-green-500' : 'bg-muted'
-            )} />
+            {/* Info Box */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Your brief will be analyzed and embedded into the system</li>
+                <li>• The AI mediator will have full context of your case</li>
+                <li>• You'll enter a voice session to discuss your position</li>
+                <li>• The AI will ask strategic questions and provide insights</li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleProceedToSession}
+                disabled={!uploadedBrief || isProcessingBrief}
+                size="lg"
+              >
+                Proceed to Voice Session
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // STEP 2: Voice Session
+  return (
+    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+      <Card className="w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
+        <CardHeader className="border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl">Voice Mediation in Progress</CardTitle>
+              <CardDescription>
+                {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
+                {sessionCode && ` • Session: ${sessionCode}`}
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setStep('upload')}
+              disabled={isConnected}
+            >
+              Back
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
+          {/* Animated Mediator */}
+          <div className="relative">
+            <AnimatedAvatar 
+              isSpeaking={conversation.isSpeaking} 
+              className="w-64 h-64"
+            />
+            {isConnected && (
+              <div className={cn(
+                "absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-sm font-medium",
+                conversation.isSpeaking 
+                  ? "bg-blue-500 text-white animate-pulse" 
+                  : "bg-green-500 text-white"
+              )}>
+                {conversation.isSpeaking ? '🗣️ Speaking' : '👂 Listening'}
+              </div>
+            )}
           </div>
 
-          {/* Transcript (shown during session) */}
-          {transcript.length > 0 && (
-            <div className="border rounded-lg p-4 max-h-48 overflow-y-auto">
-              <h4 className="font-medium mb-2">Transcript</h4>
-              <div className="space-y-2">
-                {transcript.slice(-5).map((entry, idx) => (
-                  <div key={idx} className={cn(
-                    "text-sm",
-                    entry.role === 'user' ? 'text-blue-600' : 'text-muted-foreground'
-                  )}>
-                    <span className="font-medium">{entry.role === 'user' ? 'You' : 'AI'}:</span> {entry.text}
-                  </div>
-                ))}
-              </div>
+          {/* Mediator Info */}
+          <div className="text-center space-y-2 max-w-md">
+            <h3 className="text-3xl font-bold">Verdict AI Mediator</h3>
+            <p className="text-lg text-muted-foreground">
+              {!isConnected && 'Ready to begin your mediation session'}
+              {isConnected && !conversation.isSpeaking && "I'm listening—speak naturally about your case"}
+              {isConnected && conversation.isSpeaking && 'Let me share my thoughts...'}
+            </p>
+          </div>
+
+          {/* Status Indicator */}
+          <div className={cn(
+            'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium',
+            isConnected ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+          )}>
+            <div className={cn(
+              'h-2 w-2 rounded-full',
+              isConnected ? 'bg-green-500' : 'bg-gray-400'
+            )} />
+            {isConnected ? 'Session Active' : 'Not Connected'}
+          </div>
+
+          {/* Brief Confirmation */}
+          {uploadedBrief && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+              <span className="text-blue-900">
+                📄 Mediator has reviewed: <span className="font-semibold">{uploadedBrief.name}</span>
+              </span>
             </div>
           )}
         </CardContent>
 
         {/* Footer Controls */}
-        <div className="flex items-center justify-center gap-4 p-6 border-t">
+        <div className="flex items-center justify-center gap-4 p-6 border-t bg-muted/30">
           {!isConnected ? (
             <Button
               onClick={handleStartSession}
               size="lg"
-              className="px-8"
+              className="px-12 h-14 text-lg"
             >
-              <Phone className="h-5 w-5 mr-2" />
+              <Phone className="h-6 w-6 mr-3" />
               Start Voice Session
             </Button>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="lg"
-                disabled
-                className="px-8"
-              >
-                {conversation.status === 'connected' ? (
-                  <>
-                    <Mic className="h-5 w-5 mr-2" />
-                    Mic Active
-                  </>
-                ) : (
-                  <>
-                    <MicOff className="h-5 w-5 mr-2" />
-                    Mic Inactive
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={handleEndSession}
-                variant="destructive"
-                size="lg"
-                className="px-8"
-              >
-                <PhoneOff className="h-5 w-5 mr-2" />
-                End Session
-              </Button>
-            </>
+            <Button
+              onClick={handleEndSession}
+              variant="destructive"
+              size="lg"
+              className="px-12 h-14 text-lg"
+            >
+              <PhoneOff className="h-6 w-6 mr-3" />
+              End Session
+            </Button>
           )}
         </div>
       </Card>
