@@ -21,7 +21,7 @@ const FeatureFlagsPage = () => {
     setFeatureFlags(updated);
   };
 
-  const flagDescriptions: Record<keyof FeatureFlags, { title: string; description: string; status: string }> = {
+  const flagDescriptions: Record<string, { title: string; description: string; status: string }> = {
     mediatorOverlay: {
       title: "Mediator Overlay",
       description: "Enable AI mediator overlay on case evaluation screens",
@@ -72,9 +72,9 @@ const FeatureFlagsPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(Object.keys(flagDescriptions) as Array<keyof FeatureFlags>).map((key) => {
+            {(Object.keys(flagDescriptions) as Array<keyof typeof flagDescriptions>).map((key) => {
               const info = flagDescriptions[key];
-              const isEnabled = flags[key];
+              const isEnabled = flags[key as keyof FeatureFlags] as boolean;
 
               return (
                 <div
@@ -105,7 +105,7 @@ const FeatureFlagsPage = () => {
                     )}
                     <Switch
                       checked={isEnabled}
-                      onCheckedChange={() => handleToggle(key)}
+                      onCheckedChange={() => handleToggle(key as keyof FeatureFlags)}
                     />
                   </div>
                 </div>

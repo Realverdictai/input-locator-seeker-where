@@ -2,12 +2,18 @@ export interface FeatureFlags {
   mediatorOverlay: boolean;
   modelAuditTools: boolean;
   pi_v2_preview: boolean;
+  mediatorModelOverride?: {
+    provider: string;
+    model: string;
+    purpose: string;
+  } | null;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
   mediatorOverlay: false,
   modelAuditTools: false,
   pi_v2_preview: false,
+  mediatorModelOverride: null,
 };
 
 const STORAGE_KEY = 'verdict_ai_feature_flags';
