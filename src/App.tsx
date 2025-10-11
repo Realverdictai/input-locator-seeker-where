@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Hub from "./pages/Hub";
 import ComingSoon from "./pages/ComingSoon";
+import FeatureFlags from "./pages/FeatureFlags";
 import CaseEvaluator from "./components/CaseEvaluator";
 import MediatorProposal from "./components/MediatorProposal";
 
@@ -23,6 +24,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/hub" element={<Hub />} />
+              <Route path="/flags" element={<FeatureFlags />} />
               <Route path="/" element={<Index />} />
               <Route path="/evaluator" element={<CaseEvaluator />} />
               <Route path="/admin" element={<Admin />} />
