@@ -8,6 +8,8 @@ import "@/styles/brandOverrides.css";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Hub from "./pages/Hub";
+import ComingSoon from "./pages/ComingSoon";
 import CaseEvaluator from "./components/CaseEvaluator";
 import MediatorProposal from "./components/MediatorProposal";
 
@@ -20,9 +22,12 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
           <BrowserRouter>
             <Routes>
+              <Route path="/hub" element={<Hub />} />
               <Route path="/" element={<Index />} />
               <Route path="/evaluator" element={<CaseEvaluator />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/wc_coming_soon" element={<ComingSoon title="Workers' Comp Module" />} />
+              <Route path="/divorce_coming_soon" element={<ComingSoon title="Divorce Module" />} />
               <Route path="/mediator" element={
                 <MediatorProposal 
                   mediatorProposal="$99,000"
