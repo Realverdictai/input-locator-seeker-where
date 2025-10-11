@@ -351,7 +351,13 @@ class OpenAIRealtimeClient {
           // Speak the response using Web Speech API
           if (this.speechSynthesis) {
             const utterance = new SpeechSynthesisUtterance(data.content);
-            utterance.voice = this.speechSynthesis.getVoices().find(v => v.name.includes('Google')) || null;
+            const voices = this.speechSynthesis.getVoices();
+            utterance.voice = (
+              voices.find(v => (v.lang || '').toLowerCase().startsWith('en-us') && /Microsoft David|Alex|Daniel|Google US English|Aaron|Fred|Tom/.test(v.name))
+              || voices.find(v => (v.lang || '').toLowerCase().startsWith('en-us'))
+              || voices.find(v => (v.lang || '').toLowerCase().startsWith('en'))
+              || null
+            );
             this.speechSynthesis.speak(utterance);
           }
         }
@@ -376,7 +382,13 @@ class OpenAIRealtimeClient {
         // Speak the response using Web Speech API
         if (this.speechSynthesis) {
           const utterance = new SpeechSynthesisUtterance(data.response);
-          utterance.voice = this.speechSynthesis.getVoices().find(v => v.name.includes('Google')) || null;
+          const voices = this.speechSynthesis.getVoices();
+          utterance.voice = (
+            voices.find(v => (v.lang || '').toLowerCase().startsWith('en-us') && /Microsoft David|Alex|Daniel|Google US English|Aaron|Fred|Tom/.test(v.name))
+            || voices.find(v => (v.lang || '').toLowerCase().startsWith('en-us'))
+            || voices.find(v => (v.lang || '').toLowerCase().startsWith('en'))
+            || null
+          );
           this.speechSynthesis.speak(utterance);
         }
       }
