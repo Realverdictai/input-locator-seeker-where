@@ -6,6 +6,7 @@ import { CaseData } from "@/types/verdict";
 import FileDropZone from "@/components/FileDropZone";
 import { supabase } from "@/integrations/supabase/client";
 import ClarifyModal from "@/components/ClarifyModal";
+import { callAgentTool } from "@/agents/bridge";
 
 interface DocumentUploadStepProps {
   formData: Partial<CaseData>;
@@ -32,6 +33,18 @@ const DocumentUploadStep = ({ formData, setFormData, onQuickEvaluate }: Document
         body: form
       });
       if (error) throw error;
+      
+      // Notify agent about uploaded documents (non-blocking)
+      files.forEach(file => {
+        const docId = `${sessionId}/${file.name}`;
+        callAgentTool('ingest_docs', {
+          docId,
+          name: file.name,
+          mime: file.type || 'application/octet-stream',
+          category: getCategoryFromFilename(file.name)
+        });
+      });
+      
       setFormData({ ...formData, caseSessionId: sessionId });
       setDocsUploaded(true);
       if ((formData.clarifyMode || 'ask') === 'ask') {
@@ -46,6 +59,18 @@ const DocumentUploadStep = ({ formData, setFormData, onQuickEvaluate }: Document
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper to categorize documents by filename
+  const getCategoryFromFilename = (filename: string): string => {
+    const lower = filename.toLowerCase();
+    if (lower.includes('police') || lower.includes('report')) return 'police_report';
+    if (lower.includes('medical') || lower.includes('record')) return 'medical_records';
+    if (lower.includes('bill') || lower.includes('invoice')) return 'bills';
+    if (lower.includes('mri') || lower.includes('xray') || lower.includes('ct')) return 'imaging';
+    if (lower.includes('photo') || lower.includes('image')) return 'photos';
+    if (lower.includes('letter') || lower.includes('correspondence')) return 'correspondence';
+    return 'other';
   };
 
   const handleClarifySubmit = async (answer: string) => {
