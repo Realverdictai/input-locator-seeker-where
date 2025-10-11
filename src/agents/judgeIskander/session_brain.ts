@@ -117,7 +117,7 @@ export class JudgeIskanderSessionBrain {
         {
           systemPrompt,
           tools: allAgentTools,
-          voice: 'echo', // Male voice with clear American accent
+          voice: 'onyx', // Deep, authoritative male voice
           temperature: 0.8,
           echoMode: this.config.echoMode || false
         },
