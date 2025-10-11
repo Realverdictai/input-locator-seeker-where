@@ -1,12 +1,10 @@
+import type { ModelChoice } from './modelRouter';
+
 export interface FeatureFlags {
   mediatorOverlay: boolean;
   modelAuditTools: boolean;
   pi_v2_preview: boolean;
-  mediatorModelOverride?: {
-    provider: string;
-    model: string;
-    purpose: string;
-  } | null;
+  mediatorModelOverride?: ModelChoice | null;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {

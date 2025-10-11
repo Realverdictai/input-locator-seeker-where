@@ -1,3 +1,5 @@
+import type { FeatureFlags } from './featureFlags';
+
 export type Provider = 'lovable' | 'openai-direct' | 'anthropic' | 'replicate';
 
 export interface ModelChoice {
@@ -11,13 +13,6 @@ export interface RouteConfig {
   pi?: Partial<Record<ModelChoice['purpose'], ModelChoice>>;
   wc?: Partial<Record<ModelChoice['purpose'], ModelChoice>>;
   divorce?: Partial<Record<ModelChoice['purpose'], ModelChoice>>;
-}
-
-export interface FeatureFlags {
-  mediatorOverlay: boolean;
-  modelAuditTools: boolean;
-  pi_v2_preview: boolean;
-  mediatorModelOverride?: ModelChoice | null; // global override switch
 }
 
 export function getDefaultModels(): Record<ModelChoice['purpose'], ModelChoice> {

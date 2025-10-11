@@ -5,6 +5,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { getFeatureFlags } from "@/lib/featureFlags";
+import { resolveModel, type ModelChoice } from "@/lib/modelRouter";
 
 const DEFAULT_SYSTEM_PROMPT = `You are Verdict AI, a neutral virtual mediator. You clarify facts, identify disputes, summarize competing narratives, assess risk, and generate bracketed settlement strategies. You do not give legal advice; you facilitate resolution. Always (1) ask for missing facts, (2) cite evidence sources when possible, (3) surface uncertainty, (4) explain tradeoffs, (5) keep tone calm, fair, and reality-testing.`;
 
@@ -17,12 +19,16 @@ interface MediatorOverlayProps {
   systemPrompt?: string;
   tools?: any[];
   model?: string;
+  purpose?: ModelChoice['purpose'];
+  route?: 'pi' | 'wc' | 'divorce';
 }
 
 const MediatorOverlay = ({ 
   systemPrompt = DEFAULT_SYSTEM_PROMPT, 
   tools,
-  model = "google/gemini-2.5-flash"
+  model: modelProp,
+  purpose = 'pi_reasoning',
+  route
 }: MediatorOverlayProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -31,7 +37,15 @@ const MediatorOverlay = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mediator-chat`;
+  // Resolve model based on feature flags and router
+  const flags = getFeatureFlags();
+  const resolvedModel = resolveModel(purpose, flags, route);
+  const { provider, model } = modelProp 
+    ? { provider: 'lovable' as const, model: modelProp }
+    : resolvedModel;
+
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -43,17 +57,48 @@ const MediatorOverlay = ({
   }, [messages]);
 
   const streamChat = async (userMessages: Message[]) => {
-    const resp = await fetch(CHAT_URL, {
+    // Route to appropriate edge function based on provider
+    let chatUrl: string;
+    let requestBody: any;
+
+    if (provider === 'lovable') {
+      chatUrl = `${SUPABASE_URL}/functions/v1/mediator-chat`;
+      requestBody = {
+        messages: userMessages,
+        systemPrompt,
+        model
+      };
+    } else if (provider === 'openai-direct') {
+      // Check if openai-direct function exists, otherwise fall back to mediator-chat
+      chatUrl = `${SUPABASE_URL}/functions/v1/mediator-openai-direct`;
+      requestBody = {
+        messages: userMessages,
+        systemPrompt,
+        model
+      };
+    } else if (provider === 'anthropic' || provider === 'replicate') {
+      toast({
+        title: "Provider Not Configured",
+        description: `The ${provider} provider is not yet configured. Please use Lovable or OpenAI Direct.`,
+        variant: "destructive",
+      });
+      throw new Error(`Provider ${provider} not configured`);
+    } else {
+      toast({
+        title: "Unknown Provider",
+        description: "The selected provider is not supported.",
+        variant: "destructive",
+      });
+      throw new Error(`Unknown provider: ${provider}`);
+    }
+
+    const resp = await fetch(chatUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ 
-        messages: userMessages,
-        systemPrompt,
-        model 
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!resp.ok) {
