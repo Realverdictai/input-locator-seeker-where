@@ -30,9 +30,35 @@ const Index = () => {
     // User will be automatically set by the auth hook
   };
 
-  const handleStartEvaluation = (sessionCode?: string, useVoice?: boolean) => {
+  const handleStartEvaluation = async (sessionCode?: string, useVoice?: boolean) => {
+    let voice = useVoice ?? (sessionCode ? true : false);
+
+    if (sessionCode) {
+      try {
+        const { data: sessionRow } = await supabase
+          .from('mediation_sessions')
+          .select('is_voice_session')
+          .eq('session_code', sessionCode)
+          .maybeSingle();
+
+        // Only ever upgrade to voice=true based on DB or docs; don't force false
+        if (sessionRow?.is_voice_session) {
+          voice = true;
+        } else if (useVoice === undefined) {
+          const { data: docs } = await supabase
+            .from('uploaded_docs')
+            .select('id')
+            .eq('case_session_id', sessionCode)
+            .limit(1);
+          if (docs && docs.length > 0) voice = true;
+        }
+      } catch (e) {
+        console.warn('Auto-detect voice session failed, defaulting to voice for sessions.', e);
+      }
+    }
+
     setCurrentSessionCode(sessionCode || null);
-    setUseVoiceSession(useVoice || false);
+    setUseVoiceSession(voice);
     setShowEvaluation(true);
   };
 

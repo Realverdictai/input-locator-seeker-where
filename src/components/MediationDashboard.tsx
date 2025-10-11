@@ -398,7 +398,7 @@ const MediationDashboard = ({ userProfile, onStartEvaluation }: MediationDashboa
                   </div>
                   <Button 
                     variant="outline" 
-                    onClick={() => onStartEvaluation(session.session_code, session.is_voice_session)}
+                    onClick={() => onStartEvaluation(session.session_code)}
                   >
                     Continue Evaluation
                   </Button>
