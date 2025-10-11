@@ -6,6 +6,7 @@ export interface CallConfig {
   tools?: any[];
   voice?: 'alloy' | 'ash' | 'ballad' | 'coral' | 'echo' | 'sage' | 'shimmer' | 'verse';
   temperature?: number;
+  echoMode?: boolean;
 }
 
 export interface RealtimeEvents {
@@ -323,6 +324,40 @@ class OpenAIRealtimeClient {
 
   private async processFallbackChat(userMessage: string) {
     try {
+      // Use echo mode if configured
+      if (this.callConfig.echoMode) {
+        console.log('Using echo mode for chat');
+        dbg('chat', 'echo_mode_used', {});
+        const { data, error } = await supabase.functions.invoke('chat?mode=echo', {
+          body: {
+            message: userMessage,
+            systemPrompt: this.callConfig.systemPrompt,
+            tools: this.callConfig.tools,
+            temperature: this.callConfig.temperature
+          }
+        });
+
+        if (error) {
+          console.error('Chat error:', error);
+          return;
+        }
+
+        if (data?.content) {
+          // Trigger onFinal with echo response
+          if (this.events.onFinal) {
+            this.events.onFinal(data.content);
+          }
+
+          // Speak the response using Web Speech API
+          if (this.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(data.content);
+            utterance.voice = this.speechSynthesis.getVoices().find(v => v.name.includes('Google')) || null;
+            this.speechSynthesis.speak(utterance);
+          }
+        }
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('chat', {
         body: {
           message: userMessage,

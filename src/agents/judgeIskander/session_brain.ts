@@ -26,6 +26,7 @@ import { dbg, dbe } from "@/debug/mediatorDebugStore";
 
 interface SessionConfig {
   stepHint?: PiStepId;
+  echoMode?: boolean;
   onPartial?: (text: string, speaker: 'user' | 'assistant') => void;
   onFinal?: (text: string, speaker: 'user' | 'assistant') => void;
   onToolCall?: (toolName: string, args: any, result: any) => void;
@@ -117,7 +118,8 @@ export class JudgeIskanderSessionBrain {
           systemPrompt,
           tools: allAgentTools,
           voice: 'alloy',
-          temperature: 0.8
+          temperature: 0.8,
+          echoMode: this.config.echoMode || false
         },
         events
       );

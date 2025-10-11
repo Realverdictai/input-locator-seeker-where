@@ -12,6 +12,24 @@ serve(async (req) => {
   }
 
   try {
+    // Check for echo mode query parameter
+    const url = new URL(req.url);
+    const mode = url.searchParams.get('mode');
+    
+    if (mode === 'echo') {
+      console.log('Echo mode activated - returning canned response');
+      return new Response(
+        JSON.stringify({
+          role: 'assistant',
+          content: '[ECHO MODE] I received your message. Next, please provide policy limits and billed vs paid specials.',
+          tool_calls: []
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     
     if (!OPENAI_API_KEY) {

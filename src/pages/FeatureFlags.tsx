@@ -128,9 +128,10 @@ const FeatureFlagsPage = () => {
     setSessionLog([]);
     setShowJudgeIskanderTest(true);
 
-    try {
+    const runTest = async (useEchoMode: boolean = false) => {
       const brain = await startPiSession({
         stepHint: 'upload_intake',
+        echoMode: useEchoMode,
         onPartial: () => {}, // Ignore partials for this test
         onFinal: (text, speaker) => {
           if (speaker === 'assistant') {
@@ -165,6 +166,12 @@ const FeatureFlagsPage = () => {
       const testMessage = "Rear-end MVA; LA venue; CT negative; PT x12; demand 35k; offer 8k; limits unknown; prior 2019 cervical strain.";
       brain.sendUserMessage(testMessage);
 
+      return brain;
+    };
+
+    try {
+      await runTest(false);
+
       toast({
         title: 'Test Started',
         description: 'Judge Iskander session initiated via text path',
@@ -184,12 +191,38 @@ const FeatureFlagsPage = () => {
       }, 5000);
 
     } catch (error) {
-      console.error('Failed to start test:', error);
-      toast({
-        title: 'Test Failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive'
-      });
+      console.error('Failed to start test, retrying with echo mode:', error);
+      
+      try {
+        // Retry with echo mode
+        dbg('chat', 'echo_mode_used', {});
+        await runTest(true);
+
+        toast({
+          title: 'Test Started (Echo Mode)',
+          description: 'Using echo mode fallback',
+          duration: 2000
+        });
+
+        // After 5 seconds, update session log with last 10 debug logs
+        setTimeout(() => {
+          const recentLogs = getLogs().slice(-10);
+          setSessionLog(prev => [...prev, {
+            type: 'tool' as const,
+            content: `Debug Logs (last 10):\n${recentLogs.map(log => 
+              `[${new Date(log.t).toLocaleTimeString()}] [${log.tag}] ${log.msg}`
+            ).join('\n')}`,
+            timestamp: new Date()
+          }]);
+        }, 5000);
+      } catch (echoError) {
+        console.error('Echo mode test also failed:', echoError);
+        toast({
+          title: 'Test Failed',
+          description: echoError instanceof Error ? echoError.message : 'Unknown error',
+          variant: 'destructive'
+        });
+      }
     }
   };
 
