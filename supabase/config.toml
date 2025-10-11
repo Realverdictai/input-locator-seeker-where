@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.summarize-document]
 verify_jwt = false
+
+[functions.eleven-labs-session]
+verify_jwt = false

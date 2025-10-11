@@ -13,6 +13,7 @@ import ComingSoon from "./pages/ComingSoon";
 import FeatureFlags from "./pages/FeatureFlags";
 import CaseEvaluator from "./components/CaseEvaluator";
 import MediatorProposal from "./components/MediatorProposal";
+import ElevenLabsDemo from "./pages/ElevenLabsDemo";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ function App() {
             <Routes>
               <Route path="/hub" element={<Hub />} />
               <Route path="/flags" element={<FeatureFlags />} />
+              <Route path="/eleven-labs" element={<ElevenLabsDemo />} />
               <Route path="/" element={<Index />} />
               <Route path="/evaluator" element={<CaseEvaluator />} />
               <Route path="/admin" element={<Admin />} />
