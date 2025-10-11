@@ -18,6 +18,7 @@ import { queryCasesToolSchema } from "../../supabase/functions/tools/db_read/sch
 import { startPiSession, type JudgeIskanderSessionBrain } from "@/agents/judgeIskander/session_brain";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { getLogs, clearLogs } from "@/debug/mediatorDebugStore";
 
 const FeatureFlagsPage = () => {
   const [flags, setLocalFlags] = useState<FeatureFlags>(getFeatureFlags());
@@ -31,7 +32,16 @@ const FeatureFlagsPage = () => {
     content: string;
     timestamp: Date;
   }>>([]);
+  const [debugLogs, setDebugLogs] = useState<ReturnType<typeof getLogs>>([]);
   const { toast } = useToast();
+
+  // Refresh debug logs every 500ms when on flags page
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDebugLogs(getLogs());
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   const modelsByProvider: Record<Provider, string[]> = {
     lovable: [
@@ -450,6 +460,105 @@ const FeatureFlagsPage = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              🔍 Mediator Debug
+            </CardTitle>
+            <CardDescription>
+              Real-time diagnostics for voice sessions and model routing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <h4 className="font-semibold text-sm mb-2">Feature Flags</h4>
+                <pre className="text-xs font-mono overflow-x-auto">
+                  {JSON.stringify(flags, null, 2)}
+                </pre>
+              </div>
+
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <h4 className="font-semibold text-sm mb-2">Provider / Model</h4>
+                <div className="text-sm space-y-1">
+                  {flags.mediatorModelOverride ? (
+                    <>
+                      <p><span className="font-mono text-xs bg-purple-100 px-2 py-1 rounded">GLOBAL OVERRIDE</span></p>
+                      <p>Provider: <span className="font-mono">{flags.mediatorModelOverride.provider}</span></p>
+                      <p>Model: <span className="font-mono">{flags.mediatorModelOverride.model}</span></p>
+                    </>
+                  ) : (
+                    <>
+                      <p><span className="font-mono text-xs bg-blue-100 px-2 py-1 rounded">ROUTE CONFIG</span></p>
+                      <p>PI Reasoning: <span className="font-mono">{routeConfig.pi?.pi_reasoning?.provider || 'default'} / {routeConfig.pi?.pi_reasoning?.model || 'default'}</span></p>
+                      <p>PI Docs: <span className="font-mono">{routeConfig.pi?.pi_docs?.provider || 'default'} / {routeConfig.pi?.pi_docs?.model || 'default'}</span></p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <h4 className="font-semibold text-sm mb-2">Transport</h4>
+                <p className="text-sm font-mono">
+                  {sessionBrain ? (
+                    <span className="text-green-600">● Active session (check logs for transport type)</span>
+                  ) : (
+                    <span className="text-gray-500">○ No active session</span>
+                  )}
+                </p>
+              </div>
+
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-sm">Debug Logs (Last 200)</h4>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      clearLogs();
+                      setDebugLogs([]);
+                      toast({
+                        title: 'Logs Cleared',
+                        duration: 1500
+                      });
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <ScrollArea className="h-[300px] w-full border rounded bg-white p-2">
+                  {debugLogs.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-8">No logs yet</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {debugLogs.map((log, i) => {
+                        const time = new Date(log.t).toLocaleTimeString();
+                        const levelColor = log.level === 'error' ? 'text-red-600' : 
+                                          log.level === 'warn' ? 'text-yellow-600' : 
+                                          'text-gray-700';
+                        return (
+                          <div key={i} className="text-xs font-mono border-b pb-1">
+                            <span className="text-gray-400">{time}</span>
+                            {' '}
+                            <span className={levelColor}>[{log.tag}]</span>
+                            {' '}
+                            <span>{log.msg}</span>
+                            {log.data && (
+                              <pre className="text-[10px] text-gray-500 mt-1 ml-4 overflow-x-auto">
+                                {typeof log.data === 'string' ? log.data : JSON.stringify(log.data)}
+                              </pre>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
