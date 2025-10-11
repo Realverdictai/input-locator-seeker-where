@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.mediator-openai-direct]
 verify_jwt = false
+
+[functions."tools/db_read"]
+verify_jwt = true
