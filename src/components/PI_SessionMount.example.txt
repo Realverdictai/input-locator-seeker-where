@@ -1,0 +1,94 @@
+/**
+ * PI_SessionMount Usage Example
+ * 
+ * This component provides voice-enabled mediation sessions with Judge Iskander.
+ * It will only render when the mediatorOverlay feature flag is enabled.
+ * 
+ * To enable:
+ * 1. Go to /flags page
+ * 2. Toggle "Mediator Overlay" feature flag
+ * 
+ * To add to a PI screen (demo only):
+ * 
+ * Example 1: Add to CaseEvaluator.tsx
+ * ==========================================
+ * import { PI_SessionMount } from '@/components/PI_SessionMount';
+ * 
+ * export default function CaseEvaluator() {
+ *   return (
+ *     <div className="container">
+ *       <PI_SessionMount />
+ *       
+ *       {/* ... rest of your component ... *\/}
+ *     </div>
+ *   );
+ * }
+ * 
+ * Example 2: Add to FormWizard.tsx
+ * ==========================================
+ * import { PI_SessionMount } from '@/components/PI_SessionMount';
+ * 
+ * export function FormWizard() {
+ *   return (
+ *     <>
+ *       <PI_SessionMount />
+ *       
+ *       <div className="wizard-container">
+ *         {/* ... rest of your wizard ... *\/}
+ *       </div>
+ *     </>
+ *   );
+ * }
+ * 
+ * Example 3: Add to Index.tsx (global)
+ * ==========================================
+ * import { PI_SessionMount } from '@/components/PI_SessionMount';
+ * 
+ * export default function Index() {
+ *   return (
+ *     <div className="min-h-screen">
+ *       <PI_SessionMount />
+ *       
+ *       {/* ... rest of your page ... *\/}
+ *     </div>
+ *   );
+ * }
+ * 
+ * How it works:
+ * =============
+ * 
+ * 1. Component checks if mediatorOverlay feature flag is enabled
+ * 2. If disabled, renders nothing (null)
+ * 3. If enabled, shows a "Start Session" button in top-right corner
+ * 4. When clicked, initializes Judge Iskander session brain with:
+ *    - Current PI step context
+ *    - Voice input/output via OpenAI Realtime or fallback
+ *    - Tool calling for query_cases, update_field, etc.
+ * 5. Shows MediatorSessionRoom UI with:
+ *    - Live transcript
+ *    - Tool call history in Actions tab
+ *    - Current PI step indicator
+ *    - Minimize/expand controls
+ * 
+ * Session Features:
+ * =================
+ * 
+ * - Voice input/output with real-time transcription
+ * - Automatic field updates when user provides information
+ * - Document ingestion and summarization
+ * - Comparable case queries
+ * - Step advancement when ready
+ * - Toast notifications for important actions
+ * 
+ * Notes:
+ * ======
+ * 
+ * - Session state is local to the component
+ * - Transcript is lost when component unmounts
+ * - Tool calls are recorded but not persisted to database
+ * - For production use, consider:
+ *   - Persisting session history
+ *   - Adding session recovery
+ *   - Implementing user authentication
+ *   - Adding rate limiting
+ */

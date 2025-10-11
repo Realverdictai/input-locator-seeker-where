@@ -7,30 +7,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
+interface TranscriptEntry {
+  speaker: string;
+  text: string;
+  timestamp: string;
+}
+
 interface MediatorSessionRoomProps {
   route: 'pi' | 'wc' | 'divorce';
   stepId?: string;
   onClose?: () => void;
   modelPurpose?: 'pi_reasoning' | 'pi_docs' | 'quick_qa';
+  transcript?: TranscriptEntry[];
+  notes?: string[];
+  isAgentSpeaking?: boolean;
 }
 
 export function MediatorSessionRoom({
   route,
   stepId,
   onClose,
-  modelPurpose = 'pi_reasoning'
+  modelPurpose = 'pi_reasoning',
+  transcript: externalTranscript,
+  notes: externalNotes,
+  isAgentSpeaking: externalIsAgentSpeaking
 }: MediatorSessionRoomProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
-  const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
 
-  // Mock data for demonstration
-  const transcript = [
+  // Use external data if provided, otherwise use mock data
+  const transcript = externalTranscript || [
     { speaker: 'User', text: 'I need help evaluating this case.', timestamp: '10:23 AM' },
     { speaker: 'Mediator', text: 'I can help you with that. Let me review the details.', timestamp: '10:23 AM' }
   ];
 
-  const notes = ['Case involves rear-end collision', 'Policy limits: 15/30', 'Venue: LA County'];
+  const notes = externalNotes || ['Case involves rear-end collision', 'Policy limits: 15/30', 'Venue: LA County'];
+  const isAgentSpeaking = externalIsAgentSpeaking !== undefined ? externalIsAgentSpeaking : false;
 
   const piStepLabels: Record<string, string> = {
     basic: 'Basic Info',
