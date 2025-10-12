@@ -44,8 +44,10 @@ export function VoiceMediationSession({
   const [uploadedBrief, setUploadedBrief] = useState<File | null>(null);
   const [briefText, setBriefText] = useState<string>('');
   const [isProcessingBrief, setIsProcessingBrief] = useState(false);
+  const [conversationOverrides, setConversationOverrides] = useState<any | null>(null);
 
   const conversation = useConversation({
+    overrides: conversationOverrides || undefined,
     onConnect: () => {
       console.log('[Voice Mediation] Connected');
       setIsConnected(true);
@@ -155,6 +157,17 @@ export function VoiceMediationSession({
 
       if (error) throw error;
       if (!data?.signedUrl) throw new Error('No signed URL returned');
+
+      // Apply dynamic agent overrides so the session starts with context
+      setConversationOverrides({
+        agent: {
+          prompt: { prompt: data.customPrompt || 'You are Judge William Iskandar, an experienced mediator.' },
+          firstMessage: sessionCode
+            ? `I have reviewed your mediation brief for session ${sessionCode}. I'll summarize the key points and then ask a few targeted questions to clarify.`
+            : `I have reviewed your mediation brief. I'll summarize the key points and then ask a few targeted questions to clarify.`,
+          language: 'en'
+        }
+      });
 
       console.log('[Voice Mediation] Starting session...');
       
