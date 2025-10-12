@@ -81,6 +81,8 @@ serve(async (req) => {
       fileNames: files.map(f => f.name)
     });
 
+    const processedFiles: Array<{ fileName: string; textContent: string }> = [];
+
     for (const file of files) {
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -172,6 +174,12 @@ serve(async (req) => {
             { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
+
+        // Collect processed file info
+        processedFiles.push({
+          fileName: file.name,
+          textContent: text.slice(0, 1000)
+        });
       } catch (err) {
         console.error("Error processing file", file.name, err);
         return new Response(
@@ -181,7 +189,10 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ 
+      ok: true, 
+      files: processedFiles 
+    }), {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {

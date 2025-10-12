@@ -93,6 +93,14 @@ export function VoiceMediationSession({
         throw new Error(error?.message || 'Failed to process document');
       }
 
+      // Extract and store the document text for the AI mediator
+      if (data.files && data.files.length > 0) {
+        const extractedText = data.files
+          .map((f: any) => `File: ${f.fileName}\n${f.textContent}`)
+          .join('\n\n');
+        setBriefText(extractedText);
+      }
+
       toast({
         title: 'Brief uploaded',
         description: 'Your document was uploaded and processed successfully',
