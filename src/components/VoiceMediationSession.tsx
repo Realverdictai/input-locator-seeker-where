@@ -196,7 +196,7 @@ export function VoiceMediationSession({
   // STEP 1: Upload Brief
   if (step === 'upload') {
     return (
-      <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 py-12">
         <Card className="w-full max-w-3xl shadow-2xl">
           <CardHeader className="border-b">
             <CardTitle className="text-2xl">Prepare for Mediation Session</CardTitle>
@@ -297,8 +297,8 @@ export function VoiceMediationSession({
 
   // STEP 2: Voice Session
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl">
+    <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 py-12">
+      <Card className="w-full max-w-5xl flex flex-col shadow-2xl overflow-y-auto max-h-[90vh]">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <div>
