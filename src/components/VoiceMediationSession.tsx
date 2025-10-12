@@ -359,36 +359,14 @@ export function VoiceMediationSession({
             {isConnected ? 'Session Active' : 'Not Connected'}
           </div>
 
-          {/* Brief Configuration Instructions */}
+          {/* Brief Ready Indicator */}
           {uploadedBrief && (
-            <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm space-y-3">
-              <div className="flex items-start gap-2">
-                <span className="text-2xl">⚙️</span>
-                <div className="flex-1 space-y-2">
-                  <p className="font-semibold text-amber-900">Configuration Required</p>
-                  <p className="text-amber-800">
-                    To enable Judge Iskandar to access your uploaded brief, configure the ElevenLabs agent with this custom tool:
-                  </p>
-                  <div className="bg-white/50 p-3 rounded border border-amber-200 font-mono text-xs space-y-2">
-                    <div>
-                      <strong>Tool Name:</strong> get_mediation_brief
-                    </div>
-                    <div>
-                      <strong>Description:</strong> Retrieves the uploaded mediation brief content
-                    </div>
-                    <div>
-                      <strong>URL:</strong> https://hueccsiuyxjqupxkfhkl.supabase.co/functions/v1/get-mediation-brief
-                    </div>
-                    <div>
-                      <strong>Method:</strong> POST
-                    </div>
-                    <div>
-                      <strong>Body:</strong> {`{"sessionCode": "${sessionCode || '1234987'}"}`}
-                    </div>
-                  </div>
-                  <p className="text-amber-800 text-xs">
-                    Add this tool in your ElevenLabs agent dashboard. The agent will call it when you ask about the brief.
-                  </p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-900">Brief Ready</p>
+                  <p className="text-green-700">Judge Iskandar can access your uploaded brief during the session</p>
                 </div>
               </div>
             </div>
