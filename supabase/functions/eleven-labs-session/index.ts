@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,10 +26,38 @@ serve(async (req) => {
     console.log('[ElevenLabs Session] Getting signed URL for agent:', agentId);
     console.log('[ElevenLabs Session] Session context:', sessionContext);
 
-    // Build custom prompt based on whether a brief was uploaded
-    const customPrompt = sessionContext?.hasBrief 
-      ? `You are Judge William Iskandar, an experienced mediator. A mediation brief has been uploaded for session code "${sessionContext.sessionCode}". When the user asks about the brief, use your "get_mediation_brief" custom tool with this session code to retrieve and review its content. Guide the mediation professionally and reference the brief content from the tool when relevant.`
-      : sessionContext?.instructions || 'You are Judge William Iskandar, an experienced mediator guiding this session professionally.';
+    // If there's a brief, retrieve it from the database first
+    let briefContent = '';
+    if (sessionContext?.hasBrief && sessionContext?.sessionCode) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        console.log('[ElevenLabs Session] Retrieving brief for session:', sessionContext.sessionCode);
+
+        const { data: docs, error } = await supabase
+          .from('uploaded_docs')
+          .select('file_name, text_content')
+          .eq('case_session_id', sessionContext.sessionCode)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!error && docs && docs.length > 0) {
+          briefContent = docs[0].text_content || '';
+          console.log('[ElevenLabs Session] Retrieved brief:', docs[0].file_name, 'Length:', briefContent.length);
+        } else {
+          console.log('[ElevenLabs Session] No brief found or error:', error);
+        }
+      } catch (e) {
+        console.error('[ElevenLabs Session] Error retrieving brief:', e);
+      }
+    }
+
+    // Build custom prompt with the actual brief content
+    const customPrompt = briefContent 
+      ? `You are Judge William Iskandar, an experienced mediator. I have reviewed the mediation brief submitted for this session. Here is the content:\n\n${briefContent}\n\nBegin by acknowledging you've reviewed the brief and provide a brief summary of the key points. Then guide the mediation professionally, referencing specific details from the brief as relevant.`
+      : sessionContext?.instructions || 'You are Judge William Iskandar, an experienced mediator. No brief was uploaded for this session. Begin by introducing yourself and asking about the case details.';
 
     // Get signed URL from ElevenLabs API with custom prompt
     const response = await fetch(
