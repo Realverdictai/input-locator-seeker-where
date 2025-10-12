@@ -144,8 +144,9 @@ export function VoiceMediationSession({
           sessionContext: {
             userType: userProfile.user_type,
             sessionCode,
-            briefText,
-            caseData
+            briefText: briefText || 'No brief uploaded',
+            caseData,
+            instructions: `You are Judge William Iskandar, an experienced mediator. ${briefText ? `The user has provided a brief: ${briefText}` : 'No brief was provided.'} Guide the mediation session professionally and reference the brief when relevant.`
           }
         }
       });
@@ -338,7 +339,7 @@ export function VoiceMediationSession({
 
           {/* Mediator Info */}
           <div className="text-center space-y-2 max-w-md">
-            <h3 className="text-3xl font-bold">Verdict AI Mediator</h3>
+            <h3 className="text-3xl font-bold">Judge William Iskandar</h3>
             <p className="text-lg text-muted-foreground">
               {!isConnected && 'Ready to begin your mediation session'}
               {isConnected && !conversation.isSpeaking && "I'm listening—speak naturally about your case"}
