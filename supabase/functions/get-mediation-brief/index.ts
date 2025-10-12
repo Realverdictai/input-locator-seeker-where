@@ -14,7 +14,10 @@ serve(async (req) => {
   try {
     const { conversationId, sessionCode } = await req.json();
     
-    console.log('[Get Brief] Request for conversation:', conversationId, 'session:', sessionCode);
+    console.log('[Get Brief] ==== CUSTOM TOOL CALLED ====');
+    console.log('[Get Brief] Conversation ID:', conversationId);
+    console.log('[Get Brief] Session Code:', sessionCode);
+    console.log('[Get Brief] Full request body:', JSON.stringify(await req.clone().json(), null, 2));
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

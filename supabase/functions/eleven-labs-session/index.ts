@@ -25,10 +25,10 @@ serve(async (req) => {
     console.log('[ElevenLabs Session] Getting signed URL for agent:', agentId);
     console.log('[ElevenLabs Session] Session context:', sessionContext);
 
-    // Build custom prompt with brief context
-    const customPrompt = sessionContext?.briefText 
-      ? `You are Judge William Iskandar, an experienced mediator. The user has provided the following brief for this mediation session:\n\n${sessionContext.briefText}\n\nPlease reference this brief naturally when relevant during the conversation. Guide the mediation professionally.`
-      : 'You are Judge William Iskandar, an experienced mediator. No brief was provided for this session.';
+    // Build custom prompt based on whether a brief was uploaded
+    const customPrompt = sessionContext?.hasBrief 
+      ? `You are Judge William Iskandar, an experienced mediator. A mediation brief has been uploaded for session code "${sessionContext.sessionCode}". When the user asks about the brief, use your "get_mediation_brief" custom tool with this session code to retrieve and review its content. Guide the mediation professionally and reference the brief content from the tool when relevant.`
+      : sessionContext?.instructions || 'You are Judge William Iskandar, an experienced mediator guiding this session professionally.';
 
     // Get signed URL from ElevenLabs API with custom prompt
     const response = await fetch(

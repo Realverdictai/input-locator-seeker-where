@@ -7,9 +7,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function extractText(buffer: Uint8Array, mime: string): Promise<string> {
+async function extractText(buffer: Uint8Array, mime: string, fileName: string): Promise<string> {
   try {
     const lower = mime.toLowerCase();
+    console.log(`[Text Extract] Processing ${fileName} with mime: ${mime}`);
+    
     if (lower.includes("pdf")) {
       try {
         const pdfjs: any = await import("npm:pdfjs-dist/legacy/build/pdf.mjs").catch(() =>
@@ -26,19 +28,41 @@ async function extractText(buffer: Uint8Array, mime: string): Promise<string> {
             const content = await page.getTextContent();
             text += content.items.map((it: any) => it.str || "").join(" ") + "\n";
           }
+          console.log(`[Text Extract] Extracted ${text.length} chars from PDF`);
           return text;
         }
       } catch (e) {
-        console.log("PDF parse fallback error", e);
+        console.error("[Text Extract] PDF parse error:", e);
       }
       return "";
-    } else if (lower.includes("docx")) {
-      const mammothMod: any = await import("npm:mammoth");
-      const result = await mammothMod.extractRawText({ buffer });
-      return result.value || "";
+    } else if (lower.includes("docx") || lower.includes("wordprocessingml") || fileName.endsWith('.docx')) {
+      try {
+        console.log("[Text Extract] Attempting mammoth extraction for DOCX");
+        const mammothMod: any = await import("npm:mammoth@1.9.1");
+        const result = await mammothMod.extractRawText({ buffer });
+        const extractedText = result.value || "";
+        console.log(`[Text Extract] Mammoth extracted ${extractedText.length} chars`);
+        
+        if (extractedText && extractedText.length > 10) {
+          return extractedText;
+        } else {
+          console.warn("[Text Extract] Mammoth returned no/minimal text");
+          return "Unable to extract text from document. Please ensure it's a valid DOCX file.";
+        }
+      } catch (e) {
+        console.error("[Text Extract] Mammoth error:", e);
+        return "Error extracting text from DOCX file.";
+      }
+    } else if (lower.includes("text/plain") || fileName.endsWith('.txt')) {
+      const text = new TextDecoder().decode(buffer);
+      console.log(`[Text Extract] Decoded ${text.length} chars from plain text`);
+      return text;
     }
-    return new TextDecoder().decode(buffer);
-  } catch {
+    
+    console.warn(`[Text Extract] Unsupported file type: ${mime} for ${fileName}`);
+    return `Unsupported file type: ${mime}`;
+  } catch (e) {
+    console.error("[Text Extract] Unexpected error:", e);
     return "";
   }
 }
@@ -101,7 +125,8 @@ serve(async (req) => {
           );
         }
 
-        const text = await extractText(buffer, file.type);
+        const text = await extractText(buffer, file.type, file.name);
+        console.log(`[Upload] Extracted text preview (first 200 chars): ${text.substring(0, 200)}`);
 
         let embedding: number[] | null = null;
         if (text && text.trim().length > 0) {

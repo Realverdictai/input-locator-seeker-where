@@ -144,9 +144,11 @@ export function VoiceMediationSession({
           sessionContext: {
             userType: userProfile.user_type,
             sessionCode,
-            briefText: briefText || 'No brief uploaded',
+            hasBrief: !!briefText,
             caseData,
-            instructions: `You are Judge William Iskandar, an experienced mediator. ${briefText ? `The user has provided a brief: ${briefText}` : 'No brief was provided.'} Guide the mediation session professionally and reference the brief when relevant.`
+            instructions: briefText 
+              ? `You are Judge William Iskandar, an experienced mediator. The user has uploaded a mediation brief for session ${sessionCode}. When they ask about it, use the get_mediation_brief tool to retrieve and review the content. Guide the mediation professionally.`
+              : `You are Judge William Iskandar, an experienced mediator. No brief was uploaded for this session. Guide the mediation professionally and ask clarifying questions about the case.`
           }
         }
       });
