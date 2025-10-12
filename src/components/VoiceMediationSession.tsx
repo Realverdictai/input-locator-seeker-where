@@ -50,9 +50,9 @@ export function VoiceMediationSession({
       console.log('[Voice Mediation] Connected');
       setIsConnected(true);
       toast({
-        title: 'Connected to AI Mediator',
-        description: 'You can now speak naturally about your case',
-        duration: 3000,
+        title: 'Connected to Judge Iskandar',
+        description: briefText ? 'Start by asking about the uploaded brief' : 'You can now speak naturally about your case',
+        duration: 4000,
       });
     },
     onDisconnect: () => {
@@ -359,12 +359,20 @@ export function VoiceMediationSession({
             {isConnected ? 'Session Active' : 'Not Connected'}
           </div>
 
-          {/* Brief Confirmation */}
+          {/* Brief Instructions */}
           {uploadedBrief && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-              <span className="text-blue-900">
-                📄 Mediator has reviewed: <span className="font-semibold">{uploadedBrief.name}</span>
-              </span>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-xl">📄</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-blue-900 mb-1">Brief Uploaded: {uploadedBrief.name}</p>
+                  <p className="text-blue-800">
+                    <strong>Important:</strong> You must configure your ElevenLabs agent to have knowledge of this brief. 
+                    Go to your ElevenLabs dashboard and update the agent's system prompt to include: 
+                    "You have access to a mediation brief. When asked about it, reference this document: {briefText.substring(0, 200)}..."
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>

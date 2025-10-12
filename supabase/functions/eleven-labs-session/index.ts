@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId } = await req.json();
+    const { agentId, sessionContext } = await req.json();
 
     if (!agentId) {
       throw new Error('Agent ID is required');
@@ -23,8 +23,14 @@ serve(async (req) => {
     }
 
     console.log('[ElevenLabs Session] Getting signed URL for agent:', agentId);
+    console.log('[ElevenLabs Session] Session context:', sessionContext);
 
-    // Get signed URL from ElevenLabs API
+    // Build custom prompt with brief context
+    const customPrompt = sessionContext?.briefText 
+      ? `You are Judge William Iskandar, an experienced mediator. The user has provided the following brief for this mediation session:\n\n${sessionContext.briefText}\n\nPlease reference this brief naturally when relevant during the conversation. Guide the mediation professionally.`
+      : 'You are Judge William Iskandar, an experienced mediator. No brief was provided for this session.';
+
+    // Get signed URL from ElevenLabs API with custom prompt
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
       {
@@ -44,11 +50,13 @@ serve(async (req) => {
     const data = await response.json();
 
     console.log('[ElevenLabs Session] Got signed URL');
+    console.log('[ElevenLabs Session] Note: Custom context will be passed to agent via first message');
 
     return new Response(
       JSON.stringify({
         signedUrl: data.signed_url,
         conversationId: data.conversation_id || crypto.randomUUID(),
+        customPrompt, // Return this so the client can send it as first message
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
