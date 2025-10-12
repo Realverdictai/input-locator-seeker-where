@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.case-data-query]
 verify_jwt = false
+
+[functions.get-mediation-brief]
+verify_jwt = false

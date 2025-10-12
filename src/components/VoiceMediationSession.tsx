@@ -359,17 +359,35 @@ export function VoiceMediationSession({
             {isConnected ? 'Session Active' : 'Not Connected'}
           </div>
 
-          {/* Brief Instructions */}
+          {/* Brief Configuration Instructions */}
           {uploadedBrief && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm space-y-2">
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm space-y-3">
               <div className="flex items-start gap-2">
-                <span className="text-xl">📄</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-blue-900 mb-1">Brief Uploaded: {uploadedBrief.name}</p>
-                  <p className="text-blue-800">
-                    <strong>Important:</strong> You must configure your ElevenLabs agent to have knowledge of this brief. 
-                    Go to your ElevenLabs dashboard and update the agent's system prompt to include: 
-                    "You have access to a mediation brief. When asked about it, reference this document: {briefText.substring(0, 200)}..."
+                <span className="text-2xl">⚙️</span>
+                <div className="flex-1 space-y-2">
+                  <p className="font-semibold text-amber-900">Configuration Required</p>
+                  <p className="text-amber-800">
+                    To enable Judge Iskandar to access your uploaded brief, configure the ElevenLabs agent with this custom tool:
+                  </p>
+                  <div className="bg-white/50 p-3 rounded border border-amber-200 font-mono text-xs space-y-2">
+                    <div>
+                      <strong>Tool Name:</strong> get_mediation_brief
+                    </div>
+                    <div>
+                      <strong>Description:</strong> Retrieves the uploaded mediation brief content
+                    </div>
+                    <div>
+                      <strong>URL:</strong> https://hueccsiuyxjqupxkfhkl.supabase.co/functions/v1/get-mediation-brief
+                    </div>
+                    <div>
+                      <strong>Method:</strong> POST
+                    </div>
+                    <div>
+                      <strong>Body:</strong> {`{"sessionCode": "${sessionCode || '1234987'}"}`}
+                    </div>
+                  </div>
+                  <p className="text-amber-800 text-xs">
+                    Add this tool in your ElevenLabs agent dashboard. The agent will call it when you ask about the brief.
                   </p>
                 </div>
               </div>
