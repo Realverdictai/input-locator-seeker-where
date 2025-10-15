@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,19 +13,20 @@ serve(async (req) => {
   try {
     const { sessionCode, partyEmail } = await req.json();
 
-    if (!sessionCode || !partyEmail) {
-      throw new Error('Session code and party email are required');
+    if (!sessionCode) {
+      throw new Error('Session code is required');
     }
 
-    console.log('[Request Valuation] Creating valuation request for session:', sessionCode);
+    console.log('[Request Valuation] Request received for session:', sessionCode);
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    // Queue the valuation report for generation
-    // In production, this would trigger a background job
-    // For now, we'll call the generation function directly
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase configuration missing');
+    }
+
+    // Call the generation function
     console.log('[Request Valuation] Calling generation function...');
     
     const response = await fetch(`${supabaseUrl}/functions/v1/generate-valuation-report`, {
@@ -40,8 +40,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Request Valuation] Generation failed:', errorText);
-      throw new Error('Failed to generate valuation report');
+      console.error('[Request Valuation] Generation failed:', response.status, errorText);
+      throw new Error(`Report generation failed: ${response.status}`);
     }
 
     const result = await response.json();
@@ -52,7 +52,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Valuation report will be emailed within 72 hours',
-        reportUrl: result.downloadUrl
+        reportUrl: result.downloadUrl,
+        fileName: result.fileName
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -62,7 +63,8 @@ serve(async (req) => {
     console.error('[Request Valuation] Error:', error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        success: false
       }),
       {
         status: 500,
