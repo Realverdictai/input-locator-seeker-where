@@ -39,18 +39,14 @@ export function VoiceMediationSession({
   onCaseDataUpdate
 }: VoiceMediationSessionProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState<'upload' | 'session'>('upload');
   const [isConnected, setIsConnected] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [uploadedBrief, setUploadedBrief] = useState<File | null>(null);
-  const [briefText, setBriefText] = useState<string>('');
   const [isProcessingBrief, setIsProcessingBrief] = useState(false);
   const [conversationOverrides, setConversationOverrides] = useState<any | null>(null);
 
-  // New state variables as requested
-  const [partyEmail, setPartyEmail] = useState<string | null>(null);
-  const [side, setSide] = useState<'plaintiff' | 'defense' | null>(null);
-  const [briefPath, setBriefPath] = useState<string | null>(null);
+  // Session state
+  const [partyEmail, setPartyEmail] = useState<string>(userProfile.company_name || '');
+  const [side, setSide] = useState<'plaintiff' | 'defense'>(userProfile.user_type === 'pi_lawyer' ? 'plaintiff' : 'defense');
   const [briefFilename, setBriefFilename] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string; ts: number }>>([]);
@@ -62,7 +58,7 @@ export function VoiceMediationSession({
       setIsConnected(true);
       toast({
         title: 'Connected to Judge Iskandar',
-        description: briefText ? 'Start by asking about the uploaded brief' : 'You can now speak naturally about your case',
+        description: 'Judge Iskander has reviewed your brief and is ready to mediate',
         duration: 4000,
       });
     },
@@ -96,53 +92,6 @@ export function VoiceMediationSession({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadedBrief(file);
-    setIsProcessingBrief(true);
-
-    try {
-      // Send file to Edge Function which handles storage upload, text extraction, and embeddings
-      const formData = new FormData();
-      formData.append('caseSessionId', sessionCode || `individual-${userProfile.id}`);
-      formData.append('files', file);
-
-      const { data, error } = await supabase.functions.invoke('upload-docs', {
-        body: formData
-      });
-
-      if (error || !data?.ok) {
-        throw new Error(error?.message || 'Failed to process document');
-      }
-
-      // Extract and store the document text for the AI mediator
-      if (data.files && data.files.length > 0) {
-        const extractedText = data.files
-          .map((f: any) => `File: ${f.fileName}\n${f.textContent}`)
-          .join('\n\n');
-        setBriefText(extractedText);
-      }
-
-      toast({
-        title: 'Brief uploaded',
-        description: 'Your document was uploaded and processed successfully',
-      });
-    } catch (error) {
-      console.error('[Voice Mediation] Brief upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive',
-      });
-      setUploadedBrief(null);
-    } finally {
-      setIsProcessingBrief(false);
-    }
-  };
-
-  // New function to upload brief to briefs/ bucket
-  const handleNewBriefUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
     if (!partyEmail || !side) {
       toast({
         title: 'Missing Information',
@@ -153,83 +102,42 @@ export function VoiceMediationSession({
     }
 
     setIsProcessingBrief(true);
+    setBriefFilename(file.name);
 
     try {
-      const timestamp = Date.now();
-      const filePath = `${userProfile.id}/${timestamp}_${file.name}`;
+      // Upload brief and extract text
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('partyEmail', partyEmail);
+      formData.append('side', side);
 
-      // Upload to briefs/ bucket
-      const { error: uploadError } = await supabase.storage
-        .from('briefs')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      setBriefPath(filePath);
-      setBriefFilename(file.name);
-
-      // Call edge function to extract text
       const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-brief-text', {
-        body: {
-          path: filePath,
-          filename: file.name,
-          partyEmail,
-          side,
-        }
+        body: formData
       });
 
       if (extractError || !extractData?.ok) {
         throw new Error(extractError?.message || extractData?.error || 'Failed to extract brief text');
       }
 
-      // Set sessionId from response
-      setSessionId(extractData.sessionId);
-      setBriefText(extractData.briefText);
+      const newSessionId = extractData.sessionId;
+      setSessionId(newSessionId);
 
       toast({
         title: 'Brief uploaded ✓',
-        description: `${file.name} uploaded and processed successfully`,
-      });
-    } catch (error) {
-      console.error('[Brief Upload] Error:', error);
-      toast({
-        title: 'Upload failed',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsProcessingBrief(false);
-    }
-  };
-
-  const handleProceedToSession = () => {
-    // Brief is optional; proceed even if none uploaded
-    setStep('session');
-  };
-
-  const handleStartSession = async () => {
-    if (!sessionId) {
-      toast({
-        title: 'Brief Required',
-        description: 'Please upload a brief first',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      // Call new edge function to get signed URL and prompts
-      const { data, error } = await supabase.functions.invoke('elevenlabs-start-session', {
-        body: { sessionId }
+        description: 'Starting session with Judge Iskander...',
       });
 
-      if (error || !data?.ok) {
-        throw new Error(error?.message || data?.error || 'Failed to start session');
+      // Immediately start the session
+      const { data: sessionData, error: sessionError } = await supabase.functions.invoke('elevenlabs-start-session', {
+        body: { sessionId: newSessionId }
+      });
+
+      if (sessionError || !sessionData?.ok) {
+        throw new Error(sessionError?.message || sessionData?.error || 'Failed to start session');
       }
 
-      const { signedUrl, firstMessage, systemPrompt } = data;
+      const { signedUrl, firstMessage, systemPrompt } = sessionData;
 
-      // Apply conversation overrides with the returned data
       setConversationOverrides({
         agent: {
           prompt: { prompt: systemPrompt },
@@ -244,13 +152,23 @@ export function VoiceMediationSession({
         signedUrl: signedUrl
       });
       setConversationId(id);
-    } catch (error) {
-      console.error('[Voice Mediation] Failed to start:', error);
+
       toast({
-        title: 'Failed to start session',
+        title: 'Session Started',
+        description: 'Judge Iskander is now reviewing your brief',
+      });
+
+    } catch (error) {
+      console.error('[Voice Mediation] Error:', error);
+      toast({
+        title: 'Failed',
         description: error instanceof Error ? error.message : 'Unknown error',
         variant: 'destructive',
       });
+      setBriefFilename(null);
+      setSessionId(null);
+    } finally {
+      setIsProcessingBrief(false);
     }
   };
 
@@ -270,197 +188,85 @@ export function VoiceMediationSession({
     }
   };
 
-  // STEP 1: Upload Brief
-  if (step === 'upload') {
-    return (
-      <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 py-12">
-        <Card className="w-full max-w-3xl shadow-2xl">
-          <CardHeader className="border-b">
-            <div>
-              <CardTitle className="text-2xl">Prepare for Mediation Session</CardTitle>
-              <CardDescription>
-                {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
-              </CardDescription>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-8 space-y-6">
-            {/* Upload Area */}
-            <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 text-center space-y-4">
-              <div className="flex justify-center">
-                {uploadedBrief ? (
-                  <CheckCircle2 className="h-16 w-16 text-green-500 animate-in fade-in" />
-                ) : (
-                  <FileText className="h-16 w-16 text-muted-foreground" />
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-2">
-                  {uploadedBrief ? 'Brief Uploaded' : 'Upload Your Mediation Brief'}
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  {uploadedBrief 
-                    ? `Your brief "${uploadedBrief.name}" has been uploaded and processed. The AI mediator will reference this during your session.`
-                    : 'Upload your demand letter, PLD, case evaluation, or mediation brief. The AI will analyze it to facilitate your session.'
-                  }
-                </p>
-              </div>
-
-              {uploadedBrief ? (
-                <div className="flex items-center justify-center gap-3 text-sm">
-                  <FileText className="h-5 w-5 text-green-600" />
-                  <span className="font-medium">{uploadedBrief.name}</span>
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="brief-upload">
-                    <Button 
-                      variant="outline" 
-                      disabled={isProcessingBrief}
-                      className="cursor-pointer"
-                      asChild
-                    >
-                      <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        {isProcessingBrief ? 'Processing...' : 'Choose File'}
-                      </span>
-                    </Button>
-                  </Label>
-                  <Input
-                    id="brief-upload"
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={handleBriefUpload}
-                    className="hidden"
-                    disabled={isProcessingBrief}
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Supported: PDF, DOC, DOCX, TXT
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your brief will be analyzed and embedded into the system</li>
-                <li>• The AI mediator will have full context of your case</li>
-                <li>• You'll enter a voice session to discuss your position</li>
-                <li>• The AI will ask strategic questions and provide insights</li>
-              </ul>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleProceedToSession}
-                disabled={!uploadedBrief || isProcessingBrief}
-                size="lg"
-              >
-                Proceed to Voice Session
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // STEP 2: Voice Session
   return (
     <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 py-12">
       <Card className="w-full max-w-5xl flex flex-col shadow-2xl overflow-y-auto max-h-[90vh]">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl">Voice Mediation in Progress</CardTitle>
+              <CardTitle className="text-2xl">Voice Mediation Session</CardTitle>
               <CardDescription>
                 {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
                 {sessionId && ` • Session: ${sessionId}`}
               </CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              onClick={() => setStep('upload')}
-              disabled={isConnected}
-            >
-              Back
-            </Button>
           </div>
 
-          {/* Compact Panel for Party Details */}
-          <div className="mt-4 border rounded-lg p-4 bg-muted/20">
-            <h3 className="text-sm font-semibold mb-3">Party Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="party-email" className="text-xs">Party Email *</Label>
-                <Input
-                  id="party-email"
-                  type="email"
-                  placeholder="party@example.com"
-                  value={partyEmail || ''}
-                  onChange={(e) => setPartyEmail(e.target.value)}
-                  required
-                  disabled={isConnected}
-                />
+          {/* Brief Upload Panel */}
+          {!isConnected && (
+            <div className="mt-4 border rounded-lg p-4 bg-muted/20">
+              <h3 className="text-sm font-semibold mb-3">Upload Brief to Start Session</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="space-y-2">
+                  <Label htmlFor="party-email" className="text-xs">Party Email *</Label>
+                  <Input
+                    id="party-email"
+                    type="email"
+                    placeholder="party@example.com"
+                    value={partyEmail}
+                    onChange={(e) => setPartyEmail(e.target.value)}
+                    required
+                    disabled={isProcessingBrief}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="side" className="text-xs">Side *</Label>
+                  <Select value={side} onValueChange={(val) => setSide(val as 'plaintiff' | 'defense')} disabled={isProcessingBrief}>
+                    <SelectTrigger id="side">
+                      <SelectValue placeholder="Select side" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plaintiff">Plaintiff</SelectItem>
+                      <SelectItem value="defense">Defense</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="side" className="text-xs">Side *</Label>
-                <Select value={side || ''} onValueChange={(val) => setSide(val as 'plaintiff' | 'defense')} disabled={isConnected}>
-                  <SelectTrigger id="side">
-                    <SelectValue placeholder="Select side" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="plaintiff">Plaintiff</SelectItem>
-                    <SelectItem value="defense">Defense</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="mt-4 space-y-2">
-              <Label htmlFor="new-brief-upload" className="text-xs">Upload Mediation Brief</Label>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="new-brief-upload">
-                  <Button 
-                    variant="outline" 
-                    disabled={isProcessingBrief || isConnected || !partyEmail || !side}
-                    className="cursor-pointer"
-                    asChild
-                  >
-                    <span>
-                      <Upload className="h-4 w-4 mr-2" />
-                      {isProcessingBrief ? 'Uploading...' : 'Choose Brief'}
-                    </span>
-                  </Button>
-                </Label>
-                <Input
-                  id="new-brief-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleNewBriefUpload}
-                  className="hidden"
-                  disabled={isProcessingBrief || isConnected || !partyEmail || !side}
-                />
-                {briefFilename && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Brief uploaded ✓</span>
-                  </div>
-                )}
+              <div className="space-y-2">
+                <Label htmlFor="brief-upload" className="text-xs">Mediation Brief (PDF, DOC, DOCX)</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="brief-upload">
+                    <Button 
+                      variant="outline" 
+                      disabled={isProcessingBrief || !partyEmail || !side}
+                      className="cursor-pointer"
+                      asChild
+                    >
+                      <span>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {isProcessingBrief ? 'Starting Session...' : 'Upload Brief & Start'}
+                      </span>
+                    </Button>
+                  </Label>
+                  <Input
+                    id="brief-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleBriefUpload}
+                    className="hidden"
+                    disabled={isProcessingBrief || !partyEmail || !side}
+                  />
+                  {briefFilename && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{briefFilename}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              {briefFilename && (
-                <p className="text-xs text-muted-foreground">{briefFilename}</p>
-              )}
             </div>
-          </div>
+          )}
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
@@ -504,14 +310,14 @@ export function VoiceMediationSession({
             {isConnected ? 'Session Active' : 'Not Connected'}
           </div>
 
-          {/* Brief Ready Indicator */}
-          {uploadedBrief && (
+          {/* Brief Status Indicator */}
+          {briefFilename && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <div>
-                  <p className="font-medium text-green-900">Brief Ready</p>
-                  <p className="text-green-700">Judge Iskandar can access your uploaded brief during the session</p>
+                  <p className="font-medium text-green-900">Brief: {briefFilename}</p>
+                  <p className="text-green-700">Judge Iskander is using this brief to guide the mediation</p>
                 </div>
               </div>
             </div>
@@ -520,28 +326,7 @@ export function VoiceMediationSession({
 
         {/* Footer Controls */}
         <div className="flex items-center justify-center gap-4 p-6 border-t bg-muted/30">
-          {!isConnected ? (
-            <>
-              <Button
-                onClick={handleStartSession}
-                size="lg"
-                className="px-8 h-12"
-                disabled={!partyEmail || !side}
-              >
-                <Phone className="h-5 w-5 mr-2" />
-                Start Session
-              </Button>
-              <Button
-                onClick={handleStartSession}
-                variant="outline"
-                size="lg"
-                className="px-8 h-12"
-                disabled={!partyEmail || !side || !sessionId}
-              >
-                Continue Session
-              </Button>
-            </>
-          ) : (
+          {isConnected ? (
             <Button
               onClick={handleEndSession}
               variant="destructive"
@@ -550,6 +335,15 @@ export function VoiceMediationSession({
             >
               <PhoneOff className="h-5 w-5 mr-2" />
               Finish Session
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={onClose}
+              size="lg"
+              className="px-8 h-12"
+            >
+              Cancel
             </Button>
           )}
         </div>
