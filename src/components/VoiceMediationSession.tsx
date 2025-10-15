@@ -19,6 +19,7 @@ import { UserProfile } from '@/types/auth';
 import { CaseData } from '@/types/verdict';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface VoiceMediationSessionProps {
   userProfile: UserProfile;
@@ -45,6 +46,13 @@ export function VoiceMediationSession({
   const [briefText, setBriefText] = useState<string>('');
   const [isProcessingBrief, setIsProcessingBrief] = useState(false);
   const [conversationOverrides, setConversationOverrides] = useState<any | null>(null);
+
+  // New state variables as requested
+  const [partyEmail, setPartyEmail] = useState<string | null>(null);
+  const [side, setSide] = useState<'plaintiff' | 'defense' | null>(null);
+  const [briefPath, setBriefPath] = useState<string | null>(null);
+  const [briefFilename, setBriefFilename] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const conversation = useConversation({
     overrides: conversationOverrides || undefined,
@@ -120,6 +128,52 @@ export function VoiceMediationSession({
     }
   };
 
+  // New function to upload brief to briefs/ bucket
+  const handleNewBriefUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!partyEmail || !side) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in party email and select a side first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsProcessingBrief(true);
+
+    try {
+      const timestamp = Date.now();
+      const filePath = `${userProfile.id}/${timestamp}_${file.name}`;
+
+      // Upload to briefs/ bucket
+      const { error: uploadError } = await supabase.storage
+        .from('briefs')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      setBriefPath(filePath);
+      setBriefFilename(file.name);
+
+      toast({
+        title: 'Brief uploaded ✓',
+        description: `${file.name} uploaded successfully`,
+      });
+    } catch (error) {
+      console.error('[Brief Upload] Error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessingBrief(false);
+    }
+  };
+
   const handleProceedToSession = () => {
     // Brief is optional; proceed even if none uploaded
     setStep('session');
@@ -175,6 +229,7 @@ export function VoiceMediationSession({
         signedUrl: data.signedUrl
       });
       setConversationId(id);
+      setSessionId(id);
     } catch (error) {
       console.error('[Voice Mediation] Failed to start:', error);
       toast({
@@ -331,6 +386,73 @@ export function VoiceMediationSession({
               Back
             </Button>
           </div>
+
+          {/* Compact Panel for Party Details */}
+          <div className="mt-4 border rounded-lg p-4 bg-muted/20">
+            <h3 className="text-sm font-semibold mb-3">Party Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="party-email" className="text-xs">Party Email *</Label>
+                <Input
+                  id="party-email"
+                  type="email"
+                  placeholder="party@example.com"
+                  value={partyEmail || ''}
+                  onChange={(e) => setPartyEmail(e.target.value)}
+                  required
+                  disabled={isConnected}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="side" className="text-xs">Side *</Label>
+                <Select value={side || ''} onValueChange={(val) => setSide(val as 'plaintiff' | 'defense')} disabled={isConnected}>
+                  <SelectTrigger id="side">
+                    <SelectValue placeholder="Select side" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="plaintiff">Plaintiff</SelectItem>
+                    <SelectItem value="defense">Defense</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="new-brief-upload" className="text-xs">Upload Mediation Brief</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="new-brief-upload">
+                  <Button 
+                    variant="outline" 
+                    disabled={isProcessingBrief || isConnected || !partyEmail || !side}
+                    className="cursor-pointer"
+                    asChild
+                  >
+                    <span>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {isProcessingBrief ? 'Uploading...' : 'Choose Brief'}
+                    </span>
+                  </Button>
+                </Label>
+                <Input
+                  id="new-brief-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleNewBriefUpload}
+                  className="hidden"
+                  disabled={isProcessingBrief || isConnected || !partyEmail || !side}
+                />
+                {briefFilename && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Brief uploaded ✓</span>
+                  </div>
+                )}
+              </div>
+              {briefFilename && (
+                <p className="text-xs text-muted-foreground">{briefFilename}</p>
+              )}
+            </div>
+          </div>
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col items-center justify-center p-8 space-y-8">
@@ -391,23 +513,35 @@ export function VoiceMediationSession({
         {/* Footer Controls */}
         <div className="flex items-center justify-center gap-4 p-6 border-t bg-muted/30">
           {!isConnected ? (
-            <Button
-              onClick={handleStartSession}
-              size="lg"
-              className="px-12 h-14 text-lg"
-            >
-              <Phone className="h-6 w-6 mr-3" />
-              Start Voice Session
-            </Button>
+            <>
+              <Button
+                onClick={handleStartSession}
+                size="lg"
+                className="px-8 h-12"
+                disabled={!partyEmail || !side}
+              >
+                <Phone className="h-5 w-5 mr-2" />
+                Start Session
+              </Button>
+              <Button
+                onClick={handleStartSession}
+                variant="outline"
+                size="lg"
+                className="px-8 h-12"
+                disabled={!partyEmail || !side || !sessionId}
+              >
+                Continue Session
+              </Button>
+            </>
           ) : (
             <Button
               onClick={handleEndSession}
               variant="destructive"
               size="lg"
-              className="px-12 h-14 text-lg"
+              className="px-8 h-12"
             >
-              <PhoneOff className="h-6 w-6 mr-3" />
-              End Session
+              <PhoneOff className="h-5 w-5 mr-2" />
+              Finish Session
             </Button>
           )}
         </div>
