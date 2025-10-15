@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.extract-brief-text]
 verify_jwt = false
+
+[functions.elevenlabs-start-session]
+verify_jwt = false

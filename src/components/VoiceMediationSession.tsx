@@ -53,6 +53,7 @@ export function VoiceMediationSession({
   const [briefPath, setBriefPath] = useState<string | null>(null);
   const [briefFilename, setBriefFilename] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<Array<{ role: string; text: string; ts: number }>>([]);
 
   const conversation = useConversation({
     overrides: conversationOverrides || undefined,
@@ -71,6 +72,15 @@ export function VoiceMediationSession({
     },
     onMessage: (message) => {
       console.log('[Voice Mediation] Message:', message);
+      
+      // Collect transcript for final messages
+      if (message && typeof message === 'object' && 'message' in message) {
+        const text = message.message;
+        const role = message.source || 'unknown';
+        if (text) {
+          setTranscript(prev => [...prev, { role, text, ts: Date.now() }]);
+        }
+      }
     },
     onError: (error) => {
       console.error('[Voice Mediation] Error:', error);
@@ -198,56 +208,42 @@ export function VoiceMediationSession({
   };
 
   const handleStartSession = async () => {
+    if (!sessionId) {
+      toast({
+        title: 'Brief Required',
+        description: 'Please upload a brief first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      // Save case context if available
-      if (caseData && Object.keys(caseData).length > 0) {
-        const { error } = await supabase
-          .from('case_evaluations')
-          .insert({
-            user_id: userProfile.id,
-            case_data: caseData as any
-          });
-
-        if (error) console.error('Error saving case context:', error);
-      }
-
-      // Get signed URL for ElevenLabs
-      const { data, error } = await supabase.functions.invoke('eleven-labs-session', {
-        body: { 
-          agentId: AGENT_ID,
-          sessionContext: {
-            userType: userProfile.user_type,
-            sessionCode,
-            hasBrief: !!briefText,
-            caseData,
-            instructions: briefText 
-              ? `You are Judge William Iskandar, an experienced mediator. The user has uploaded a mediation brief for session ${sessionCode}. When they ask about it, use the get_mediation_brief tool to retrieve and review the content. Guide the mediation professionally.`
-              : `You are Judge William Iskandar, an experienced mediator. No brief was uploaded for this session. Guide the mediation professionally and ask clarifying questions about the case.`
-          }
-        }
+      // Call new edge function to get signed URL and prompts
+      const { data, error } = await supabase.functions.invoke('elevenlabs-start-session', {
+        body: { sessionId }
       });
 
-      if (error) throw error;
-      if (!data?.signedUrl) throw new Error('No signed URL returned');
+      if (error || !data?.ok) {
+        throw new Error(error?.message || data?.error || 'Failed to start session');
+      }
 
-      // Apply dynamic agent overrides so the session starts with context
+      const { signedUrl, firstMessage, systemPrompt } = data;
+
+      // Apply conversation overrides with the returned data
       setConversationOverrides({
         agent: {
-          prompt: { prompt: data.customPrompt || 'You are Judge William Iskandar, an experienced mediator.' },
-          firstMessage: sessionCode
-            ? `I have reviewed your mediation brief for session ${sessionCode}. I'll summarize the key points and then ask a few targeted questions to clarify.`
-            : `I have reviewed your mediation brief. I'll summarize the key points and then ask a few targeted questions to clarify.`,
+          prompt: { prompt: systemPrompt },
+          firstMessage: firstMessage,
           language: 'en'
         }
       });
 
-      console.log('[Voice Mediation] Starting session...');
+      console.log('[Voice Mediation] Starting session with overrides...');
       
       const id = await conversation.startSession({ 
-        signedUrl: data.signedUrl
+        signedUrl: signedUrl
       });
       setConversationId(id);
-      setSessionId(id);
     } catch (error) {
       console.error('[Voice Mediation] Failed to start:', error);
       toast({
