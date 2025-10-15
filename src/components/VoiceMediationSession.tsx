@@ -52,7 +52,6 @@ export function VoiceMediationSession({
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string; ts: number }>>([]);
 
   const conversation = useConversation({
-    overrides: conversationOverrides || undefined,
     onConnect: () => {
       console.log('[Voice Mediation] Connected');
       setIsConnected(true);
@@ -186,24 +185,28 @@ export function VoiceMediationSession({
 
       const { signedUrl, firstMessage, systemPrompt } = sessionData;
 
-      setConversationOverrides({
-        agent: {
-          prompt: { prompt: systemPrompt },
-          firstMessage: firstMessage,
-          language: 'en'
-        }
+      console.log('[Voice Mediation] Starting session with overrides...', {
+        firstMessagePreview: firstMessage.substring(0, 100),
+        systemPromptPreview: systemPrompt.substring(0, 100)
       });
-
-      console.log('[Voice Mediation] Starting session with overrides...');
       
+      // Pass overrides directly to startSession
       const id = await conversation.startSession({ 
-        signedUrl: signedUrl
+        signedUrl: signedUrl,
+        overrides: {
+          agent: {
+            prompt: {
+              prompt: systemPrompt
+            },
+            firstMessage: firstMessage,
+            language: 'en'
+          }
+        }
       });
       setConversationId(id);
       
       console.log('[Voice Mediation] Session started successfully:', {
         conversationId: id,
-        hasOverrides: !!conversationOverrides,
         sessionId: newSessionId
       });
 
