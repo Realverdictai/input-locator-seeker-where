@@ -50,14 +50,16 @@ export function VoiceMediationSession({
   const [briefFilename, setBriefFilename] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: string; text: string; ts: number }>>([]);
+  const [briefContext, setBriefContext] = useState<{firstMessage: string; systemPrompt: string} | null>(null);
 
   const conversation = useConversation({
     onConnect: () => {
-      console.log('[Voice Mediation] Connected');
+      console.log('[Voice Mediation] Connected to Judge Iskander');
       setIsConnected(true);
+      
       toast({
-        title: 'Connected to Judge Iskandar',
-        description: 'Judge Iskander has reviewed your brief and is ready to mediate',
+        title: 'Connected to Judge Iskander',
+        description: 'Session is ready - you can start speaking',
         duration: 4000,
       });
     },
@@ -166,13 +168,7 @@ export function VoiceMediationSession({
         throw new Error('Failed to save brief: ' + insertError.message);
       }
 
-      setSessionId(newSessionId);
-      console.log('[Brief Upload] Brief saved with sessionId:', newSessionId);
-
-      toast({
-        title: 'Brief uploaded ✓',
-        description: 'Starting session with Judge Iskander...',
-      });
+      console.log('[Voice Mediation] Brief extracted and saved, starting ElevenLabs session...');
 
       // Step 3: Start ElevenLabs session
       const { data: sessionData, error: sessionError } = await supabase.functions.invoke('elevenlabs-start-session', {
@@ -183,25 +179,12 @@ export function VoiceMediationSession({
         throw new Error(sessionError?.message || sessionData?.error || 'Failed to start session');
       }
 
-      const { signedUrl, firstMessage, systemPrompt } = sessionData;
+      const { signedUrl } = sessionData;
 
-      console.log('[Voice Mediation] Starting session with overrides...', {
-        firstMessagePreview: firstMessage.substring(0, 100),
-        systemPromptPreview: systemPrompt.substring(0, 100)
-      });
+      console.log('[Voice Mediation] Starting session...');
       
-      // Pass overrides directly to startSession
       const id = await conversation.startSession({ 
-        signedUrl: signedUrl,
-        overrides: {
-          agent: {
-            prompt: {
-              prompt: systemPrompt
-            },
-            firstMessage: firstMessage,
-            language: 'en'
-          }
-        }
+        signedUrl: signedUrl
       });
       setConversationId(id);
       
