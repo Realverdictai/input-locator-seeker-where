@@ -105,29 +105,54 @@ export function VoiceMediationSession({
     setBriefFilename(file.name);
 
     try {
-      // Upload brief and extract text
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('partyEmail', partyEmail);
-      formData.append('side', side);
+      // Step 1: Extract text using upload-docs
+      const newSessionId = `one_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      
+      const uploadFormData = new FormData();
+      uploadFormData.append('caseSessionId', newSessionId);
+      uploadFormData.append('files', file);
 
-      const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-brief-text', {
-        body: formData
+      console.log('[Brief Upload] Calling upload-docs to extract text...');
+      const { data: uploadData, error: uploadError } = await supabase.functions.invoke('upload-docs', {
+        body: uploadFormData
       });
 
-      if (extractError || !extractData?.ok) {
-        throw new Error(extractError?.message || extractData?.error || 'Failed to extract brief text');
+      if (uploadError || !uploadData?.ok) {
+        throw new Error(uploadError?.message || 'Failed to extract document text');
       }
 
-      const newSessionId = extractData.sessionId;
+      const extractedText = uploadData.files?.[0]?.textContent || '';
+      console.log('[Brief Upload] Extracted text length:', extractedText.length);
+
+      if (!extractedText) {
+        throw new Error('No text could be extracted from the document');
+      }
+
+      // Step 2: Store in briefs_one_side table
+      const { error: insertError } = await supabase
+        .from('briefs_one_side')
+        .insert({
+          session_id: newSessionId,
+          party_email: partyEmail,
+          side: side,
+          filename: file.name,
+          brief_text: extractedText
+        });
+
+      if (insertError) {
+        console.error('[Brief Upload] Insert error:', insertError);
+        throw new Error('Failed to save brief: ' + insertError.message);
+      }
+
       setSessionId(newSessionId);
+      console.log('[Brief Upload] Brief saved with sessionId:', newSessionId);
 
       toast({
         title: 'Brief uploaded ✓',
         description: 'Starting session with Judge Iskander...',
       });
 
-      // Immediately start the session
+      // Step 3: Start ElevenLabs session
       const { data: sessionData, error: sessionError } = await supabase.functions.invoke('elevenlabs-start-session', {
         body: { sessionId: newSessionId }
       });
@@ -155,7 +180,7 @@ export function VoiceMediationSession({
 
       toast({
         title: 'Session Started',
-        description: 'Judge Iskander is now reviewing your brief',
+        description: 'Judge Iskander has reviewed your brief and is ready to mediate',
       });
 
     } catch (error) {
