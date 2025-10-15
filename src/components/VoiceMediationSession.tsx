@@ -158,9 +158,27 @@ export function VoiceMediationSession({
       setBriefPath(filePath);
       setBriefFilename(file.name);
 
+      // Call edge function to extract text
+      const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-brief-text', {
+        body: {
+          path: filePath,
+          filename: file.name,
+          partyEmail,
+          side,
+        }
+      });
+
+      if (extractError || !extractData?.ok) {
+        throw new Error(extractError?.message || extractData?.error || 'Failed to extract brief text');
+      }
+
+      // Set sessionId from response
+      setSessionId(extractData.sessionId);
+      setBriefText(extractData.briefText);
+
       toast({
         title: 'Brief uploaded ✓',
-        description: `${file.name} uploaded successfully`,
+        description: `${file.name} uploaded and processed successfully`,
       });
     } catch (error) {
       console.error('[Brief Upload] Error:', error);

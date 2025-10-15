@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      briefs_one_side: {
+        Row: {
+          brief_text: string | null
+          created_at: string
+          filename: string
+          party_email: string
+          session_id: string
+          side: string
+        }
+        Insert: {
+          brief_text?: string | null
+          created_at?: string
+          filename: string
+          party_email: string
+          session_id: string
+          side: string
+        }
+        Update: {
+          brief_text?: string | null
+          created_at?: string
+          filename?: string
+          party_email?: string
+          session_id?: string
+          side?: string
+        }
+        Relationships: []
+      }
       case_evaluations: {
         Row: {
           case_data: Json
