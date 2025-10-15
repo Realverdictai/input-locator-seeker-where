@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.elevenlabs-start-session]
 verify_jwt = false
+
+[functions.get-session-brief]
+verify_jwt = false
