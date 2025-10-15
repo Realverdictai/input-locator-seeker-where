@@ -30,6 +30,9 @@ export interface AIEvaluationResult {
     categories: string[];
   };
   method: 'ai' | 'traditional' | 'hybrid';
+  exceedsLimits?: boolean;
+  excessRiskWarning?: string;
+  plaintiffConfirmationNeeded?: boolean;
 }
 
 interface WeightsData {
@@ -113,9 +116,17 @@ export async function calcEvaluatorAI(
     const deductionResult = applyDeductions(weightedPrediction, newCase, narrativeText);
     console.log('⚖️ Applied deductions:', deductionResult);
 
-    // Step 6: Calculate mediator proposal
+    // Step 6: Calculate mediator proposal with policy limit checks
     const policyLimits = newCase.policyLimits || newCase.policy_limits_num || 0;
-    const { mediator, expiresOn, rangeLow, rangeHigh } = calculateMediatorProposal(
+    const { 
+      mediator, 
+      expiresOn, 
+      rangeLow, 
+      rangeHigh,
+      exceedsLimits,
+      excessRiskWarning,
+      plaintiffConfirmationNeeded
+    } = calculateMediatorProposal(
       deductionResult.evaluatorAfterDeductions,
       policyLimits
     );
@@ -144,12 +155,15 @@ export async function calcEvaluatorAI(
       settlementRangeLow: rangeLow,
       settlementRangeHigh: rangeHigh,
       confidence: regressionResult.confidence,
-      nearestCases: regressionResult.nearestCaseIds.slice(0, 5), // Top 5 for display
+      nearestCases: regressionResult.nearestCaseIds.slice(0, 5),
       rationale,
       isNovelCase,
       traditionalValuation,
       injuryAnalysis,
-      method: isNovelCase ? 'hybrid' : 'ai'
+      method: isNovelCase ? 'hybrid' : 'ai',
+      exceedsLimits,
+      excessRiskWarning,
+      plaintiffConfirmationNeeded
     };
 
   } catch (error) {
@@ -185,18 +199,40 @@ async function applyWeightsBoost(newCase: any, features: CaseFeatures): Promise<
       console.log(`🧠 TBI boost (${tbiLabel}): $${weights.tbiWeights[tbiLabel].toLocaleString()}`);
     }
     
-    // Add surgery weights if available  
+    // Add surgery weights with major/minor distinction
     const surgeryCount = features.surgeryCount || newCase.surgeries || 0;
-    const surgeryType = newCase.surgeryType || newCase.Surgery || '';
+    const surgeryType = (newCase.surgeryType || newCase.Surgery || '').toLowerCase();
     if (surgeryCount > 0 && surgeryType) {
-      const surgeryKey = Object.keys(weights.surgeryWeights).find(key =>
-        surgeryType.toLowerCase().includes(key.toLowerCase())
-      );
-      if (surgeryKey) {
-        const surgeryBoost = surgeryCount * weights.surgeryWeights[surgeryKey];
-        boost += surgeryBoost;
-        console.log(`🔧 Surgery boost (${surgeryKey}): ${surgeryCount} × $${weights.surgeryWeights[surgeryKey].toLocaleString()} = $${surgeryBoost.toLocaleString()}`);
+      // Check for minor surgeries first
+      const minorKeywords = ['micro', 'decompression', 'arthroscopy', 'minor'];
+      const isMinorSurgery = minorKeywords.some(keyword => surgeryType.includes(keyword));
+      
+      // Check for multi-level fusion
+      const levelMatch = surgeryType.match(/(\d+)\s*level/i);
+      const levels = levelMatch ? parseInt(levelMatch[1]) : 1;
+      
+      let surgeryBoost = 0;
+      
+      if (isMinorSurgery) {
+        // Minor surgery: $75k-$150k, use $100k as baseline
+        surgeryBoost = surgeryCount * (weights.surgeryWeights.minorSurgery || 100000);
+        console.log(`🔧 Minor surgery boost: ${surgeryCount} × $100k = $${surgeryBoost.toLocaleString()}`);
+      } else if (surgeryType.includes('fusion') || surgeryType.includes('disc replacement')) {
+        // Major spine surgery: $250k per level
+        surgeryBoost = levels * (weights.surgeryWeights.fusion || 250000);
+        console.log(`🔧 Major spine surgery boost (${levels} level${levels > 1 ? 's' : ''}): ${levels} × $250k = $${surgeryBoost.toLocaleString()}`);
+      } else {
+        // Try to match other surgery types
+        const surgeryKey = Object.keys(weights.surgeryWeights).find(key =>
+          surgeryType.includes(key.toLowerCase())
+        );
+        if (surgeryKey) {
+          surgeryBoost = surgeryCount * weights.surgeryWeights[surgeryKey];
+          console.log(`🔧 Surgery boost (${surgeryKey}): ${surgeryCount} × $${weights.surgeryWeights[surgeryKey].toLocaleString()} = $${surgeryBoost.toLocaleString()}`);
+        }
       }
+      
+      boost += surgeryBoost;
     }
 
     // Injury severity multipliers
@@ -398,18 +434,36 @@ async function fallbackEvaluation(
   }
 
 /**
- * Calculate mediator proposal
+ * Calculate mediator proposal with policy limit considerations
  */
 function calculateMediatorProposal(
   evaluatorAfterDeductions: number,
   policyLimits: number
-): { mediator: string; expiresOn: string; rangeLow: string; rangeHigh: string } {
+): { 
+  mediator: string; 
+  expiresOn: string; 
+  rangeLow: string; 
+  rangeHigh: string;
+  exceedsLimits: boolean;
+  excessRiskWarning?: string;
+  plaintiffConfirmationNeeded?: boolean;
+} {
   let proposalAmount: number;
+  let exceedsLimits = false;
+  let excessRiskWarning: string | undefined;
+  let plaintiffConfirmationNeeded = false;
   
+  // Most cases are capped at policy limits - plaintiffs don't want personal contributions
   if (policyLimits > 0) {
     const policyLimit90Percent = policyLimits * 0.90;
     
-    if (evaluatorAfterDeductions >= policyLimit90Percent) {
+    // Check if case value exceeds limits
+    if (evaluatorAfterDeductions > policyLimits) {
+      exceedsLimits = true;
+      excessRiskWarning = `Case value ($${evaluatorAfterDeductions.toLocaleString()}) exceeds policy limits ($${policyLimits.toLocaleString()}). Defense should be aware of excess exposure risk.`;
+      plaintiffConfirmationNeeded = true; // Need to confirm plaintiff won't seek beyond limits
+      proposalAmount = policyLimits; // Cap at limits
+    } else if (evaluatorAfterDeductions >= policyLimit90Percent) {
       proposalAmount = policyLimit90Percent;
     } else {
       proposalAmount = evaluatorAfterDeductions * 0.95;
@@ -448,7 +502,10 @@ function calculateMediatorProposal(
     mediator: `$${proposalAmount.toLocaleString()}`,
     expiresOn,
     rangeLow: rangeLowStr,
-    rangeHigh: rangeHighStr
+    rangeHigh: rangeHighStr,
+    exceedsLimits,
+    excessRiskWarning,
+    plaintiffConfirmationNeeded
   };
 }
 

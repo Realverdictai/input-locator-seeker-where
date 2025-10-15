@@ -1,11 +1,15 @@
 {
   "defaultInjectionValue": 50000,
   "surgeryWeights": {
-    "fusion": 180000,
-    "arthroscopy": 70000,
-    "rotator": 95000,
-    "acl": 90000,
-    "discReplacement": 160000
+    "fusion": 250000,
+    "discReplacement": 250000,
+    "twoLevelFusion": 500000,
+    "multilevelFusion": 250000,
+    "microDecompression": 100000,
+    "minorSurgery": 100000,
+    "arthroscopy": 100000,
+    "rotator": 150000,
+    "acl": 150000
   },
   "tbiWeights": {
     "None": 0,

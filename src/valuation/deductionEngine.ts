@@ -28,13 +28,17 @@ export function applyDeductions(
   const narrative = narrativeText || caseData.narrative || '';
   const deductions: Deduction[] = [];
 
-  // 1. Subsequent accidents during treatment (15-25%, default 20%)
+  // 1. Subsequent accidents during treatment - CAUSAL CHAIN BREAK (25-40%, default 30%)
   const subsequentAccident = checkSubsequentAccident(narrative);
+  const subsequentBeforeSurgery = checkSubsequentBeforeSurgery(narrative);
+  const apportionmentPct = subsequentBeforeSurgery ? -35 : (subsequentAccident ? -30 : 0);
   deductions.push({
-    name: 'Subsequent accident during treatment',
-    pct: subsequentAccident ? -20 : 0,
-    triggered: subsequentAccident,
-    reason: subsequentAccident ? 'Additional accident occurred during treatment period' : undefined
+    name: subsequentBeforeSurgery ? 'Subsequent accident before surgery (apportionment)' : 'Subsequent accident during treatment',
+    pct: apportionmentPct,
+    triggered: subsequentAccident || subsequentBeforeSurgery,
+    reason: subsequentBeforeSurgery 
+      ? 'Subsequent accident before surgery creates significant apportionment issues'
+      : (subsequentAccident ? 'Additional accident during treatment breaks causal chain' : undefined)
   });
 
   // 2. Treatment gap > 90 days (10-15%, default 12%)
@@ -116,7 +120,24 @@ function checkSubsequentAccident(narrative: string): boolean {
     /later accident/gi,
     /additional accident.*during treatment/gi,
     /second accident.*treatment/gi,
-    /another accident.*while treating/gi
+    /another accident.*while treating/gi,
+    /intervening accident/gi,
+    /new accident/gi
+  ];
+  
+  return patterns.some(pattern => pattern.test(narrative));
+}
+
+/**
+ * Check for subsequent accident BEFORE surgery (worse apportionment)
+ */
+function checkSubsequentBeforeSurgery(narrative: string): boolean {
+  const patterns = [
+    /subsequent accident.*before.*surgery/gi,
+    /accident.*prior to.*surgery/gi,
+    /additional accident.*pre-surgery/gi,
+    /another accident.*before.*operation/gi,
+    /intervening accident.*before.*procedure/gi
   ];
   
   return patterns.some(pattern => pattern.test(narrative));
