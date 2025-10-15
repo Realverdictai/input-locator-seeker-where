@@ -263,7 +263,6 @@ export function VoiceMediationSession({
               <CardTitle className="text-2xl">Voice Mediation Session</CardTitle>
               <CardDescription>
                 {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
-                {sessionId && ` • Session: ${sessionId}`}
               </CardDescription>
             </div>
           </div>

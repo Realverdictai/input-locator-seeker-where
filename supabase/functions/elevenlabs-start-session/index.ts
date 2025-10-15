@@ -74,9 +74,8 @@ serve(async (req) => {
       throw new Error('No signed URL returned from ElevenLabs');
     }
 
-    // Build firstMessage
-    const firstMessage = `Session Code: ${sessionId}.
-Side: ${side}.
+    // Build firstMessage (no session code shown)
+    const firstMessage = `Side: ${side}.
 Party Email: ${party_email}.
 
 I have reviewed your mediation brief: ${filename}.
@@ -88,11 +87,12 @@ Please begin by summarizing it in ≤120 words, then ask up to 3 targeted questi
 BRIEF CONTENT:
 ${brief_text}
 
-INSTRUCTIONS:
-Use the provided brief content to guide questions.
-Priority order: (1) coverage/limits, (2) liability facts, (3) objective medicals & specials, (4) venue, (5) negotiation history.
-Keep a calm, settlement-oriented tone. No legal advice.
-End the session when the user says "submit" or "done".`;
+    INSTRUCTIONS:
+    Use the provided brief content to guide questions.
+    Priority order: (1) coverage/limits, (2) liability facts, (3) objective medicals & specials, (4) venue, (5) negotiation history.
+    Keep a calm, settlement-oriented tone. No legal advice.
+    Do not ask for any session codes; you already have the brief content.
+    End the session when the user says "submit" or "done".`;
 
     return new Response(
       JSON.stringify({
