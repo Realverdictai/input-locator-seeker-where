@@ -66,17 +66,27 @@ export function ElevenLabsSessionRoom({
 
   const handleStartSession = async () => {
     try {
-      // Get signed URL from our edge function
+      console.log('[ElevenLabs Room] Starting session with sessionCode:', sessionCode);
+      
+      // Get signed URL from our edge function with sessionId
       const { data, error } = await supabase.functions.invoke('eleven-labs-session', {
-        body: { agentId }
+        body: { 
+          agentId,
+          sessionId: sessionCode || 'no-session', // Pass sessionId for dynamic variables
+          sessionContext: {
+            sessionCode: sessionCode || 'no-session',
+            hasBrief: !!sessionCode
+          }
+        }
       });
 
       if (error) throw error;
       if (!data?.signedUrl) throw new Error('No signed URL returned');
 
-      console.log('[ElevenLabs Room] Got signed URL, starting session...');
+      console.log('[ElevenLabs Room] Got signed URL, starting session with sessionId:', sessionCode);
       setSignedUrl(data.signedUrl);
 
+      // Start the conversation
       const id = await conversation.startSession({ 
         signedUrl: data.signedUrl
       });

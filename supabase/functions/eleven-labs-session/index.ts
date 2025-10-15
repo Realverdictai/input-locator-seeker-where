@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { agentId, sessionContext } = await req.json();
+    const { agentId, sessionId, sessionContext } = await req.json();
 
     if (!agentId) {
       throw new Error('Agent ID is required');
@@ -24,6 +24,7 @@ serve(async (req) => {
     }
 
     console.log('[ElevenLabs Session] Getting signed URL for agent:', agentId);
+    console.log('[ElevenLabs Session] Session ID:', sessionId);
     console.log('[ElevenLabs Session] Session context:', sessionContext);
 
     // If there's a brief, retrieve it from the database first
@@ -59,14 +60,25 @@ serve(async (req) => {
       ? `You are Judge William Iskandar, an experienced mediator. I have reviewed the mediation brief submitted for this session. Here is the content:\n\n${briefContent}\n\nBegin by acknowledging you've reviewed the brief and provide a brief summary of the key points. Then guide the mediation professionally, referencing specific details from the brief as relevant.`
       : sessionContext?.instructions || 'You are Judge William Iskandar, an experienced mediator. No brief was uploaded for this session. Begin by introducing yourself and asking about the case details.';
 
-    // Get signed URL from ElevenLabs API with custom prompt
+    // Get signed URL from ElevenLabs API with dynamic variables
+    const requestBody: any = {};
+    
+    // If we have a sessionId, pass it as a dynamic variable
+    if (sessionId) {
+      requestBody.variables = {
+        sessionId: sessionId
+      };
+    }
+
     const response = await fetch(
       `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agentId}`,
       {
-        method: 'GET',
+        method: requestBody.variables ? 'POST' : 'GET',
         headers: {
           'xi-api-key': ELEVEN_LABS_API_KEY,
+          ...(requestBody.variables ? { 'Content-Type': 'application/json' } : {})
         },
+        ...(requestBody.variables ? { body: JSON.stringify(requestBody) } : {})
       }
     );
 
