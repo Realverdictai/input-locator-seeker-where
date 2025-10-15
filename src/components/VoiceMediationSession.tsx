@@ -63,8 +63,19 @@ export function VoiceMediationSession({
       });
     },
     onDisconnect: () => {
-      console.log('[Voice Mediation] Disconnected');
+      console.log('[Voice Mediation] Disconnected - checking if unexpected...');
       setIsConnected(false);
+      
+      // If we have a conversation ID but disconnected unexpectedly, notify user
+      if (conversationId) {
+        console.error('[Voice Mediation] Unexpected disconnect during active session');
+        toast({
+          title: 'Session Disconnected',
+          description: 'The connection was lost. Please check your internet connection and try again.',
+          variant: 'destructive',
+          duration: 6000,
+        });
+      }
     },
     onMessage: (message) => {
       console.log('[Voice Mediation] Message:', message);
@@ -80,11 +91,23 @@ export function VoiceMediationSession({
     },
     onError: (error) => {
       console.error('[Voice Mediation] Error:', error);
+      
+      // Log detailed error information
+      const errorDetails = typeof error === 'object' ? JSON.stringify(error) : String(error);
+      console.error('[Voice Mediation] Full error details:', errorDetails);
+      
       toast({
         title: 'Session Error',
-        description: typeof error === 'string' ? error : 'Unknown error occurred',
+        description: typeof error === 'string' ? error : 'Connection error - please try reconnecting',
         variant: 'destructive',
+        duration: 6000,
       });
+      
+      // If critical error, reset state
+      if (errorDetails.includes('WebSocket') || errorDetails.includes('connection')) {
+        setIsConnected(false);
+        setConversationId(null);
+      }
     },
   });
 
@@ -177,6 +200,12 @@ export function VoiceMediationSession({
         signedUrl: signedUrl
       });
       setConversationId(id);
+      
+      console.log('[Voice Mediation] Session started successfully:', {
+        conversationId: id,
+        hasOverrides: !!conversationOverrides,
+        sessionId: newSessionId
+      });
 
       toast({
         title: 'Session Started',
@@ -199,17 +228,29 @@ export function VoiceMediationSession({
 
   const handleEndSession = async () => {
     try {
+      console.log('[Voice Mediation] Ending session gracefully...');
       await conversation.endSession();
       
       // Note: For one-sided sessions, we don't update mediation_sessions table
       // The session data is tracked in briefs_one_side and transcript state
       
-      console.log('[Voice Mediation] Session ended. Transcript:', transcript);
+      console.log('[Voice Mediation] Session ended. Transcript entries:', transcript.length);
 
       setConversationId(null);
+      setIsConnected(false);
+      
+      toast({
+        title: 'Session Ended',
+        description: `Your mediation session has been saved with ${transcript.length} exchanges.`,
+      });
+      
       onClose();
     } catch (error) {
-      console.error('[Voice Mediation] Failed to end:', error);
+      console.error('[Voice Mediation] Failed to end session:', error);
+      // Still close even if there's an error
+      setConversationId(null);
+      setIsConnected(false);
+      onClose();
     }
   };
 
