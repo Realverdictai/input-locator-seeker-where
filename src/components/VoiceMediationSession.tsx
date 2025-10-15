@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface VoiceMediationSessionProps {
   userProfile: UserProfile;
-  sessionCode?: string;
+  sessionCode?: string; // Optional now
   caseData?: Partial<CaseData>;
   onClose: () => void;
   onCaseDataUpdate?: (data: Partial<CaseData>) => void;
@@ -258,17 +258,10 @@ export function VoiceMediationSession({
     try {
       await conversation.endSession();
       
-      // Update session status
-      if (sessionCode) {
-        const { error } = await supabase
-          .from('mediation_sessions')
-          .update({
-            status: 'completed'
-          })
-          .eq('session_code', sessionCode);
-
-        if (error) console.error('Error updating session:', error);
-      }
+      // Note: For one-sided sessions, we don't update mediation_sessions table
+      // The session data is tracked in briefs_one_side and transcript state
+      
+      console.log('[Voice Mediation] Session ended. Transcript:', transcript);
 
       setConversationId(null);
       onClose();
@@ -283,11 +276,12 @@ export function VoiceMediationSession({
       <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4 py-12">
         <Card className="w-full max-w-3xl shadow-2xl">
           <CardHeader className="border-b">
-            <CardTitle className="text-2xl">Prepare for Mediation Session</CardTitle>
-            <CardDescription>
-              {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
-              {sessionCode && ` • Session: ${sessionCode}`}
-            </CardDescription>
+            <div>
+              <CardTitle className="text-2xl">Prepare for Mediation Session</CardTitle>
+              <CardDescription>
+                {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
+              </CardDescription>
+            </div>
           </CardHeader>
 
           <CardContent className="p-8 space-y-6">
@@ -389,7 +383,7 @@ export function VoiceMediationSession({
               <CardTitle className="text-2xl">Voice Mediation in Progress</CardTitle>
               <CardDescription>
                 {userProfile.user_type === 'pi_lawyer' ? 'Plaintiff Counsel' : 'Defense Counsel'}
-                {sessionCode && ` • Session: ${sessionCode}`}
+                {sessionId && ` • Session: ${sessionId}`}
               </CardDescription>
             </div>
             <Button
