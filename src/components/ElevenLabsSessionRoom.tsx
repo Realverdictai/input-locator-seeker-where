@@ -105,6 +105,36 @@ export function ElevenLabsSessionRoom({
     try {
       await conversation.endSession();
       setConversationId(null);
+      
+      // Request valuation report if this was a mediation session with a session code
+      if (sessionCode) {
+        console.log('[ElevenLabs Room] Requesting valuation report for session:', sessionCode);
+        
+        toast({
+          title: 'Session Ended',
+          description: 'Your detailed valuation report will be emailed within 72 hours',
+          duration: 5000,
+        });
+
+        // Trigger valuation report generation
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          const userEmail = userData.user?.email || '';
+          
+          await supabase.functions.invoke('request-valuation-report', {
+            body: { 
+              sessionCode,
+              partyEmail: userEmail
+            }
+          });
+          
+          console.log('[ElevenLabs Room] Valuation report requested successfully');
+        } catch (reportError) {
+          console.error('[ElevenLabs Room] Failed to request valuation report:', reportError);
+          // Don't show error to user - report will still be generated via backend
+        }
+      }
+      
       onClose();
     } catch (error) {
       console.error('[ElevenLabs Room] Failed to end:', error);

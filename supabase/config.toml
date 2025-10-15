@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.get-session-brief]
 verify_jwt = false
+
+[functions.generate-valuation-report]
+verify_jwt = false
+
+[functions.request-valuation-report]
+verify_jwt = false
