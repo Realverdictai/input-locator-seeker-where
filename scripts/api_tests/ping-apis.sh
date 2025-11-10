@@ -237,7 +237,7 @@ elif need SUPABASE_URL SUPABASE_KEY; then
 else
   log "Supabase: negative/skip recorded"; hr
 fi
-
+}
 
 # jq is optional (only needed for the Plaid JSON body)
 if ! command -v jq >/dev/null 2>&1; then
