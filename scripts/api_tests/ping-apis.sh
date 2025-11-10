@@ -221,22 +221,23 @@ main() {
     log "ElevenLabs: negative/skip recorded"; hr
   fi
 
-  # -------------------------------
-  # Supabase — REST root (401/404 expected without table)
-  # -------------------------------
-  if need SUPABASE_URL SUPABASE_KEY; then
-    hit "Supabase: /rest/v1/ (auth check)" \
-      -H "apikey: ${SUPABASE_KEY}" \
-      -H "Authorization: Bearer ${SUPABASE_KEY}" \
-      "${SUPABASE_URL%/}/rest/v1/"
-  else
-    log "Supabase: negative/skip recorded"; hr
-  fi
+ # -------------------------------
+# Supabase — REST ping (auth check)
+# -------------------------------
+if need VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; then
+  hit "Supabase: /rest/v1/ (VITE vars)" \
+    -H "apikey: ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+    -H "Authorization: Bearer ${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+    "${VITE_SUPABASE_URL%/}/rest/v1/"
+elif need SUPABASE_URL SUPABASE_KEY; then
+  hit "Supabase: /rest/v1/ (server vars)" \
+    -H "apikey: ${SUPABASE_KEY}" \
+    -H "Authorization: Bearer ${SUPABASE_KEY}" \
+    "${SUPABASE_URL%/}/rest/v1/"
+else
+  log "Supabase: negative/skip recorded"; hr
+fi
 
-  log "Done."
-  # If you want CI to fail when anything was missing, uncomment:
-  # if [[ "${MISSING_ANY:-0}" -eq 1 ]]; then exit 2; fi
-}
 
 # jq is optional (only needed for the Plaid JSON body)
 if ! command -v jq >/dev/null 2>&1; then
